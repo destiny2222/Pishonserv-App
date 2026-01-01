@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { Stack } from "expo-router";
+import { PaperProvider , MD3LightTheme } from "react-native-paper";
 
 type SignupData = {
   firstName: string;
@@ -62,10 +63,23 @@ function SignupProvider({ children }: { children: React.ReactNode }) {
   return <SignupCtx.Provider value={value}>{children}</SignupCtx.Provider>;
 }
 
+const theme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: '#ffffff',
+    background:"#ffffff",
+    outline: '#d1d5db', 
+  },
+  roundness: 6,
+};
+
 export default function SignupLayout() {
   return (
-    <SignupProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+    <SignupProvider >
+      <PaperProvider theme={theme}>
+        <Stack screenOptions={{ headerShown: false }} />
+      </PaperProvider>  
     </SignupProvider>
   );
 }

@@ -1,5 +1,5 @@
-import React, {useState} from "react";
-import { Keyboard, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import React, { useState, useMemo} from "react";
+import { Keyboard, Pressable, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { router, Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Watermarks from "@/components/Watermarks";
@@ -8,6 +8,8 @@ import { Picker } from "@react-native-picker/picker";
 import Button from "@/components/Button";
 import TextInputField from "@/components/TextInputField";
 import CountryPicker, { Country } from "react-native-country-picker-modal";
+import { State } from "country-state-city";
+import { Dropdown, MultiSelectDropdown} from "react-native-paper-dropdown"
 
 function getFlagEmoji(countryCode: string) {
   return countryCode
@@ -17,18 +19,30 @@ function getFlagEmoji(countryCode: string) {
     );
 }
 
+
+
 export default function Step2() {
   const { data, update } = useSignup();
   const [open, setOpen] = useState(false);
+  const [statePickerOpen, setStatePickerOpen] = useState(false);
 
   const onSelectCountry = (c: Country) => {
+    // console.log("Country", c.callingCode?.[0])
     update({
-      country: c.name?.common ?? "",
+      country: c.name ?? "",
       countryCode: c.cca2 ?? "",
       phoneCode: c.callingCode?.[0] ? `+${c.callingCode[0]}` : data.phoneCode,
+      state: "",
     });
     setOpen(false);
   };
+
+
+const states = useMemo(() => {
+  if (!data.countryCode) return [];
+  return State.getStatesOfCountry(data.countryCode); // e.g. NG, AU, US
+}, [data.countryCode]);
+
 
   const next = () => {
     if (!data.country || !data.state || !data.phoneNumber) return;
@@ -62,25 +76,27 @@ export default function Step2() {
                 </View>
                 <Ionicons name="chevron-down" size={18} color="#666" />
             </TouchableOpacity>
-            <CountryPicker  visible={open}  onClose={() => setOpen(false)}
+            <CountryPicker  visible={open}  onClose={() => setOpen(false)} renderFlagButton={() => null}
               onSelect={onSelectCountry} withFilter   withFlag  withCallingCode withEmoji 
             />
         </View>
 
-        <View className="space-y-6 w-full px-8 mt-10">
+        <View className="space-y-6 w-full px-8 mt-10"> 
           <Text className="font-poppins-medium text-sm mb-2">State <Text className="text-red-500">*</Text></Text>
-          <View className="border border-gray-300 rounded-xl overflow-hidden">
-            <Picker
-              selectedValue={data.state}
-              onValueChange={(v) => update({ state: v })}
-            >
-              <Picker.Item label="Select a state" value="" />
-              <Picker.Item label="Lagos" value="Lagos" />
-              <Picker.Item label="Abuja" value="Abuja" />
-              <Picker.Item label="Rivers" value="Rivers" />
-            </Picker>
-          </View>
+          <Dropdown 
+            label="State"
+            placeholder="Select state"
+            options={states.map(state => ({
+              label: state.name,
+              value: state.isoCode
+            }))}
+            value={data.state}
+            onSelect={(value) => update({ state: value })}
+            mode="outlined"
+            hideMenuHeader={true}
+          />
         </View>
+
 
         <View className="space-y-6 w-full px-8 mt-10">
           <Text className="font-poppins-medium text-sm mb-2">Phone Number <Text className="text-red-500">*</Text></Text>
@@ -115,9 +131,9 @@ export default function Step2() {
         </View>
 
         <View className="space-y-6 w-full px-8 mt-10">
-          <Button style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}} onTouchEnd={next}>
+          <Pressable style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}} onTouchEnd={next}>
             <Text className="text-white font-poppins-semibold">Next</Text>
-          </Button>
+          </Pressable>
         </View>
 
         <View className="mt-8 items-center">

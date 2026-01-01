@@ -1,5 +1,5 @@
 import React from "react";
-import { Keyboard, Text, TextInput, TouchableWithoutFeedback, View } from "react-native";
+import { Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from "react-native";
 import { router, Link } from "expo-router";
 import Watermarks from "@/components/Watermarks";
 import { useSignup } from "./_layout";
@@ -56,9 +56,9 @@ export default function Step1() {
         </View>
 
         <View className="space-y-6 w-full px-8 mt-10">
-          <Button style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}} onTouchEnd={next}  >
+          <Pressable style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}} onTouchEnd={next}  >
             <Text className="text-white font-poppins-semibold">Next</Text>
-          </Button>
+          </Pressable>
         </View>
 
         <View className="mt-9 items-center">

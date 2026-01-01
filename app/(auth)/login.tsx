@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableNativeFeedback, TouchableWithoutFeedback, Keyboard, TextInput } from 'react-native'
+import { View, Text, Image, TouchableNativeFeedback, TouchableWithoutFeedback, Keyboard, TextInput, Pressable } from 'react-native'
 import React, { useState } from 'react'
 import TextInputField from '@/components/TextInputField';
 import Button from '@/components/Button';
@@ -46,9 +46,9 @@ export default function login() {
         </View>
 
         <View className='w-full px-8 mt-10'>
-          <Button style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}} onPress={handleSubmit} >
+          <Pressable style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}} onPress={handleSubmit} >
             <Text className='text-white font-poppins-semibold font-semibold text-lg'>Login</Text>
-          </Button>
+          </Pressable>
         </View>
         <View className='mt-16'>
           <Link href="/reset-password" className='font-poppins-semibold underline font-semibold  text-lg text-secondary'>Forgot your password?</Link>

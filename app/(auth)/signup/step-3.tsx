@@ -1,5 +1,5 @@
-import React from "react";
-import { Keyboard, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import React, { useState } from "react";
+import { Keyboard, Pressable, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { router, Link } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Watermarks from "@/components/Watermarks";
@@ -8,12 +8,20 @@ import { Picker } from "@react-native-picker/picker";
 
 export default function Step3() {
   const { data, update } = useSignup();
+  const [success, setSuccess] = useState(false);
 
   const register = async () => {
     if (!data.password || data.password !== data.confirmPassword || !data.role) return;
-
-    // TODO: call your API here
-    console.log("REGISTER DATA:", data);
+    setSuccess(true)
+    try {
+      
+      // TODO: call your API here
+      console.log("REGISTER DATA:", data);
+    } catch (error) {
+      console.log(error);
+    }finally{
+      setSuccess(false);
+    }
 
     router.replace("/(auth)/login");
   };
@@ -68,9 +76,9 @@ export default function Step3() {
         </View>
 
         <View className="mt-10">
-          <View className="bg-[#C9A24D] rounded-xl py-4 items-center" onTouchEnd={register}>
+          <Pressable className="bg-[#C9A24D] rounded-xl py-4 items-center" onPress={register}>
             <Text className="text-white font-poppins-semibold">Register</Text>
-          </View>
+          </Pressable>
         </View>
 
         <View className="mt-8 items-center">
