@@ -5,6 +5,16 @@ import cardMiddle  from '@/assets/onboarding/card-middle.png';
 import cardRight  from '@/assets/onboarding/card-right.png';
 import transparentLogo from '@/assets/onboarding/transparent-logo.png';
 import watermarkArrow from "@/assets/onboarding/watermark-arrow.png";
+import profileImage from "@/assets/images/profile.png";
+import featured1 from "@/assets/images/featured1.jpg";
+import featured2 from "@/assets/images/featured2.jpg";
+import featured3 from "@/assets/images/featured3.jpg";
+import featured4 from "@/assets/images/featured4.jpg";
+import hero1 from "@/assets/images/hero.png";
+import hero2 from "@/assets/images/hero2.jpg";
+import hero3 from "@/assets/images/hero3.jpg";
+import cardGradient from "@/assets/images/card-gradient.png";
+
 
 
 export default {
@@ -15,4 +25,13 @@ export default {
     cardMiddle,
     cardRight,
     watermarkArrow,
+    profileImage,
+    hero1,
+    hero2,
+    hero3,
+    featured1,
+    featured2,
+    featured3,
+    featured4,
+    cardGradient,
 };

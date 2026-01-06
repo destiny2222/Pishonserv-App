@@ -1,0 +1,41 @@
+import { View, Text, Image } from 'react-native'
+import React from 'react'
+import { Slot, Stack, Tabs } from 'expo-router'
+import Header from '@/components/Header'
+import icons from '@/constants/icons'
+
+const TabIcon = ({ focused, icon, title }: { focused: boolean; icon: any, title: string }) => {
+  return (
+    <View className='flex-1 flex-col flex items-center mt-3'>
+      <Image source={icon} className='size-6' tintColor={focused ? '#C9A24D' : '#0D3B66'} resizeMode='contain' />
+      <Text className={`mt-1 font-rubik text-center w-full text-xs ${focused ? 'text-primary-300' : 'text-gray-500'}`}>{title}</Text>
+    </View>
+  )
+}
+
+const  TabsLayout = () => {
+  return (
+    <>
+      <Tabs screenOptions={{
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          backgroundColor:'white',
+          position: 'absolute',
+          borderTopColor: '#0061FF1a',
+          borderTopWidth: 1,
+          minHeight: 70,
+        }
+      }}>
+        <Tabs.Screen name='home' options={{ headerShown: false, title: "Home", 
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={icons.home} title="Home" /> }}/>
+        <Tabs.Screen name='search' options={{ headerShown: false, title: "Search",
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={icons.search} title="Explore" /> }}/>
+        <Tabs.Screen name='cart' options={{ headerShown: false, title: "Cart",
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={icons.cart} title="Cart" /> }}/>
+        
+      </Tabs>
+    </> 
+  )
+}
+
+export default TabsLayout

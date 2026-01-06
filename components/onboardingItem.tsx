@@ -38,7 +38,7 @@ export default function OnboardingItem({ item, currentIndex, onboardingData, han
 
   const finishOnboarding = async () => {
     await AsyncStorage.setItem("hasSeenOnboarding", "true");
-    router.replace("/(auth)/login"); // or "/(tabs)/home"
+    router.replace("/(tabs)/home"); // or "/(tabs)/home"
   };
 
   const onNextPress = () => {
@@ -99,7 +99,7 @@ export default function OnboardingItem({ item, currentIndex, onboardingData, han
           <Text className="text-xl font-bold  font-poppins-semibold text-black">
             {item.title}
             {item.highlightedTitle && (
-              <Text className="text-[#D4A574] font-bold  font-poppins-semibold">{item.highlightedTitle}</Text>
+              <Text className="text-[#D4A574] font-bold  poppins-semibold">{item.highlightedTitle}</Text>
             )}
             {item.titleEnd}
           </Text>
