@@ -7,9 +7,9 @@ import Header from '@/components/Header';
 import { Card, FeaturedCard, } from '@/components/Cards';
 import Filters from '@/components/Filters';
 import { featured } from '@/constants/data';
+import { router } from 'expo-router';
 
 export default function home() {
-  const commendation = [1,2,3,4] ;
   return (
     < >
       
@@ -39,7 +39,10 @@ export default function home() {
                     </View>
                     <FlatList 
                       data={featured}
-                      renderItem={({ item }) => <FeaturedCard item={item} />} 
+                      renderItem={({ item }) => 
+                      <FeaturedCard item={item} 
+                       onPress={() => router.push(`/properties/${item.id}`)}
+                      />} 
                       keyExtractor={(item) => item.id.toString()}
                       nestedScrollEnabled
                       horizontal

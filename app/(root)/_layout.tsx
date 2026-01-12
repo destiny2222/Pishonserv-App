@@ -6,20 +6,20 @@ import { router, Slot, Stack } from 'expo-router';
 export default function AppLayout() {
     const [isLoading, setIsLoading] = useState(false)
 
-    useEffect(() => {
-        const boot = async () => {
-        const hasSeenOnboarding = await AsyncStorage.getItem("hasSeenOnboarding");
-        //   setIsLoading(true)
-        if (hasSeenOnboarding === "true") {
-            router.replace("/(tabs)/home");
-        } else {
-            router.replace("/(onboarding)");
-        }
-           setIsLoading(false);
-        }
+    // useEffect(() => {
+    //     const boot = async () => {
+    //     const hasSeenOnboarding = await AsyncStorage.getItem("hasSeenOnboarding");
+    //     //   setIsLoading(true)
+    //     if (hasSeenOnboarding === "true") {
+    //         router.replace("/(auth)/login");
+    //     } else {
+    //         router.replace("/(onboarding)");
+    //     }
+    //        setIsLoading(false);
+    //     }
 
-        boot();
-    }, []);
+    //     boot();
+    // }, []);
 
     if (isLoading) {
         return (

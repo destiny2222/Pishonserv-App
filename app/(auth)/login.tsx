@@ -2,7 +2,7 @@ import { View, Text, Image, TouchableNativeFeedback, TouchableWithoutFeedback, K
 import React, { useState } from 'react'
 import TextInputField from '@/components/TextInputField';
 import Button from '@/components/Button';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Watermarks from '@/components/Watermarks';
 
@@ -15,7 +15,8 @@ export default function login() {
 
   const handleSubmit = async () => {
     console.log("User logged in details", email, password)
-    await AsyncStorage.removeItem("hasSeenOnboarding");
+    router.replace("/(root)/agent/home");
+    // await AsyncStorage.removeItem("hasSeenOnboarding");
 
   }
 

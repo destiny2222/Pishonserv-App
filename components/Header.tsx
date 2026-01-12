@@ -51,21 +51,21 @@ export default function Header() {
   };
 
   return (
-    <SafeAreaView className="w-full">
+    <View className="w-full">
         {/* style={{ paddingTop: insets.top + 2 }} */}
-        <View className='w-full flex-row justify-between items-center px-4 py-4 overflow-hidden mt-10 bg-white shadow-white' >
+        <View className='w-full flex-row justify-between items-center px-4 py-6 overflow-hidden  bg-white shadow-white' >
             <View className='flex-row items-center gap-5'>
-                <Image source={images.profileImage} className="w-12 h-12 rounded-full size-5" resizeMode="cover"/>
+                <Image source={images.avatar} className="w-12 h-12 rounded-full size-5" resizeMode="cover"/>
                 <View className=''>
                     <Text className='text-2xl font-semibold poppins-semibold'>Adrian Hajdin</Text>
                     <Text className='text-sm font-normal poppins-regular'>Good Morning</Text>
                 </View>
             </View>
             <View className="flex-row items-center">
-                <Pressable onPress={() => setCountryOpen(true)} className="flex-row items-center mr-4" android_ripple={{ color: "#eee" }}>
+                <TouchableOpacity onPress={() => setCountryOpen(true)} className="flex-row items-center mr-4" style={{ color: "#eee" }}>
                     <Text className="text-xl mr-1">{countryCode ? getFlagEmoji(countryCode) : "🏳️"}</Text>
                     <Ionicons name="chevron-down" size={16} color="#111" />
-                </Pressable>
+                </TouchableOpacity>
                 <Pressable onPress={() => setMenuOpen(true)} android_ripple={{ color: "#eee", borderless: true }}>
                     <Ionicons name="menu-outline" size={30} color="#111" />
                 </Pressable>
@@ -103,6 +103,6 @@ export default function Header() {
                 </Pressable>
             </Pressable>
         </Modal>
-    </SafeAreaView>
+    </View>
   )
 }

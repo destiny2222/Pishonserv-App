@@ -112,8 +112,7 @@ export default function OnboardingItem({ item, currentIndex, onboardingData, han
             {item.subtitleEnd}
           </Text>
         </View>
-        <TouchableOpacity
-          onPress={currentIndex < onboardingData.length - 1 ? handleNext : undefined}
+        <TouchableOpacity  onPress={currentIndex < onboardingData.length - 1 ? handleNext : undefined}
           className="bg-white border-2 border-[#D4A574] px-3 pt-3 pb-2 rounded-full"
         >
           <Text className="text-[#D4A574] text-4xl"><Ionicons name="arrow-forward" size={32} /></Text>
