@@ -47,7 +47,7 @@ export default function Header() {
     () => [
       { label: "Home", onPress: () => router.push("/(tabs)/home") },
       { label: "Furniture", onPress: () => router.push("/(root)/furniture") },
-      { label: "Solar & Inverter", onPress: () => router.push("/(tabs)/solar") },
+      { label: "Solar & Inverter", onPress: () => router.push("/(root)/solar") },
       { label: "Profile", onPress: () => router.push("/(tabs)/profile") },
       {
         label: "Log Out",
@@ -72,7 +72,7 @@ export default function Header() {
         {/* style={{ paddingTop: insets.top + 2 }} */}
         <View className='w-full flex-row justify-between items-center px-4 py-6 overflow-hidden  bg-white shadow-white' >
             <View className='flex-row items-center gap-5'>
-                <Image source={{ uri: user?.profile_image || images.avatar }} className="w-12 h-12 rounded-full size-5" resizeMode="cover"/>
+                <Image source={{ uri: user?.profile_image  }} className="w-12 h-12 rounded-full size-5" resizeMode="cover"/>
                 <View className=''>
                     <Text className='text-2xl font-semibold poppins-semibold'>{user?.name}  {user?.lname}</Text>
                     <Text className='text-sm font-normal poppins-regular'>Good Morning</Text>

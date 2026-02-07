@@ -1,34 +1,3 @@
-// import React from "react";
-// import { View, Image, TouchableOpacity, Text } from "react-native";
-// import { SafeAreaView } from "react-native-safe-area-context";
-// import images from "@/constants/images";
-// import icons from "@/constants/icons";
-// import Ionicons from "@expo/vector-icons/Ionicons";
-
-// type Props = {
-//   onPressBell?: () => void;
-//   onPressMenu?: () => void;
-// };
-
-// const AgentHeader = ({ onPressBell, onPressMenu }: Props) => {
-//   return (
-//     <View  className="bg-white flex-row items-center justify-between px-5 shadow-sm">
-//         <Image  source={images.logo} className="w-40 h-20 " resizeMode="contain" /> 
-//         <View className="flex-row items-center gap-6">
-//             <TouchableOpacity onPress={onPressBell} hitSlop={12}>
-//                 <Image  source={icons.bell}  className="w-6 h-6" resizeMode="contain" />
-//             </TouchableOpacity>
-//             <TouchableOpacity onPress={onPressMenu} hitSlop={12}>
-//                 <Ionicons name="menu-outline" size={40} color="#111" />
-//             </TouchableOpacity>
-//         </View>
-//     </View>
-//   );
-// };
-
-// export default AgentHeader;
-
-
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Image, TouchableOpacity, Modal, Pressable, Animated, } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

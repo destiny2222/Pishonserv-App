@@ -13,8 +13,8 @@ export interface Property {
   garage?: number;
   size?: string;
   amenities?: string[];
-  // images?: string[];
-  // image?: string;
+  images?: string[];
+  image?: string;
   rating?: number;
   user_id?: number;
   is_featured?: boolean;

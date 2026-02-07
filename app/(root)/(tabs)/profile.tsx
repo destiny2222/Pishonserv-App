@@ -115,7 +115,7 @@ const profile = () => {
         <View className="flex flex-col items-center relative mt-5">
           <View className="flex flex-col items-center">
             <Image
-              source={{ uri: user?.profile_image || images.avatar }}
+              source={{ uri: user?.profile_image  }}
               className="size-44 relative rounded-full"
             />
             <TouchableOpacity className="absolute bottom-11 right-2">

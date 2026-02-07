@@ -1,7 +1,6 @@
 import { View, Text, Image, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import images from '@/constants/images'
 import icons from '@/constants/icons'
 import AgentHeader from '@/components/AgentHeader'
 import { router } from 'expo-router'

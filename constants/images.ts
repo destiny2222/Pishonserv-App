@@ -17,6 +17,15 @@ import cardGradient from "@/assets/images/card-gradient.png";
 import cart from "@/assets/images/proicons_cart.png";
 import logo from "@/assets/images/logo.png";
 import opay from "@/assets/images/opay.jpg";
+import heroSolar from "@/assets/images/bg-solar.jpg";
+import aboutSolar from "@/assets/images/about-solar.png";
+import mission from "@/assets/images/mission.png";
+import coreValue from "@/assets/images/corevalue.png";
+import ourProduct from "@/assets/images/our-product.png";
+import services from "@/assets/images/services.png";
+import holistic1 from "@/assets/images/hoslistic-2.png";
+import holistic2 from "@/assets/images/holistic-3.png";
+import whyChooseUs from "@/assets/images/whychoose.png";
 
 export default {
     onboardingCard1,
@@ -38,4 +47,13 @@ export default {
     cart,
     logo,
     opay,
+    heroSolar,
+    aboutSolar,
+    mission,
+    coreValue,
+    ourProduct,
+    services,
+    holistic1,
+    holistic2,
+    whyChooseUs
 };

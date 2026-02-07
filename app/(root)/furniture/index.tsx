@@ -18,7 +18,7 @@ export const FurnitureCard = ({ item, onPress }: FurnitureCardProps) => {
         <View className='mb-8 w-full px-4'>
             <TouchableOpacity onPress={onPress} className='w-full rounded-xl bg-white shadow-md shadow-black/20'>
                 <View className='relative'>
-                    <Image source={item.image_url ? { uri: item.image_url } : images.featured1} className="w-full rounded-t-xl h-60" resizeMode="cover" />
+                    <Image source={{ uri: item.image_url }} className="w-full rounded-t-xl h-60" resizeMode="cover" />
                     <View className="absolute inset-0 bg-black/30 rounded-t-xl" />
                     {/* <View className="absolute top-3 right-3 bg-white/90 p-1 z-10 rounded-full flex-row items-center">
                         <Ionicons name="star" size={14} color="#C9A24D" />

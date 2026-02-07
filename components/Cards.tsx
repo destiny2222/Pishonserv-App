@@ -5,7 +5,7 @@ import { addToWishlist, WishlistItem } from '@/libs/endpoints/wishlist';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native';
+import { ImageSourcePropType, ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 
 
 interface Props {
@@ -46,22 +46,32 @@ interface ListingProperty {
   onPress: () => void;
 }
 
-// interface ImageSourcePropType {
-//   uri: string;
-// }
+interface ImageSourcePropType {
+  uri: string;
+}
 
-// function toImageSource(img: any): ImageSourcePropType {
-//   if (typeof img === "string") return { uri: img };
-//   if (typeof img === "number") return img;
-//   if (img && typeof img === "object" && "uri" in img) return img as ImageSourcePropType;
 
-//   return images.featured1;
-// }
+
+const toImageSource = (img: any, fallback: ImageSourcePropType): ImageSourcePropType => {
+  if (!img) return fallback;
+
+  // local image: require("...") returns a number
+  if (typeof img === "number") return img;
+
+  // remote image url
+  if (typeof img === "string") return { uri: img };
+
+  // already { uri: "..." }
+  if (typeof img === "object" && typeof img.uri === "string") return img;
+
+  return fallback;
+};
+
 
 export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistToggle }: Props) => {
   const [isFavorite, setIsFavorite] = useState(isInWishlist);
   const [loading, setLoading] = useState(false);
-  // const item?.image = toImageSource(item?.image);
+  const imageSource = toImageSource(item?.image, images.featured1);
   const formattedPrice = item?.price ? `₦${Number(item.price).toLocaleString()}` : '₦0';
 
   useEffect(() => {
@@ -111,7 +121,7 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
 
   return (
     <TouchableOpacity onPress={onPress} className='w-60 h-80 bg-white rounded-2xl mr-7  items-start relative flex flex-col gap-6'>
-      <Image source={{uri: item?.image}} className="size-full  rounded-2xl" resizeMode="cover" />
+      <Image source={imageSource} className="size-full  rounded-2xl" resizeMode="cover" />
       <Image source={images.cardGradient} className="size-full  rounded-2xl absolute bottom-0" resizeMode="cover" />
       {/* <View className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded-full flex-row items-center">
         <Ionicons name="star" size={14} color="#C9A24D" />
@@ -144,7 +154,7 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
 export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: Props) => {
   const [isFavorite, setIsFavorite] = useState(isInWishlist);
   const [loading, setLoading] = useState(false);
-  // const item?.image = toImageSource(item?.image);
+  const imageSource = toImageSource(item?.image, images.featured1);
   const formattedPrice = item?.price ? `₦${Number(item.price).toLocaleString()}` : '₦0';
 
   useEffect(() => {
@@ -193,12 +203,12 @@ export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: 
     };
 
   return (
-    <TouchableOpacity onPress={onPress} className='w- flex-1 mt-4 px-3 py-4 rounded-lg bg-white shadow-lg shadow-black-100/70 relative'>
+    <TouchableOpacity onPress={onPress} className='w-full flex-1 mt-4 px-3 py-4 rounded-lg bg-white shadow-lg shadow-black-100/70 relative'>
       {/* <View className="absolute top-5 right-5 bg-white/90 p-1 z-50 rounded-full flex-row items-center">
         <Ionicons name="star" size={14} color="#C9A24D" />
         <Text className="ml-0.5 text-xs font-semibold text-primary-300">{rating}</Text>
       </View> */}
-      <Image source={{uri: item?.image}} className="w-full rounded-lg h-40" resizeMode="cover" />
+      <Image source={imageSource} className="w-full rounded-lg h-40" resizeMode="cover" />
       <View className="flex flex-col mt-2">
         <Text className="text-black-300 text-base font-poppins-semibold" numberOfLines={1}>
           {item?.title}
@@ -268,7 +278,7 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View className="relative bg-slate-50 py-4 mx-4 shadow-slate-100 shadow-xl rounded-2xl px-3 mb-10 flex-row items-center overflow-hidden">
         <View className="relative">
-          <Image source={{uri: item?.images}} className="w-36 h-36 rounded-lg" resizeMode="cover" />
+          <Image source={imageSource} className="w-36 h-36 rounded-lg" resizeMode="cover" />
         </View>
         <View className="flex-1 pl-3 pr-20">
           <Text className="text-secondary font-poppins-bold text-xl mb-1" numberOfLines={2}>
@@ -300,7 +310,7 @@ export const ListingPropertyCard  = ({onPress, item}: ListingProperty ) => {
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View className="relative bg-slate-50 py-4 mx-4 shadow-slate-100 shadow-xl rounded-2xl px-3 mb-10 flex-row items-center overflow-hidden">
         <View className="relative">
-          <Image source={item?.image} className="w-36 h-36 rounded-lg" resizeMode="cover" />
+          <Image source={imageSource} className="w-36 h-36 rounded-lg" resizeMode="cover" />
           {/* <View className="absolute top-0  right-0 bg-green-500 px-3 py-2 rounded-b-lg">
             <Text className="text-white font-poppins-semibold text-sm">
               {item?.status}
