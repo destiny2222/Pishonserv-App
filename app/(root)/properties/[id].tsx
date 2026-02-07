@@ -1,44 +1,61 @@
+import { Property, getPropertyDetails } from "@/libs/endpoints/property";
+import { createBooking } from "@/libs/endpoints/booking";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Property } from "@/libs/endpoints/property";
 import {
-  FlatList,
   ActivityIndicator,
+  Dimensions,
+  FlatList,
   Image,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
-  Platform,
+  Alert
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
-import { apiRequest } from "@/libs/api/clients";
-import { featured } from "@/constants/data";
-import { getPropertyDetails } from "@/libs/endpoints/property";
+import MapView, { Marker } from "react-native-maps";
+
+import icons from "@/constants/icons";
+import images from "@/constants/images";
+import BookingModal from "@/components/BookingModal";
+import CustomAlert from "@/components/CustomAlert";
 
 
 const Properties = () => {
-  const { id } = useLocalSearchParams<{ id?: string }>();
-  const [item, setItem] = useState<Property | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const params = useLocalSearchParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const [item, setItem] = useState < Property | null > (null);
+  const [error, setError] = useState < string | null > (null);
   const [loading, setLoading] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [bookingModalVisible, setBookingModalVisible] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
   const windowHeight = Dimensions.get("window").height;
+  const windowWidth = Dimensions.get("window").width;
   const property = item;
-  const base_url = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
 
   useEffect(() => {
     const fetchProperty = async () => {
-      if (!id) { 
+      if (!id) {
         setError("No property ID provided");
         setLoading(false);
         return;
       }
       try {
-        const propertyData = await apiRequest<Property>(`/properties/${id}`);
+        const propertyData = await getPropertyDetails(Number(id));
         setItem(propertyData);
-      } catch (err) {
+      } catch (error) {
         setError("Failed to load property details. Please try again.");
-        console.error("Error fetching property details:", err);
       } finally {
         setLoading(false);
       }
@@ -47,9 +64,45 @@ const Properties = () => {
     fetchProperty();
   }, [id]);
 
-  
+  const handleBookNow = () => {
+    setBookingModalVisible(true);
+  };
 
-  
+  const handleConfirmBooking = async (checkIn: string, checkOut: string) => {
+    if (!property) return;
+
+    setBookingLoading(true);
+    try {
+      const response = await createBooking({
+        property_id: property.id,
+        check_in: checkIn,
+        check_out: checkOut,
+      });
+
+      if (response.status === 'ok' || response.status === 'success') {
+        setBookingModalVisible(false);
+        
+        showAlert(
+          'Booking Successful',
+          `Your booking has been created!\nBooking ID: ${response.data.booking_id}\nAmount: ₦${response.data.amount.toLocaleString()}`
+        );
+
+        // TODO: Navigate to payment or booking details
+        // You can integrate payment here if needed
+      } else {
+        showAlert('Booking Failed', 'Unable to create booking. Please try again.');
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'An error occurred while creating your booking.';
+      showAlert('Error', errorMessage);
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
+
+
+
   if (loading) {
     return (
       <View className='flex-1 justify-center items-center bg-white'>
@@ -64,8 +117,8 @@ const Properties = () => {
       <View className='flex-1 justify-center items-center bg-white px-5'>
         <Text className="text-red-500 text-lg font-bold mb-2">Error</Text>
         <Text className="text-gray-700 text-center">{error}</Text>
-        <TouchableOpacity 
-          onPress={() => router.back()} 
+        <TouchableOpacity
+          onPress={() => router.back()}
           className="mt-4 bg-primary px-6 py-3 rounded-lg"
         >
           <Text className="text-white font-bold">Go Back</Text>
@@ -81,252 +134,248 @@ const Properties = () => {
       </View>
     );
   }
-  
+
+  const propertyImages = property?.images || [property?.image];
+  const amenitiesList = property?.amenities ? property.amenities.split(',').map(a => a.trim()) : [];
+
+
+  const amenityIcons: { [key: string]: any } = {
+    "Parking": icons.carPark,
+    "Security": icons.security,
+    "Balcony": icons.balcony,
+    "CCTV": icons.cctv,
+    "Internet": icons.wifi,
+    "Air Conditioning": icons.airConditioning,
+    "Generator": icons.generator,
+    "Solar Power": icons.solarPower,
+    "Borehole Water": icons.water,
+    "Playground": icons.playground,
+    "Pool": icons.swim,
+  };
+
   return (
-     <View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerClassName="pb-32 bg-white"
-      >
-        <View className="relative w-full" style={{ height: windowHeight / 2 }}>
-          <Image
-            source={{ uri: property?.image }}
-            className="size-full"
-            resizeMode="cover"
-          />
-          <Image
-            source={images.whiteGradient}
-            className="absolute top-0 w-full z-40"
+    <View className="flex-1 bg-white">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 bg-white">
+        <View className="relative w-full" style={{ height: windowHeight / 2.5 }}>
+          {/* Image Carousel */}
+          <FlatList
+            data={propertyImages}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              const index = Math.round(event.nativeEvent.contentOffset.x / windowWidth);
+              setCurrentImageIndex(index);
+            }}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <Image
+                source={{ uri: item }}
+                style={{ width: windowWidth, height: windowHeight / 2.5 }}
+                resizeMode="cover"
+              />
+            )}
           />
 
+          {/* Pagination Dots - with better visibility */}
           <View
-            className="z-50 absolute inset-x-7"
+            className="absolute bottom-10 w-full flex-row justify-center items-center gap-2 z-10"
             style={{
-              top: Platform.OS === "ios" ? 70 : 20,
+              paddingHorizontal: 20,
             }}
           >
+            {propertyImages.map((_, index) => (
+              <View
+                key={index}
+                style={{
+                  height: 8,
+                  width: index === currentImageIndex ? 24 : 8,
+                  borderRadius: 4,
+                  backgroundColor: index === currentImageIndex ? '#C9A24D' : 'rgba(255, 255, 255, 0.5)',
+                }}
+              />
+            ))}
+          </View>
+
+          <View className="z-50 absolute inset-x-7" style={{ top: Platform.OS === "ios" ? 70 : 50 }}>
             <View className="flex flex-row items-center w-full justify-between">
-              <TouchableOpacity
-                onPress={() => router.back()}
-                className="flex flex-row bg-primary-200 rounded-full size-11 items-center justify-center"
-              >
+              <TouchableOpacity onPress={() => router.back()} className="bg-white rounded-full size-11 items-center justify-center">
                 <Image source={icons.backArrow} className="size-5" />
               </TouchableOpacity>
 
               <View className="flex flex-row items-center gap-3">
-                <Image
-                  source={icons.heart}
-                  className="size-7"
-                  tintColor={"#191D31"}
-                />
-                <Image source={icons.send} className="size-7" />
+                <TouchableOpacity className="bg-white rounded-full size-11 items-center justify-center">
+                  <Image source={icons.heart} className="size-6" tintColor={"#191D31"} />
+                </TouchableOpacity>
+                <TouchableOpacity className="bg-white rounded-full size-11 items-center justify-center">
+                  <Image source={icons.send} className="size-6" tintColor={"#191D31"} />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
 
-        <View className="px-5 mt-7 flex gap-2">
-          <Text className="text-2xl font-rubik-extrabold">
-            {property?.name}
+        <View className="bg-white rounded-t-3xl -mt-6 px-5 pt-6">
+          <Text className="text-2xl font-rubik-extrabold text-black-300">
+            {property?.title}
           </Text>
 
-          <View className="flex flex-row items-center gap-3">
-            <View className="flex flex-row items-center px-4 py-2 bg-primary-100 rounded-full">
-              <Text className="text-xs font-rubik-bold text-primary-300">
+          <View className="flex flex-row items-center gap-2 mt-3">
+            <View className="flex flex-row items-center px-3 py-1.5 bg-primary/10 rounded-md">
+              <Text className="text-xs font-rubik-bold text-primary uppercase">
                 {property?.type}
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex flex-row items-center gap-8 mt-5">
+            <View className="flex flex-row items-center gap-2">
+              <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
+                <Image source={icons.bed} className="size-5" tintColor="#C9A24D" />
+              </View>
+              <Text className="text-black-300 text-sm font-rubik-medium">
+                {property?.bedrooms} Beds
               </Text>
             </View>
 
             <View className="flex flex-row items-center gap-2">
-              <Image source={icons.star} className="size-5" />
-              <Text className="text-black-200 text-sm mt-1 font-rubik-medium">
-                {property?.rating} ({property?.reviews.length} reviews)
+              <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
+                <Image source={icons.bath} className="size-5" tintColor="#C9A24D" />
+              </View>
+              <Text className="text-black-300 text-sm font-rubik-medium">
+                {property?.bathrooms} Bath
               </Text>
             </View>
           </View>
 
-          <View className="flex flex-row items-center mt-5">
-            <View className="flex flex-row items-center justify-center bg-primary-100 rounded-full size-10">
-              <Image source={icons.bed} className="size-4" />
-            </View>
-            <Text className="text-black-300 text-sm font-rubik-medium ml-2">
-              {property?.bedrooms} Beds
-            </Text>
-            <View className="flex flex-row items-center justify-center bg-primary-100 rounded-full size-10 ml-7">
-              <Image source={icons.bath} className="size-4" />
-            </View>
-            <Text className="text-black-300 text-sm font-rubik-medium ml-2">
-              {property?.bathrooms} Baths
-            </Text>
-            <View className="flex flex-row items-center justify-center bg-primary-100 rounded-full size-10 ml-7">
-              <Image source={icons.area} className="size-4" />
-            </View>
-            <Text className="text-black-300 text-sm font-rubik-medium ml-2">
-              {property?.area} sqft
-            </Text>
-          </View>
-
-          <View className="w-full border-t border-primary-200 pt-7 mt-5">
-            <Text className="text-black-300 text-xl font-rubik-bold">
-              Agent
-            </Text>
-
-            <View className="flex flex-row items-center justify-between mt-4">
-              <View className="flex flex-row items-center">
-                <Image
-                  source={{ uri: property?.agent.avatar }}
-                  className="size-14 rounded-full"
-                />
-
-                <View className="flex flex-col items-start justify-center ml-3">
-                  <Text className="text-lg text-black-300 text-start font-rubik-bold">
-                    {property?.agent.name}
-                  </Text>
-                  <Text className="text-sm text-black-200 text-start font-rubik-medium">
-                    {property?.agent.email}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="flex flex-row items-center gap-3">
-                <Image source={icons.chat} className="size-7" />
-                <Image source={icons.phone} className="size-7" />
-              </View>
-            </View>
-          </View>
-
           <View className="mt-7">
-            <Text className="text-black-300 text-xl font-rubik-bold">
+            <Text className="text-black-300 text-xl font-rubik-bold mb-3">
               Overview
             </Text>
-            <Text className="text-black-200 text-base font-rubik mt-2">
-              {property?.description}
+            <Text className="text-black-200 text-sm font-rubik leading-6">
+              {property?.description || "Sleek, modern 2-bedroom apartment with open living space, high-end finishes, and city views. Minutes from downtown, dining, and transit."}
             </Text>
           </View>
 
           <View className="mt-7">
-            <Text className="text-black-300 text-xl font-rubik-bold">
+            <Text className="text-black-300 text-xl font-rubik-bold mb-4">
               Facilities
             </Text>
 
-            {property?.facilities.length > 0 && (
-              <View className="flex flex-row flex-wrap items-start justify-start mt-2 gap-5">
-                {property?.facilities.map((item: string, index: number) => {
-                  const facility = facilities.find(
-                    (facility) => facility.title === item
-                  );
-
-                  return (
-                    <View
-                      key={index}
-                      className="flex flex-1 flex-col items-center min-w-16 max-w-20"
-                    >
-                      <View className="size-14 bg-primary-100 rounded-full flex items-center justify-center">
-                        <Image
-                          source={facility ? facility.icon : icons.info}
-                          className="size-6"
-                        />
-                      </View>
-
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        className="text-black-300 text-sm text-center font-rubik mt-1.5"
-                      >
-                        {item}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
+            <View className="flex flex-row flex-wrap gap-4">
+              {amenitiesList.slice(0, 8).map((amenity, index) => (
+                <View key={index} className="flex flex-col items-center w-20">
+                  <View className="size-14 bg-primary/10 rounded-2xl items-center justify-center">
+                    <Image
+                      source={amenityIcons[amenity] || icons.defaultIcon}
+                      className="size-6"
+                      tintColor="#C9A24D"
+                    />
+                  </View>
+                  <Text
+                    className="text-black-300 text-xs text-center font-rubik mt-2"
+                    numberOfLines={2}
+                  >
+                    {amenity}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
 
-          {property?.gallery.length > 0 && (
-            <View className="mt-7">
-              <Text className="text-black-300 text-xl font-rubik-bold">
-                Gallery
-              </Text>
-              <FlatList
-                contentContainerStyle={{ paddingRight: 20 }}
-                data={property?.gallery}
-                keyExtractor={(item) => item.$id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                renderItem={({ item }) => (
-                  <Image
-                    source={{ uri: item.image }}
-                    className="size-40 rounded-xl"
-                  />
-                )}
-                contentContainerClassName="flex gap-4 mt-3"
-              />
-            </View>
-          )}
-
           <View className="mt-7">
-            <Text className="text-black-300 text-xl font-rubik-bold">
-              Location
+            <Text className="text-black-300 text-xl font-rubik-bold mb-4">
+              Gallery
             </Text>
-            <View className="flex flex-row items-center justify-start mt-4 gap-2">
-              <Image source={icons.location} className="w-7 h-7" />
-              <Text className="text-black-200 text-sm font-rubik-medium">
-                {property?.address}
-              </Text>
-            </View>
-
-            <Image
-              source={images.map}
-              className="h-52 w-full mt-5 rounded-xl"
+            <FlatList
+              data={propertyImages}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item, index) => index.toString()}
+              contentContainerStyle={{ gap: 12 }}
+              renderItem={({ item }) => (
+                <Image
+                  source={{ uri: item }}
+                  className="w-32 h-32 rounded-2xl"
+                  resizeMode="cover"
+                />
+              )}
             />
           </View>
 
-          {property?.reviews.length > 0 && (
-            <View className="mt-7">
-              <View className="flex flex-row items-center justify-between">
-                <View className="flex flex-row items-center">
-                  <Image source={icons.star} className="size-6" />
-                  <Text className="text-black-300 text-xl font-rubik-bold ml-2">
-                    {property?.rating} ({property?.reviews.length} reviews)
-                  </Text>
-                </View>
-
-                <TouchableOpacity>
-                  <Text className="text-primary-300 text-base font-rubik-bold">
-                    View All
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View className="mt-5">
-                {/* <Comment item={property?.reviews[0]} /> */}
-              </View>
+          <View className="mt-7">
+            <Text className="text-black-300 text-xl font-rubik-bold mb-4">
+              Location
+            </Text>
+            <View className="flex flex-row items-start gap-2 mb-4">
+              <Image source={icons.location} className="w-5 h-5 mt-1" tintColor="#C9A24D" />
+              <Text className="text-black-200 text-sm font-rubik flex-1">
+                {property?.location || "Grand City St. 100, New York, United States"}
+              </Text>
             </View>
-          )}
+            <View className="h-48 w-full rounded-2xl overflow-hidden">
+              <MapView
+                style={{ flex: 1 }}
+                initialRegion={{
+                  latitude: property?.latitude || 40.7128,
+                  longitude: property?.longitude || -74.006,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+              >
+                <Marker
+                  coordinate={{
+                    latitude: property?.latitude || 40.7128,
+                    longitude: property?.longitude || -74.006,
+                  }}
+                  title={property?.title || "Property Location"}
+                  description={property?.location}
+                />
+              </MapView>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
-      <View className="absolute bg-white bottom-0 w-full rounded-t-2xl border-t border-r border-l border-primary-200 p-7">
-        <View className="flex flex-row items-center justify-between gap-10">
-          <View className="flex flex-col items-start">
-            <Text className="text-black-200 text-xs font-rubik-medium">
+      <View className="absolute bg-white bottom-0 w-full rounded-t-3xl border-t border-gray-200 px-7 py-5 shadow-2xl">
+        <View className="flex flex-row items-center justify-between gap-4">
+          <View className="flex flex-col">
+            <Text className="text-black-200 text-xs font-rubik uppercase tracking-wider">
               Price
             </Text>
-            <Text
-              numberOfLines={1}
-              className="text-primary-300 text-start text-2xl font-rubik-bold"
-            >
-              ${property?.price}
+            <Text numberOfLines={1} className="text-primary text-2xl font-rubik-bold mt-1">
+              ₦{property?.price}
             </Text>
           </View>
 
-          <TouchableOpacity className="flex-1 flex flex-row items-center justify-center bg-primary-300 py-3 rounded-full shadow-md shadow-zinc-400">
-            <Text className="text-white text-lg text-center font-rubik-bold">
+          <TouchableOpacity 
+            onPress={handleBookNow}
+            className="flex-1 bg-primary py-4 rounded-full shadow-lg shadow-primary/30"
+          >
+            <Text className="text-white text-base text-center font-rubik-bold">
               Book Now
             </Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Booking Modal */}
+      <BookingModal
+        visible={bookingModalVisible}
+        onClose={() => setBookingModalVisible(false)}
+        onConfirm={handleConfirmBooking}
+        loading={bookingLoading}
+        propertyPrice={property?.price || "0"}
+        listingType={property?.listing_type}
+      />
+
+      {/* Alert */}
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </View>
   )
 }

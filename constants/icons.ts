@@ -36,6 +36,12 @@ import order from "@/assets/icons/order.png";
 import deleteicon from "@/assets/icons/delete.png";
 import task from "@/assets/icons/task.png";
 import line from "@/assets/icons/line.png"; 
+import security from "@/assets/icons/security.png";
+import balcony from "@/assets/icons/balcony.png";
+import cctv from "@/assets/icons/cctv.png";
+import solarPower from "@/assets/icons/solarPower.png";
+import generator from "@/assets/icons/generator.png";
+import airConditioning from "@/assets/icons/airConditioning.png";
 
 export default {
     home,
@@ -76,4 +82,10 @@ export default {
     order,
     task,
     line,
+    security,
+    balcony,
+    cctv,
+    solarPower,
+    generator,
+    airConditioning,
 };

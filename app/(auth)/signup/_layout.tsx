@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
 import { Stack } from "expo-router";
-import { PaperProvider , MD3LightTheme } from "react-native-paper";
+import React, { createContext, useContext, useMemo, useState } from "react";
+import { MD3LightTheme, PaperProvider } from "react-native-paper";
 
 type SignupData = {
   firstName: string;
@@ -10,6 +10,8 @@ type SignupData = {
   country: string;
   countryCode: string;
   state: string;
+  city: string;
+  address: string;
   phoneCode: string;
   phoneNumber: string;
   nin?: string;
@@ -26,6 +28,8 @@ const initial: SignupData = {
   country: "",
   countryCode: "",
   state: "",
+  city: "",
+  address: "",
   phoneCode: "+234",
   phoneNumber: "",
   nin: "",

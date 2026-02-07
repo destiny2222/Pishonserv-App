@@ -6,9 +6,11 @@ import { Link } from "expo-router";
 import { FavoriteCard } from "@/components/Cards";
 import { favorites } from "@/constants/data"; // ✅ named import
 
+
+
 const Cart = () => {
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-gray-200" edges={['top']}>
       <FlatList
         data={favorites ?? []}
         renderItem={({ item }) => (

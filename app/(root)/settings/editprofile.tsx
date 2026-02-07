@@ -1,16 +1,55 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native'
-import React, { useState } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import TopHeader from '@/components/TopHeader'
-import images from '@/constants/images'
-import icons from '@/constants/icons'
+import CustomAlert from '@/components/CustomAlert'
 import TextInputField from '@/components/TextInputField'
-import Button from '@/components/Button'
+import TopHeader from '@/components/TopHeader'
+import icons from '@/constants/icons'
+import images from '@/constants/images'
+import { useAuth } from '@/hooks/useAuth'
+import React, { useEffect, useState } from 'react'
+import { Image, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 const editprofile = () => {
-    const [email, setEmail] = useState('');
-    const handleChanges = async () => {
+    const { user, updateUser } = useAuth();
+    const [formData, setFormData] = useState({
+        name: '',
+        lname: '',
+        phone: '',
+    });
+    const [loading, setLoading] = useState(false);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
 
+    const showAlert = (title: string, message: string) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertVisible(true);
+    };
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                name: user.name || '',
+                lname: user.lname || '',
+                phone: user.phone || '',
+            });
+        }
+    }, [user]);
+    
+    const handleChanges = async () => {
+        setLoading(true);
+        try {
+            const result = await updateUser(formData);
+            if (result.success) {
+                showAlert('Success', 'Profile updated successfully!');
+            } else {
+                showAlert('Error', 'Failed to update profile: ' + result.error);
+            }
+        } catch (error) {
+            showAlert('Error', 'An error occurred while updating profile');
+        } finally {
+            setLoading(false);
+        }
     }
   return (
     <SafeAreaView className='h-full bg-white'>
@@ -22,11 +61,11 @@ const editprofile = () => {
             <TopHeader title='Personal Profile'/>
             <View className='flex flex-col items-center relative mt-5'>
             <View className='flex flex-col items-center'>
-                <Image source={images.avatar} className='size-44 relative rounded-full' />
+                <Image source={{uri: user?.profile_image }} className='size-44 relative rounded-full' />
                 <TouchableOpacity className='absolute bottom-11 right-2'>
                 <Image source={icons.edit} className='size-9' />
                 </TouchableOpacity>
-                <Text className='pt-4 font-poppins-semibold text-2xl text-secondary font-semibold'>Adrian Hajdin</Text>
+                <Text className='pt-4 font-poppins-semibold text-2xl text-secondary font-semibold'>{user?.name} {user?.lname}</Text>
             </View>
             </View>
 
@@ -34,18 +73,18 @@ const editprofile = () => {
                 <View className='space-y-6 w-full px-4 mt-10'>
                     <Text className='font-poppins-medium text-xl mb-2 '>First Name</Text>
                     <TextInputField 
-                        secureTextEntry={true} 
-                        onChangeText=''
-                        value=''
+                        secureTextEntry={false} 
+                        onChangeText={text => setFormData({ ...formData, name: text })}
+                        value={formData.name}
                         className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
                     />
                 </View>
                 <View className='space-y-6 w-full px-4 mt-10'>
                     <Text className='font-poppins-medium text-xl mb-2 '>Last Name</Text>
                     <TextInputField 
-                        secureTextEntry={true} 
-                        onChangeText=''
-                        value=''
+                        secureTextEntry={false} 
+                        onChangeText={text => setFormData({ ...formData, lname: text })}
+                        value={formData.lname}
                         className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
                     />
                 </View>
@@ -53,26 +92,41 @@ const editprofile = () => {
                     <Text className='font-poppins-medium text-base mb-2'>Email</Text>
                     <TextInputField  
                     keyboardType='email-address' 
-                    className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium" 
-                    value={email}
-                    onChangeText={setEmail}
+                    secureTextEntry={false}
+                    className="border focus:border-primary border-gray-300 bg-gray-100 text-base font-poppins-medium" 
+                    value={user?.email || ''}
+                    editable={false}
                     />
                 </View>
                 <View className='space-y-6 w-full px-4 mt-10'>
                     <Text className='font-poppins-medium text-xl mb-2 '>Phone</Text>
                     <TextInputField 
-                        secureTextEntry={true} 
-                        onChangeText=''
-                        value=''
+                        secureTextEntry={false} 
+                        onChangeText={text => setFormData({ ...formData, phone: text })}
+                        value={formData.phone}
                         className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
                     />
                 </View>
-                <TouchableOpacity className='w-60 py-5 justify-center mx-auto items-center mt-10' style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}}  onPress={handleChanges}>
-                    <Text className='text-white font-poppins-semibold font-semibold text-lg'>Save Changes</Text>
+                <TouchableOpacity 
+                    className='w-60 py-5 justify-center mx-auto items-center mt-10' 
+                    style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center', opacity: loading ? 0.7 : 1}}  
+                    onPress={handleChanges}
+                    disabled={loading}
+                >
+                    <Text className='text-white font-poppins-semibold font-semibold text-lg'>
+                        {loading ? 'Saving...' : 'Save Changes'}
+                    </Text>
                 </TouchableOpacity>
             </View>
             </ScrollView>
         </KeyboardAvoidingView>
+
+        <CustomAlert
+            visible={alertVisible}
+            title={alertTitle}
+            message={alertMessage}
+            onClose={() => setAlertVisible(false)}
+        />
     </SafeAreaView>
   )
 }

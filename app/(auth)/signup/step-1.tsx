@@ -1,18 +1,22 @@
-import React from "react";
-import { Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from "react-native";
-import { router, Link } from "expo-router";
-import Watermarks from "@/components/Watermarks";
-import { useSignup } from "./_layout";
 import TextInputField from "@/components/TextInputField";
-import Button from "@/components/Button";
+import Watermarks from "@/components/Watermarks";
+import { Link, router } from "expo-router";
+import React, { useState } from "react";
+import { ActivityIndicator, Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { useSignup } from "./_layout";
 
 export default function Step1() {
   const { data, update } = useSignup();
+  const [isLoading, setIsLoading] = useState(false);
 
   const next = () => {
     // basic validation
-    if (!data.firstName || !data.lastName || !data.email) return;
-    router.push("/(auth)/signup/step-2");
+    if (!data.firstName || !data.lastName || !data.email  || isLoading) return;
+    setIsLoading(true);
+    setTimeout(() => {
+      router.push("/(auth)/signup/step-2");
+      setIsLoading(false);
+    }, 300);
   };
 
   return (
@@ -23,8 +27,8 @@ export default function Step1() {
         <Text className="text-2xl font-poppins-semibold text-secondary text-center">Sign Up</Text>
         <Text className="text-xs text-gray-300 text-center mt-2">(Personal Details)</Text>
 
-        <View className="'space-y-6 w-full px-8 mt-10">
-          <Text className="font-poppins-medium text-sm mb-2">First Name <Text className="text-red-500">*</Text></Text>
+        <View className="space-y-6 w-full px-8 mt-5">
+          <Text className="font-poppins-medium text-sm mb-1">First Name <Text className="text-red-500">*</Text></Text>
           <TextInputField
             value={data.firstName}
             onChangeText={(t) => update({ firstName: t })}
@@ -33,8 +37,8 @@ export default function Step1() {
           />
         </View>
 
-        <View className="'space-y-6 w-full px-8 mt-7">
-          <Text className="font-poppins-medium text-sm mb-2">Last Name <Text className="text-red-500">*</Text></Text>
+        <View className="space-y-6 w-full px-8 mt-5">
+          <Text className="font-poppins-medium text-sm mb-1">Last Name <Text className="text-red-500">*</Text></Text>
           <TextInputField
             value={data.lastName}
             onChangeText={(t) => update({ lastName: t })}
@@ -43,8 +47,8 @@ export default function Step1() {
           />
         </View>
 
-        <View className="'space-y-6 w-full px-8 mt-7">
-          <Text className="font-poppins-medium text-sm mb-2">Email <Text className="text-red-500">*</Text></Text>
+        <View className="space-y-6 w-full px-8 mt-5">
+          <Text className="font-poppins-medium text-sm mb-1">Email <Text className="text-red-500">*</Text></Text>
           <TextInputField
             value={data.email}
             onChangeText={(t) => update({ email: t })}
@@ -55,10 +59,20 @@ export default function Step1() {
           />
         </View>
 
-        <View className="space-y-6 w-full px-8 mt-10">
-          <Pressable style={{backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center'}} onTouchEnd={next}  >
-            <Text className="text-white font-poppins-semibold">Next</Text>
-          </Pressable>
+        
+
+        <View className="space-y-6 w-full px-8 mt-6">
+          <TouchableOpacity 
+            style={{ backgroundColor: '#C9A24D', paddingVertical: 16, borderRadius: 12, alignItems: 'center', opacity: isLoading ? 0.7 : 1 }} 
+            onPress={next}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text className="text-white font-poppins-semibold">Next</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View className="mt-9 items-center">

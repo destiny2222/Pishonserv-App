@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
-import * as SplashScreen from 'expo-splash-screen';
-import { Stack } from "expo-router";
+import { AuthGuard } from '@/components/AuthGuard';
+import { UserProvider } from '@/contexts/UserContext';
 import { useFonts } from 'expo-font';
-import './global.css';
+import { Stack } from "expo-router";
+import * as SplashScreen from 'expo-splash-screen';
+import React, { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
+import './global.css';
 
 
 export default function RootLayout() {
@@ -26,6 +28,12 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return <ActivityIndicator />; // or a loading spinner
   }
-
-  return <Stack screenOptions={{ headerShown: false }} />;
+  // return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <UserProvider>
+      <AuthGuard>
+        <Stack  screenOptions={{ headerShown: false }} />
+      </AuthGuard>
+    </UserProvider>
+  )
 }

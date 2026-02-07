@@ -1,5 +1,4 @@
 import * as SecureStore from "expo-secure-store";
-
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 if (!BASE_URL) {
@@ -24,58 +23,20 @@ type RequestOptions = {
   method?: HttpMethod;
   body?: unknown;
   headers?: Record<string, string>;
-  auth?: boolean; // default true
+  auth?: boolean;
+  token?: string;
   signal?: AbortSignal;
 };
 
 async function getAccessToken() {
-  return SecureStore.getItemAsync("access_token");
+  try {
+    const token = await SecureStore.getItemAsync("access_token");
+    return token;
+  } catch (error) {
+    console.error("Error retrieving access token:", error);
+    return null;
+  }
 }
-
-// export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-//   const url = `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
-
-//   const headers: Record<string, string> = {
-//     Accept: "application/json",
-//     "Content-Type": "application/json",
-//     ...options.headers,
-//   };
-
-//   const useAuth = options.auth !== false;
-//   if (useAuth) {
-//     const token = await getAccessToken();
-//     if (token) headers.Authorization = `Bearer ${token}`;
-//   }
-
-//   const res = await fetch(url, {
-//     method: options.method ?? "GET",
-//     headers,
-//     body: options.body === undefined ? undefined : JSON.stringify(options.body),
-//     signal: options.signal,
-//   });
-
-  
-//   let data: unknown = null;
-//   const text = await res.text();
-//   if (text) {
-//     try {
-//       data = JSON.parse(text);
-//     } catch {
-//       data = text;
-//     }
-//   }
-
-//   if (!res.ok) {
-//     const message =
-//       typeof data === "object" && data && "message" in (data as any)
-//         ? String((data as any).message)
-//         : `Request failed (${res.status})`;
-
-//     throw new ApiError(message, res.status, data);
-//   }
-
-//   return data as T;
-// }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const url = `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;

@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { View, Text, Image, TouchableOpacity, Pressable, Modal } from 'react-native'
-import images from '@/constants/images'
-import Ionicons from '@expo/vector-icons/Ionicons'
-import CountryPicker, { Country } from "react-native-country-picker-modal";
-import { SafeAreaView, useSafeAreaInsets, SafeAreaProvider } from "react-native-safe-area-context";
+import images from '@/constants/images';
+import { getCurrentUser } from "@/libs/endpoints/auth";
+import { User } from "@/types/auth";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
+import { Image, Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import CountryPicker, { Country } from "react-native-country-picker-modal";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 
 function getFlagEmoji(code: string) {
@@ -25,11 +27,26 @@ export default function Header() {
   const [countryOpen, setCountryOpen] = useState(false);
   const [countryCode, setCountryCode] = useState("NG");
   const [countryName, setCountryName] = useState("Nigeria");
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await getCurrentUser();
+        setUser(response.data.user);
+        // console.log("Current User:", response.data.user);
+      } catch (error) {
+        // console.error("Error fetching user:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const menuItems = useMemo(
     () => [
       { label: "Home", onPress: () => router.push("/(tabs)/home") },
-      { label: "Furniture", onPress: () => router.push("/(tabs)/furniture") },
+      { label: "Furniture", onPress: () => router.push("/(root)/furniture") },
       { label: "Solar & Inverter", onPress: () => router.push("/(tabs)/solar") },
       { label: "Profile", onPress: () => router.push("/(tabs)/profile") },
       {
@@ -55,9 +72,9 @@ export default function Header() {
         {/* style={{ paddingTop: insets.top + 2 }} */}
         <View className='w-full flex-row justify-between items-center px-4 py-6 overflow-hidden  bg-white shadow-white' >
             <View className='flex-row items-center gap-5'>
-                <Image source={images.avatar} className="w-12 h-12 rounded-full size-5" resizeMode="cover"/>
+                <Image source={{ uri: user?.profile_image || images.avatar }} className="w-12 h-12 rounded-full size-5" resizeMode="cover"/>
                 <View className=''>
-                    <Text className='text-2xl font-semibold poppins-semibold'>Adrian Hajdin</Text>
+                    <Text className='text-2xl font-semibold poppins-semibold'>{user?.name}  {user?.lname}</Text>
                     <Text className='text-sm font-normal poppins-regular'>Good Morning</Text>
                 </View>
             </View>
