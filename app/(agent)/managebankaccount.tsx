@@ -1,19 +1,22 @@
-import React, { useMemo, useState } from "react";
+import CustomAlert from "@/components/CustomAlert";
+import TopHeader from "@/components/TopHeader";
+import images from "@/constants/images";
+import { addBankAccount, BankAccount, getBankAccounts } from "@/libs/endpoints/bankAccounts";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
+  ActivityIndicator,
   Image,
-  TouchableOpacity,
-  TextInput,
   Modal,
   Pressable,
   ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import TopHeader from "@/components/TopHeader";
-import images from "@/constants/images";
-import icons from "@/constants/icons";
 
 type BankOption = { label: string; value: string };
 
@@ -27,34 +30,98 @@ const BANKS: BankOption[] = [
 
 const ManageBank = () => {
   const [openBank, setOpenBank] = useState(false);
-  const [bank, setBank] = useState<string>("");
+  const [bank, setBank] = useState < BankOption | null > (null);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState < BankAccount[] > ([]);
 
-  const bankLabel = useMemo(
-    () => BANKS.find((b) => b.value === bank)?.label,
-    [bank]
-  );
+  // Custom Alert State
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
 
-  const onAddAccount = () => {
-    // basic validation (adjust to your needs)
-    if (!bank) return console.log("Select a bank");
-    if (accountNumber.trim().length < 10) return console.log("Account number should be 10 digits");
-    if (!accountName.trim()) return console.log("Enter account name");
+  useEffect(() => {
+    fetchBankAccounts();
+  }, []);
 
-    const payload = { bank, accountNumber, accountName };
-    console.log("ADD ACCOUNT:", payload);
-
-    // call your API here...
-    // then reset
-    // setBank(""); setAccountNumber(""); setAccountName("");
+  const fetchBankAccounts = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getBankAccounts();
+      if (data) {
+        setBankAccounts(data);
+      }
+    } catch (error) {
+      // console.error("Failed to fetch bank accounts", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
+  const onAddAccount = async () => {
+    if (!bank) {
+      showAlert("Error", "Please select a bank");
+      return;
+    }
+    if (accountNumber.trim().length < 10) {
+      showAlert("Error", "Account number should be at least 10 digits");
+      return;
+    }
+    if (!accountName.trim()) {
+      showAlert("Error", "Please enter account name");
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      await addBankAccount({
+        bank_name: bank.label,
+        account_number: accountNumber,
+        account_name: accountName,
+      });
+      showAlert("Success", "Bank account added successfully");
+      setBank(null);
+      setAccountNumber("");
+      setAccountName("");
+      fetchBankAccounts(); // Refresh list
+    } catch (error: any) {
+      // console.error("Failed to add bank account", error);
+      showAlert("Error", "Failed to add bank account. Please try again.");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
         <View className="px-4 pt-5">
-          <TopHeader title="Return to earnings" />
+          <View className="flex-row items-center justify-between mb-4">
+            <TouchableOpacity
+              className="border p-2 rounded-full border-primary"
+              onPress={() => router.replace('/earnings')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="chevron-back" size={24} color="#C9A24D" />
+            </TouchableOpacity>
+      
+            <Text className="flex-1 text-center text-2xl font-poppins-semibold text-black-300 mx-3">
+               Return to earnings 
+            </Text>
+      
+            {/* Right side spacer so title stays centered */}
+            {/* <View className="w-10" /> */}
+          </View>
 
           {/* Title */}
           <View className="my-6">
@@ -63,36 +130,42 @@ const ManageBank = () => {
             </Text>
           </View>
 
-          {/* Existing Bank Card */}
-          <View className="mb-6">
-            <TouchableOpacity activeOpacity={0.9}>
-              <View className="relative bg-slate-50 py-4 shadow-slate-100 shadow-xl rounded-2xl px-3 flex-row items-center overflow-hidden">
-                <Image source={images.opay} className="w-20 h-20 rounded-lg" resizeMode="cover" />
-
-                <View className="flex-1 pl-3 pr-20">
-                  <Text className="text-secondary font-poppins-bold text-xl mb-1" numberOfLines={2}>
-                    David Amiri
+          {/* Loading State */}
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#C9A24D" className="my-5" />
+          ) : (
+            <>
+              {/* Existing Bank Accounts */}
+              {bankAccounts.length > 0 ? (
+                <View className="mb-6">
+                  <Text className="text-secondary text-lg font-poppins-semibold mb-3">
+                    Your Accounts
                   </Text>
-                  <Text className="text-gray-600 font-poppins text-base mb-2" numberOfLines={1}>
-                    9011237281
-                  </Text>
-                  <Text className="text-black-300 font-poppins-semibold text-base">
-                    Opay Digital Bank
-                  </Text>
+                  {bankAccounts.map((account) => (
+                    <View key={account.id} className="relative bg-slate-50 py-4 shadow-slate-100 shadow-xl rounded-2xl px-3 flex-row items-center overflow-hidden mb-4">
+                      {/* <Image source={getBankLogo(account.bank_name)} className="w-20 h-20 rounded-lg" resizeMode="cover" /> */}
+                      <Ionicons name="wallet" size={70} color="#C9A24D"  className="w-20 h-20 rounded-lg"/>
+                      <View className="flex-1 pl-5 pr-10">
+                        <Text className="text-secondary font-poppins-bold font-bold text-xl mb-1" numberOfLines={2}>
+                          {account.account_name}
+                        </Text>
+                        <Text className="text-black-300 font-poppins-semibold text-base font-semibold mb-2" numberOfLines={1}>
+                          {account.account_number}
+                        </Text>
+                        <Text className="text-black-300 font-poppins-semibold text-base font-semibold">
+                          {account.bank_name}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
-
-                <TouchableOpacity
-                  onPress={() => console.log("delete")}
-                  className="absolute right-4"
-                  style={{ top: "35%", transform: [{ translateY: 22 }] }}
-                >
-                  <View className="bg-red-50 p-3 rounded-full">
-                    <Image source={icons.deleteicon} className="w-6 h-6" tintColor="#EF4444" />
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          </View>
+              ) : (
+                <Text className="text-gray-500 font-poppins text-base mb-6 text-center">
+                  No bank accounts added yet.
+                </Text>
+              )}
+            </>
+          )}
 
           {/* Add New Bank Account */}
           <Text className="text-secondary text-2xl font-poppins-semibold mb-5">
@@ -107,7 +180,7 @@ const ManageBank = () => {
             className="border border-gray-200 rounded-lg px-4 py-4 flex-row items-center justify-between bg-white mb-6"
           >
             <Text className={`font-poppins ${bank ? "text-black-300" : "text-gray-300"}`}>
-              {bankLabel || "Select"}
+              {bank?.label || "Select"}
             </Text>
             <Ionicons name="chevron-down" size={20} color="#111827" />
           </TouchableOpacity>
@@ -138,9 +211,14 @@ const ManageBank = () => {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={onAddAccount}
-            className="bg-[#C9A24D] rounded-xl py-4 items-center"
+            disabled={isAdding}
+            className={`bg-[#C9A24D] rounded-xl py-4 items-center ${isAdding ? 'opacity-70' : ''}`}
           >
-            <Text className="text-white font-poppins-bold text-lg">Add Account</Text>
+            {isAdding ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white font-poppins-bold text-lg">Add Account</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -148,16 +226,16 @@ const ManageBank = () => {
       {/* Bank Dropdown Modal */}
       <Modal transparent visible={openBank} animationType="fade" onRequestClose={() => setOpenBank(false)}>
         <Pressable className="flex-1 bg-black/25 justify-end" onPress={() => setOpenBank(false)}>
-          <Pressable className="bg-white rounded-t-3xl px-5 pt-5 pb-8">
+          <View className="bg-white rounded-t-3xl px-5 pt-5 pb-8">
             <Text className="font-poppins-bold text-lg text-black-300 mb-4">Select Bank</Text>
 
             {BANKS.map((b) => {
-              const selected = b.value === bank;
+              const selected = b.value === bank?.value;
               return (
                 <TouchableOpacity
                   key={b.value}
                   onPress={() => {
-                    setBank(b.value);
+                    setBank(b);
                     setOpenBank(false);
                   }}
                   className="py-4 flex-row items-center justify-between border-b border-gray-100"
@@ -167,9 +245,16 @@ const ManageBank = () => {
                 </TouchableOpacity>
               );
             })}
-          </Pressable>
+          </View>
         </Pressable>
       </Modal>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </SafeAreaView>
   );
 };

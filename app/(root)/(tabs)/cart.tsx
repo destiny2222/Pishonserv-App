@@ -1,25 +1,55 @@
-import { View, Text, Image, FlatList } from "react-native";
-import React from "react";
+import { View, Text, Image, FlatList, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "@/constants/images";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { FavoriteCard } from "@/components/Cards";
-import { favorites } from "@/constants/data"; // ✅ named import
-
-
+import { getWishlist, WishlistItem } from "@/libs/endpoints/wishlist";
+import { useFocusEffect } from "expo-router";
 
 const Cart = () => {
+  const [favorites, setFavorites] = useState<WishlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchWishlist();
+    }, [])
+  );
+
+  const fetchWishlist = async () => {
+    try {
+      setLoading(true);
+      const response = await getWishlist();
+      setFavorites(response.data.items);
+    } catch (error) {
+      // console.error("Failed to fetch wishlist:", error);
+      setFavorites([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-200 justify-center items-center">
+        <ActivityIndicator size="large" color="#C9A24D" />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-200" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-gray-200" edges={["top"]}>
       <FlatList
-        data={favorites ?? []}
+        data={favorites}
         renderItem={({ item }) => (
           <FavoriteCard
             item={item}
-            onPress={() => console.log("Open favorite:", item.id)}
+            onPress={() =>  router.push(`/properties/${item.id}`)}
+            onDelete={fetchWishlist}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 }}
         ListHeaderComponent={

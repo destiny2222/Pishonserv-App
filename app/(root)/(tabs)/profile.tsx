@@ -52,11 +52,11 @@ const profile = () => {
   const { logout, user, isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
-    const result = await logout();
-    if (result.success) {
+    try {
+      await logout();
       router.replace("/(auth)/login");
-    } else {
-      Alert.alert("Error", result.error || "Logout failed. Please try again.");
+    } catch (error) {
+      // console.error("Error logging out:", error);
     }
   };
 

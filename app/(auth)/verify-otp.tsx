@@ -1,8 +1,13 @@
-import { View, Text, TouchableWithoutFeedback, Keyboard, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
-import React, { useState, useRef } from 'react'
-import { useLocalSearchParams, router } from 'expo-router'
-import Ionicons from '@expo/vector-icons/Ionicons'
+import CustomAlert from '@/components/CustomAlert'
 import Watermarks from '@/components/Watermarks'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { router, useLocalSearchParams } from 'expo-router'
+import React, { useRef, useState } from 'react'
+import { ActivityIndicator, Keyboard, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native'
+// import { useAuth } from '@/hooks/useAuth'
+
+// Mocking useAuth for now as per previous context or keeping it if it works. 
+// The user file content showed `import { useAuth } from '@/hooks/useAuth'`. I will keep it.
 import { useAuth } from '@/hooks/useAuth'
 
 const VerifyOtp = () => {
@@ -15,8 +20,29 @@ const VerifyOtp = () => {
   const [isResending, setIsResending] = useState(false)
   const inputRefs = useRef < TextInput[] > ([])
 
+  // Custom Alert State
+  const [alertVisible, setAlertVisible] = useState(false)
+  const [alertTitle, setAlertTitle] = useState("")
+  const [alertMessage, setAlertMessage] = useState("")
+  const [alertAction, setAlertAction] = useState < (() => void) | null > (null)
+
+  const showAlert = (title: string, message: string, action?: () => void) => {
+    setAlertTitle(title)
+    setAlertMessage(message)
+    if (action) setAlertAction(() => action)
+    setAlertVisible(true)
+  }
+
+  const handleAlertClose = () => {
+    setAlertVisible(false)
+    if (alertAction) {
+      alertAction()
+      setAlertAction(null)
+    }
+  }
+
   const handleOtpChange = (value: string, index: number) => {
-    if (!/^\d*$/.test(value)) return 
+    if (!/^\d*$/.test(value)) return
 
     const newOtp = [...otp]
     newOtp[index] = value
@@ -38,7 +64,7 @@ const VerifyOtp = () => {
     const otpCode = otp.join('')
 
     if (otpCode.length !== 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit OTP')
+      showAlert('Error', 'Please enter the complete 6-digit OTP')
       return
     }
 
@@ -47,18 +73,15 @@ const VerifyOtp = () => {
       const result = await verifyOtp(email, otpCode)
 
       if (result.success) {
-        Alert.alert('Success', 'Email verified successfully!', [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/(root)/(tabs)/home')
-          }
-        ])
+        showAlert('Success', 'Email verified successfully!', () => {
+          router.replace('/(root)/(tabs)/home')
+        })
       } else {
-        Alert.alert('Verification Failed', result.error || 'Invalid OTP code')
+        showAlert('Verification Failed', result.error || 'Invalid OTP code')
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred')
-      console.error('OTP verification error:', error)
+      showAlert('Error', 'An unexpected error occurred')
+      // console.error('OTP verification error:', error)
     } finally {
       setIsLoading(false)
     }
@@ -70,15 +93,15 @@ const VerifyOtp = () => {
       const result = await resendOtp(email)
 
       if (result.success) {
-        Alert.alert('Success', 'A new OTP has been sent to your email')
-        setOtp(['', '', '', '', '', '']) 
+        showAlert('Success', 'A new OTP has been sent to your email')
+        setOtp(['', '', '', '', '', ''])
         inputRefs.current[0]?.focus()
       } else {
-        Alert.alert('Error', result.error || 'Failed to resend OTP')
+        showAlert('Error', result.error || 'Failed to resend OTP')
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to resend OTP')
-      console.error('Resend OTP error:', error)
+      showAlert('Error', 'Failed to resend OTP')
+      // console.error('Resend OTP error:', error)
     } finally {
       setIsResending(false)
     }
@@ -151,6 +174,13 @@ const VerifyOtp = () => {
             )}
           </TouchableOpacity>
         </View>
+
+        <CustomAlert
+          visible={alertVisible}
+          title={alertTitle}
+          message={alertMessage}
+          onClose={handleAlertClose}
+        />
       </View>
     </TouchableWithoutFeedback>
   )

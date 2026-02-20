@@ -112,11 +112,11 @@ export const settings = [
     icon: icons.wallet,
     href: "/settings/transactions",
   },
-  {
-    title: "Orders",
-    icon: icons.order,
-    href: "/orders",
-  },
+  // {
+  //   title: "Orders",
+  //   icon: icons.order,
+  //   href: "/orders",
+  // },
   {
     title: "Security",
     icon: icons.shield,

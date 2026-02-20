@@ -36,8 +36,9 @@ export async function getWishlist(): Promise<WishlistResponse> {
       auth: true,
     });
     return response;
+    
   } catch (error) {
-    console.error("Error fetching wishlist:", error);
+    // console.error("Error fetching wishlist:", error);
     throw error;
   }
 }
@@ -56,7 +57,26 @@ export async function addToWishlist(
     });
     return response;
   } catch (error) {
-    console.error("Error toggling wishlist:", error);
+    // console.error("Error toggling wishlist:", error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a property from user's wishlist
+ */
+export async function removeFromWishlist(
+  propertyId: number,
+): Promise<WishlistToggleResponse> {
+  try {
+    const response = await apiRequest<WishlistToggleResponse>("/wishlist/remove", {
+      method: "POST",
+      body: { property_id: propertyId },
+      auth: true,
+    });
+    return response;
+  } catch (error) {
+    // console.error("Error removing from wishlist:", error);
     throw error;
   }
 }

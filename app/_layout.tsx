@@ -26,7 +26,7 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return <ActivityIndicator />; // or a loading spinner
+    return <ActivityIndicator size="large" color="#C9A24D"  className='flex-1 justify-center items-center' />;
   }
   // return <Stack screenOptions={{ headerShown: false }} />;
   return (

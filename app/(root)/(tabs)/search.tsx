@@ -30,7 +30,7 @@ const search = () => {
       const all = await getProperties({ limit: 100 });
       setAllProperties(all);
     } catch (error) {
-      console.error('Error fetching properties:', error);
+      // console.error('Error fetching properties:', error);
     } finally {
       setLoading(false);
     }

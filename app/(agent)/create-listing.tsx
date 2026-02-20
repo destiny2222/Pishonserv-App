@@ -1,25 +1,25 @@
-import React, { useMemo, useState } from "react";
-import { View, Text, TextInput, ScrollView, TouchableOpacity, Image, Modal, Pressable, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import images from "@/constants/images";
-import icons from "@/constants/icons";
-import { router } from "expo-router";
+import CustomAlert from "@/components/CustomAlert";
 import TopHeader from "@/components/TopHeader";
+import { createListing, CreateListingData, ListingType } from "@/libs/endpoints/agent/createListing";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as ImagePicker from "expo-image-picker";
+import { router } from "expo-router";
+import React, { useMemo, useState } from "react";
+import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Option = { label: string; value: string };
 
 const LISTING_TYPES: Option[] = [
-    { label: "Rent", value: "rent" },
-    { label: "Sale", value: "sale" },
+    { label: "Rent", value: "for_rent" },
+    { label: "Sale", value: "for_sale" },
 ];
 
 const PROPERTY_TYPES: Option[] = [
-    { label: "Apartment", value: "apartment" },
-    { label: "House", value: "house" },
-    { label: "Villa", value: "villa" },
-    { label: "Duplex", value: "duplex" },
+    { label: "Apartment", value: "Apartment" },
+    { label: "House", value: "House" },
+    { label: "Villa", value: "Villa" },
+    { label: "Duplex", value: "Duplex" },
 ];
 
 const FURNISHING: Option[] = [
@@ -57,15 +57,15 @@ const AMENITIES = [
 ];
 
 function Label({ children }: { children: React.ReactNode }) {
-    return <Text className="text-black-300 font-poppins mb-2">{children}</Text>;
+    return <Text className="text-secondary font-poppins mb-2">{children}</Text>;
 }
 
 function Input(props: any) {
     return (
         <TextInput
             {...props}
-            className={`border border-gray-200 rounded-lg px-4 py-3 text-black-300 font-poppins ${props.className ?? ""}`}
-            placeholderTextColor="#B8B8B8"
+            className={`border border-gray-400 rounded-lg px-4 py-3 text-secondary font-poppins ${props.className ?? ""}`}
+            placeholderTextColor="#6B7280"
         />
     );
 }
@@ -96,9 +96,9 @@ function Select({
             <TouchableOpacity
                 onPress={() => setOpen(true)}
                 activeOpacity={0.9}
-                className="border border-gray-200 rounded-lg px-4 py-4 flex-row items-center justify-between bg-white"
+                className="border border-gray-400 rounded-lg px-4 py-4 flex-row items-center justify-between bg-white"
             >
-                <Text className={`font-poppins ${value ? "text-black-300" : "text-gray-300"}`}>
+                <Text className={`font-poppins ${value ? "text-secondary" : "text-gray-500"}`}>
                     {currentLabel || placeholder}
                 </Text>
                 <Ionicons name="chevron-down" size={18} color="#111827" />
@@ -107,7 +107,7 @@ function Select({
             <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
                 <Pressable className="flex-1 bg-black/25 justify-end" onPress={() => setOpen(false)}>
                     <Pressable className="bg-white rounded-t-3xl px-5 pt-5 pb-8">
-                        <Text className="font-poppins-bold text-lg text-black-300 mb-4">{label}</Text>
+                        <Text className="font-poppins-bold text-lg text-secondary mb-4">{label}</Text>
 
                         {options.map((opt) => {
                             const selected = opt.value === value;
@@ -120,7 +120,7 @@ function Select({
                                     }}
                                     className="py-4 flex-row items-center justify-between border-b border-gray-100"
                                 >
-                                    <Text className="font-poppins text-black-300">{opt.label}</Text>
+                                    <Text className="font-poppins text-secondary">{opt.label}</Text>
                                     {selected ? <Ionicons name="checkmark" size={20} color="#C9A24D" /> : null}
                                 </TouchableOpacity>
                             );
@@ -142,11 +142,11 @@ function CheckItem({
     onToggle: () => void;
 }) {
     return (
-        <TouchableOpacity onPress={onToggle}  activeOpacity={0.8}  className="w-1/2 flex-row items-center mb-4" >
-            <View className={`w-5 h-5 rounded border mr-3 items-center justify-center ${checked ? "bg-primary border-primary" : "border-gray-300 bg-white"  }`}  >
+        <TouchableOpacity onPress={onToggle} activeOpacity={0.8} className="w-1/2 flex-row items-center mb-4" >
+            <View className={`w-5 h-5 rounded border mr-3 items-center justify-center ${checked ? "bg-primary border-primary" : "border-gray-400 bg-white"}`}  >
                 {checked ? <Ionicons name="checkmark" size={14} color="white" /> : null}
             </View>
-            <Text className="font-poppins text-black-300">{label}</Text>
+            <Text className="font-poppins text-secondary">{label}</Text>
         </TouchableOpacity>
     );
 }
@@ -165,7 +165,30 @@ export default function CreateListing() {
     const [description, setDescription] = useState("");
 
     const [amenities, setAmenities] = useState < string[] > ([]);
-    const [imagesPicked, setImagesPicked] = useState < string[] > ([]);
+    const [imagesPicked, setImagesPicked] = useState < ImagePicker.ImagePickerAsset[] > ([]);
+    const [loading, setLoading] = useState(false);
+
+    // Custom Alert State
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertTitle, setAlertTitle] = useState("");
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertOnClose, setAlertOnClose] = useState < (() => void) | undefined > (undefined);
+
+    const showAlert = (title: string, message: string, onClose?: () => void) => {
+        setAlertTitle(title);
+        setAlertMessage(message);
+        setAlertOnClose(() => onClose); // wrap in function if needed, but state setter might invoke it. 
+        // Better: setAlertOnClose(() => onClose); to store the function
+        setAlertVisible(true);
+    };
+
+    const closeAlert = () => {
+        setAlertVisible(false);
+        if (alertOnClose) {
+            alertOnClose();
+            setAlertOnClose(undefined);
+        }
+    };
 
     const toggleAmenity = (name: string) => {
         setAmenities((prev) => (prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]));
@@ -175,49 +198,86 @@ export default function CreateListing() {
         if (imagesPicked.length >= 7) return;
 
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!perm.granted) return;
-        // Note: allowsMultipleSelection works on iOS; Android typically returns single.
+        if (!perm.granted) {
+            showAlert("Permission Required", "Please allow access to your photos to upload images.");
+            return;
+        }
+
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: [ImagePicker.MediaType.Image],
-            quality: 0.8,
+            mediaTypes: ['images'],
+            quality: 0.5,
             allowsMultipleSelection: Platform.OS === "ios",
             selectionLimit: 7 - imagesPicked.length,
+            base64: true,
         });
 
         if (result.canceled) return;
 
-        const uris = result.assets.map((a) => a.uri);
-        setImagesPicked((prev) => [...prev, ...uris].slice(0, 7));
+        setImagesPicked((prev) => [...prev, ...result.assets].slice(0, 7));
     };
 
     const removePicked = (uri: string) => {
-        setImagesPicked((prev) => prev.filter((x) => x !== uri));
+        setImagesPicked((prev) => prev.filter((x) => x.uri !== uri));
     };
 
-    const submit = () => {
-        const payload = {
-            title,
-            location,
-            listingType,
-            price,
-            propertyType,
-            amenities,
-            furnishing,
-            condition,
-            bedrooms,
-            bathrooms,
-            garage,
-            description,
-            images: imagesPicked,
-        };
+    const submit = async () => {
+        if (!title || !price || !location || !listingType || !description) {
+            showAlert("Missing Fields", "Please fill in all required fields (Title, Location, simple Listing Type, Price, Description)");
+            return;
+        }
 
-        console.log("SUBMIT:", payload);
-        // call your API here
+        if (imagesPicked.length === 0) {
+            showAlert("No Images", "Please upload at least one image.");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const imageBase64s = imagesPicked.map(asset =>
+                `data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}`
+            );
+
+            const payload: CreateListingData = {
+                title,
+                location,
+                listing_type: listingType as ListingType,
+                price: Number(price.replace(/[^0-9.]/g, '')),
+                description,
+                type: propertyType || undefined,
+                amenities,
+                ...(bedrooms ? { bedrooms: Number(bedrooms) } : {}),
+                ...(bathrooms ? { bathrooms: Number(bathrooms) } : {}),
+                ...(garage ? { garage: Number(garage) } : {}),
+                images: imageBase64s,
+            };
+
+            // console.log("Submitting payload...", { ...payload, images: `[${payload.images?.length} images]` });
+
+            const response = await createListing(payload);
+
+            if (response.status === 'success' || response.status === 'ok' || (response as any).success) {
+                showAlert("Success", "Property created successfully!", () => router.replace("/listing"));
+            } else {
+                showAlert("Error", (response as any).message || "Failed to create listing.");
+            }
+
+        } catch (error: any) {
+            // console.error("Create listing error:", error);
+            if (error.status === 400 && error.data) {
+                // console.log("Validation errors:", JSON.stringify(error.data, null, 2));
+                showAlert("Validation Error", error.data.message || "Please check your inputs.");
+            } else {
+                const msg = error?.data?.message || error?.message || "An unknown error occurred.";
+                showAlert("Error", msg);
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white pt-6">
-            {/* <Image source={images.logoMark ?? images.logo}  className="absolute -top-6 -right-10 w-48 h-48 opacity-10"  resizeMode="contain" /> */}
+        <SafeAreaView className="flex-1 bg-gray-300 pt-6">
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View className="px-4">
@@ -234,19 +294,19 @@ export default function CreateListing() {
                         <Input placeholder="Enter location" value={location} onChangeText={setLocation} />
                     </View>
 
-                    <Select  label="Listing type" value={listingType} placeholder="Select"  options={LISTING_TYPES}  onChange={setListingType} />
+                    <Select label="Listing type" value={listingType} placeholder="Select" options={LISTING_TYPES} onChange={setListingType} />
 
                     <View className="mb-5">
                         <Label>Price</Label>
-                        <Input  placeholder="e.g. 5000000" keyboardType="numeric"  value={price} onChangeText={setPrice} />
+                        <Input placeholder="e.g. 5000000" keyboardType="numeric" value={price} onChangeText={setPrice} />
                     </View>
 
-                    <Select  label="Property type" value={propertyType} placeholder="Select"
-                        options={PROPERTY_TYPES}  onChange={setPropertyType}
+                    <Select label="Property type" value={propertyType} placeholder="Select"
+                        options={PROPERTY_TYPES} onChange={setPropertyType}
                     />
 
                     {/* Amenities */}
-                    <Text className="font-poppins-bold text-base text-black-300 mb-4">Amenities</Text>
+                    <Text className="font-poppins-bold text-base text-secondary mb-4">Amenities</Text>
                     <View className="flex-row flex-wrap">
                         {AMENITIES.map((a) => (
                             <CheckItem
@@ -293,29 +353,29 @@ export default function CreateListing() {
                         <Label>Description</Label>
                         <TextInput
                             placeholder="Please kindly describe the property..."
-                            placeholderTextColor="#B8B8B8"
+                            placeholderTextColor="#6B7280"
                             value={description}
                             onChangeText={setDescription}
                             multiline
                             textAlignVertical="top"
-                            className="border border-gray-200 rounded-lg px-4 py-4 h-40 font-poppins text-black-300"
+                            className="border border-gray-400 rounded-lg px-4 py-4 h-40 font-poppins text-secondary"
                         />
                     </View>
 
                     {/* Images */}
                     <View className="mb-6">
-                        <Text className="font-poppins text-black-300 mb-2">
+                        <Text className="font-poppins text-secondary mb-2">
                             Upload Property Images{" "}
-                            <Text className="text-gray-400">(Max 7 images)</Text>
+                            <Text className="text-gray-500">(Max 7 images)</Text>
                         </Text>
 
-                        <View className="border border-gray-200 rounded-lg p-3 bg-white">
+                        <View className="border border-gray-400 rounded-lg p-3 bg-white">
                             <TouchableOpacity
                                 onPress={pickImages}
                                 activeOpacity={0.85}
                                 className="self-start bg-gray-100 px-4 py-2 rounded-md"
                             >
-                                <Text className="font-poppins text-black-300">Choose File</Text>
+                                <Text className="font-poppins text-secondary">Choose File</Text>
                             </TouchableOpacity>
 
                             <Text className="font-poppins text-gray-500 mt-2">
@@ -325,11 +385,11 @@ export default function CreateListing() {
                             {/* thumbnails */}
                             {imagesPicked.length > 0 && (
                                 <View className="flex-row flex-wrap mt-3">
-                                    {imagesPicked.map((uri) => (
-                                        <View key={uri} className="mr-3 mb-3 relative">
-                                            <Image source={{ uri }} className="w-16 h-16 rounded-lg" />
+                                    {imagesPicked.map((asset) => (
+                                        <View key={asset.uri} className="mr-3 mb-3 relative">
+                                            <Image source={{ uri: asset.uri }} className="w-16 h-16 rounded-lg" />
                                             <TouchableOpacity
-                                                onPress={() => removePicked(uri)}
+                                                onPress={() => removePicked(asset.uri)}
                                                 className="absolute -top-2 -right-2 bg-white rounded-full"
                                             >
                                                 <Ionicons name="close-circle" size={22} color="#EF4444" />
@@ -339,7 +399,7 @@ export default function CreateListing() {
                                 </View>
                             )}
 
-                            <Text className="font-poppins text-gray-400 text-xs mt-2">
+                            <Text className="font-poppins text-gray-500 text-xs mt-2">
                                 Images will be auto-compressed. Accepted: JPG, PNG.
                             </Text>
                         </View>
@@ -348,13 +408,24 @@ export default function CreateListing() {
                     {/* Submit */}
                     <TouchableOpacity
                         onPress={submit}
-                        activeOpacity={0.9}
-                        className="bg-primary rounded-xl py-4 items-center mb-10"
+                        disabled={loading}
+                        className={`bg-primary rounded-xl py-4 items-center mb-10 ${loading ? "opacity-70" : ""}`}
                     >
-                        <Text className="text-white font-poppins-bold text-base">Add Property</Text>
+                        {loading ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text className="text-white font-poppins-bold text-base">Add Property</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+
+            <CustomAlert
+                visible={alertVisible}
+                title={alertTitle}
+                message={alertMessage}
+                onClose={closeAlert}
+            />
         </SafeAreaView>
     );
 }

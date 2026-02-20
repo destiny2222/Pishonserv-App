@@ -119,4 +119,3 @@ export async function updateCurrentUser(payload: Partial<UserResponse>): Promise
 export async function logout(): Promise<void> {
   await SecureStore.deleteItemAsync('access_token');
 }
-

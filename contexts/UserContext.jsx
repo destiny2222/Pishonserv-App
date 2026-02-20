@@ -43,8 +43,24 @@ export function UserProvider({ children }) {
       }
       return { success: true, data: response.data };
     } catch (error) {
-      console.error("Login failed:", error);
-      return { success: false, error: error.message || "Login failed" };
+      // console.error("Login failed:", error);
+      
+      // Customize error message based on status code
+      let errorMessage = "Login failed";
+      
+      if (error.status === 401) {
+        errorMessage = error.data?.message || "Invalid email or password. Please try again.";
+      } else if (error.status === 404) {
+        errorMessage = "Account not found. Please check your email or sign up.";
+      } else if (error.status === 403) {
+        errorMessage = error.data?.message || "Access denied. Your account may be inactive.";
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage, status: error.status };
     }
   }
 
@@ -53,8 +69,21 @@ export function UserProvider({ children }) {
       const response = await authApi.register(userData);
       return { success: true, data: response.data };
     } catch (error) {
-      console.error("Registration failed:", error);
-      return { success: false, error: error.message || "Registration failed" };
+      // console.error("Registration failed:", error);
+      
+      let errorMessage = "Registration failed";
+      
+      if (error.status === 400) {
+        errorMessage = error.data?.message || "Invalid registration data. Please check your information.";
+      } else if (error.status === 409) {
+        errorMessage = "Email already exists. Please use a different email or login.";
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage, status: error.status };
     }
   }
 
@@ -65,8 +94,21 @@ export function UserProvider({ children }) {
       setIsAuthenticated(true);
       return { success: true, data: response.data };
     } catch (error) {
-      console.error("OTP verification failed:", error);
-      return { success: false, error: error.message || "Verification failed" };
+      // console.error("OTP verification failed:", error);
+      
+      let errorMessage = "Verification failed";
+      
+      if (error.status === 400) {
+        errorMessage = error.data?.message || "Invalid or expired OTP. Please try again.";
+      } else if (error.status === 404) {
+        errorMessage = "Verification request not found. Please request a new OTP.";
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage, status: error.status };
     }
   }
 
@@ -75,7 +117,7 @@ export function UserProvider({ children }) {
       const response = await authApi.resendOtp({ email });
       return { success: true, data: response };
     } catch (error) {
-      console.error("Resend OTP failed:", error);
+      // console.error("Resend OTP failed:", error);
       return { success: false, error: error.message || "Failed to resend OTP" };
     }
   }
@@ -85,8 +127,19 @@ export function UserProvider({ children }) {
       const response = await authApi.requestPasswordReset({ email });
       return { success: true, data: response };
     } catch (error) {
-      console.error("Password reset request failed:", error);
-      return { success: false, error: error.message || "Failed to request password reset" };
+      // console.error("Password reset request failed:", error);
+      
+      let errorMessage = "Failed to request password reset";
+      
+      if (error.status === 404) {
+        errorMessage = "Email not found. Please check your email or sign up.";
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage, status: error.status };
     }
   }
 
@@ -95,8 +148,19 @@ export function UserProvider({ children }) {
       const response = await authApi.resetPassword({ email, otp, password });
       return { success: true, data: response };
     } catch (error) {
-      console.error("Password reset failed:", error);
-      return { success: false, error: error.message || "Password reset failed" };
+      // console.error("Password reset failed:", error);
+      
+      let errorMessage = "Password reset failed";
+      
+      if (error.status === 400) {
+        errorMessage = error.data?.message || "Invalid or expired OTP. Please request a new one.";
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, error: errorMessage, status: error.status };
     }
   }
 
@@ -107,7 +171,7 @@ export function UserProvider({ children }) {
       setIsAuthenticated(false);
       return { success: true };
     } catch (error) {
-      console.error("Logout failed:", error);
+      // console.error("Logout failed:", error);
       return { success: false, error: error.message || "Logout failed" };
     }
   }
@@ -118,7 +182,7 @@ export function UserProvider({ children }) {
       setUser(response.data.user);
       return { success: true, data: response.data.user };
     } catch (error) {
-      console.error("Failed to refresh user:", error);
+      // console.error("Failed to refresh user:", error);
       return { success: false, error: error.message || "Failed to refresh user" };
     }
   }
@@ -132,7 +196,7 @@ export function UserProvider({ children }) {
       setUser(response.data.user);
       return { success: true, data: response.data.user };
     } catch (error) {
-      console.error("Failed to update user:", error);
+      // console.error("Failed to update user:", error);
       // Revert the optimistic update by refreshing from server
       await refreshUser();
       return { success: false, error: error.message || "Failed to update user" };

@@ -33,7 +33,7 @@ async function getAccessToken() {
     const token = await SecureStore.getItemAsync("access_token");
     return token;
   } catch (error) {
-    console.error("Error retrieving access token:", error);
+    // console.error("Error retrieving access token:", error);
     return null;
   }
 }

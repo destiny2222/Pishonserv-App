@@ -39,7 +39,7 @@ const FurnitureDetail = () => {
 
     const handleAddToCart = () => {
         // Implement add to cart logic
-        console.log('Add to cart:', furniture?.name, 'Quantity:', quantity);
+        // console.log('Add to cart:', furniture?.name, 'Quantity:', quantity);
     };
 
     const handleToggleFavorite = () => {

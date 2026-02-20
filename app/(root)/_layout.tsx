@@ -24,7 +24,7 @@ export default function AppLayout() {
     if (isLoading) {
         return (
             <View className='flex-1 justify-center items-center'>
-                <ActivityIndicator  />
+                <ActivityIndicator size="large" color="#C9A24D" />
             </View>
         );
     }

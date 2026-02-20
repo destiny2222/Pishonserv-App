@@ -1,11 +1,12 @@
 import icons from '@/constants/icons';
 import images from '@/constants/images';
 import { Property } from '@/libs/endpoints/property';
-import { addToWishlist, WishlistItem } from '@/libs/endpoints/wishlist';
+import { addToWishlist, removeFromWishlist, WishlistItem } from '@/libs/endpoints/wishlist';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from 'react';
-import { ImageSourcePropType, ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ImageSourcePropType, Text, TouchableOpacity, View } from 'react-native';
+import CustomAlert from './CustomAlert';
 
 
 interface Props {
@@ -57,13 +58,8 @@ const toImageSource = (img: any, fallback: ImageSourcePropType): ImageSourceProp
 
   // local image: require("...") returns a number
   if (typeof img === "number") return img;
-
-  // remote image url
   if (typeof img === "string") return { uri: img };
-
-  // already { uri: "..." }
   if (typeof img === "object" && typeof img.uri === "string") return img;
-
   return fallback;
 };
 
@@ -71,6 +67,9 @@ const toImageSource = (img: any, fallback: ImageSourcePropType): ImageSourceProp
 export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistToggle }: Props) => {
   const [isFavorite, setIsFavorite] = useState(isInWishlist);
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const imageSource = toImageSource(item?.image, images.featured1);
   const formattedPrice = item?.price ? `₦${Number(item.price).toLocaleString()}` : '₦0';
 
@@ -78,23 +77,26 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
     setIsFavorite(isInWishlist);
   }, [isInWishlist]);
 
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
   const handleWishlistToggle = async (e: any) => {
     e.stopPropagation();
     if (!item?.id || loading) return;
 
     // Check if user is authenticated
     const token = await SecureStore.getItemAsync('access_token');
-    // console.log('Token exists:', !!token);
     if (!token) {
-      Alert.alert('Authentication Required', 'Please log in to add items to your wishlist.');
+      showAlert('Authentication Required', 'Please log in to add items to your wishlist.');
       return;
     }
 
     setLoading(true);
     try {
-      // console.log('Toggling wishlist for property:', item.id);
       const response = await addToWishlist(item.id);
-      // console.log('Wishlist toggle response:', response);
       const newFavoriteState = !isFavorite;
       setIsFavorite(newFavoriteState);
       onWishlistToggle?.(item.id, newFavoriteState);
@@ -106,18 +108,18 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
         ? 'Removed from wishlist'
         : response.message || 'Wishlist updated';
       
-      Alert.alert('Success', message);
+      showAlert('Success', message);
     } catch (error: any) {
-      console.error('Error toggling wishlist:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
       const errorMessage = error?.data?.message || error?.message || 'Failed to update wishlist';
-      Alert.alert('Error', errorMessage);
+      showAlert('Error', errorMessage);
       // Revert state on error
       setIsFavorite(isFavorite);
     } finally {
       setLoading(false);
     }
   };
+
+  
 
   return (
     <TouchableOpacity onPress={onPress} className='w-60 h-80 bg-white rounded-2xl mr-7  items-start relative flex flex-col gap-6'>
@@ -147,6 +149,12 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
           </TouchableOpacity>
         </View>
       </View>
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </TouchableOpacity>
   )
 }
@@ -154,48 +162,48 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
 export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: Props) => {
   const [isFavorite, setIsFavorite] = useState(isInWishlist);
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const imageSource = toImageSource(item?.image, images.featured1);
   const formattedPrice = item?.price ? `₦${Number(item.price).toLocaleString()}` : '₦0';
 
   useEffect(() => {
-      setIsFavorite(isInWishlist);
-    }, [isInWishlist]);
-  
+  setIsFavorite(isInWishlist);
+}, [isInWishlist]);
+
+    const showAlert = (title: string, message: string) => {
+      setAlertTitle(title);
+      setAlertMessage(message);
+      setAlertVisible(true);
+    };
+
     const handleWishlistToggle = async (e: any) => {
       e.stopPropagation();
       if (!item?.id || loading) return;
   
-      // Check if user is authenticated
       const token = await SecureStore.getItemAsync('access_token');
-      console.log('Token exists:', !!token);
       if (!token) {
-        Alert.alert('Authentication Required', 'Please log in to add items to your wishlist.');
+        showAlert('Authentication Required', 'Please log in to add items to your wishlist.');
         return;
       }
   
       setLoading(true);
       try {
-        console.log('Toggling wishlist for property:', item.id);
         const response = await addToWishlist(item.id);
-        console.log('Wishlist toggle response:', response);
         const newFavoriteState = !isFavorite;
         setIsFavorite(newFavoriteState);
         onWishlistToggle?.(item.id, newFavoriteState);
-        
-        // Check response to determine if added or removed
         const message = response.data?.added 
           ? 'Added to wishlist' 
           : response.data?.removed 
           ? 'Removed from wishlist'
           : response.message || 'Wishlist updated';
         
-        Alert.alert('Success', message);
+        showAlert('Success', message);
       } catch (error: any) {
-        console.error('Error toggling wishlist:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
         const errorMessage = error?.data?.message || error?.message || 'Failed to update wishlist';
-        Alert.alert('Error', errorMessage);
-        // Revert state on error
+        showAlert('Error', errorMessage);
         setIsFavorite(isFavorite);
       } finally {
         setLoading(false);
@@ -204,10 +212,6 @@ export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: 
 
   return (
     <TouchableOpacity onPress={onPress} className='w-full flex-1 mt-4 px-3 py-4 rounded-lg bg-white shadow-lg shadow-black-100/70 relative'>
-      {/* <View className="absolute top-5 right-5 bg-white/90 p-1 z-50 rounded-full flex-row items-center">
-        <Ionicons name="star" size={14} color="#C9A24D" />
-        <Text className="ml-0.5 text-xs font-semibold text-primary-300">{rating}</Text>
-      </View> */}
       <Image source={imageSource} className="w-full rounded-lg h-40" resizeMode="cover" />
       <View className="flex flex-col mt-2">
         <Text className="text-black-300 text-base font-poppins-semibold" numberOfLines={1}>
@@ -229,49 +233,69 @@ export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: 
           </TouchableOpacity>
         </View>
       </View>
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </TouchableOpacity>
   )
 }
 
 export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [confirmVisible, setConfirmVisible] = useState(false);
   
   if (!item) return null;
 
   const firstImage = item.images ? item.images.split(',')[0].trim() : undefined;
-  const imageSource = firstImage ? { uri: firstImage } : images.featured1;
+  const imageSource = firstImage 
+  ? { uri: `https://yourdomain.com/storage/${firstImage}` } 
+  : images.featured1;
+
+  
   const formattedPrice = `₦${Number(item.price).toLocaleString()}`;
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
 
   const handleDelete = async (e: any) => {
     e.stopPropagation();
-    
-    Alert.alert(
-      'Remove from Wishlist',
-      'Are you sure you want to remove this property from your wishlist?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await addToWishlist(item.property_id);
-              onDelete?.(item.id);
-              Alert.alert('Success', 'Removed from wishlist');
-            } catch (error: any) {
-              console.error('Error removing from wishlist:', error);
-              Alert.alert('Error', 'Failed to remove from wishlist');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    if (!item?.id || loading) return;
+    try {      
+      setLoading(true);
+      const response = await removeFromWishlist(item.id);
+      showAlert('Removed', 'Property removed from wishlist');
+       onDelete?.(item.id);
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || error?.message || 'Failed to remove from wishlist';
+      showAlert('Error', errorMessage);
+    }
+    finally {      
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmClose = async () => {
+    setConfirmVisible(false);
+    setLoading(true);
+    try {
+      await removeFromWishlist(item.id);
+      onDelete?.(item.id);
+      showAlert('Success', 'Removed from wishlist');
+    } catch (error: any) {
+      showAlert('Error', 'Failed to remove from wishlist');
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -301,21 +325,30 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
           </View>
         </TouchableOpacity>
       </View>
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
+      <CustomAlert
+        visible={confirmVisible}
+        title="Remove from Wishlist"
+        message="Are you sure you want to remove this property from your wishlist?"
+        onClose={handleConfirmClose}
+      />
     </TouchableOpacity>
   );
 };
 
 export const ListingPropertyCard  = ({onPress, item}: ListingProperty ) => {
+  const imageSource = toImageSource(item?.image, images.featured1);
+  
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View className="relative bg-slate-50 py-4 mx-4 shadow-slate-100 shadow-xl rounded-2xl px-3 mb-10 flex-row items-center overflow-hidden">
         <View className="relative">
           <Image source={imageSource} className="w-36 h-36 rounded-lg" resizeMode="cover" />
-          {/* <View className="absolute top-0  right-0 bg-green-500 px-3 py-2 rounded-b-lg">
-            <Text className="text-white font-poppins-semibold text-sm">
-              {item?.status}
-            </Text>
-          </View> */}
         </View>
         <View className="flex-1 pl-3 pr-20">
           <Text className="text-secondary font-poppins-bold text-xl mb-1" numberOfLines={2}>

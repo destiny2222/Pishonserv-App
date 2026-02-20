@@ -33,7 +33,7 @@ export default function login() {
     setIsLoading(true);
     try {
       const result = await login(email, password);
-      if (result.success) {
+      if (result.success === true) {
         if (result.data?.verification_required) {
           router.replace({
             pathname: '/(auth)/verify-otp',
@@ -43,13 +43,10 @@ export default function login() {
           router.replace('/(root)/(tabs)/home');
         }
       } else {
-        const errorMessage = result.statusCode === 401
-          ? 'Unauthorized: Invalid email or password.'
-          : result.error || 'An unexpected error occurred.';
-        showAlert('Login Failed', errorMessage);
+        showAlert('Login Failed', result.error || 'An unexpected error occurred.');
       }
-    } catch (error) {
-      showAlert('Error', 'An unexpected error occurred');
+    } catch (error: any) {
+      showAlert('Error', 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }

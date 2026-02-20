@@ -19,6 +19,8 @@ type SignupData = {
   password: string;
   confirmPassword: string;
   role: string;
+  agree_mou?: number;
+  signed_name?: string;
 };
 
 const initial: SignupData = {
@@ -36,6 +38,8 @@ const initial: SignupData = {
   password: "",
   confirmPassword: "",
   role: "",
+  agree_mou: 0,
+  signed_name: "",
 };
 
 type Ctx = {
@@ -44,7 +48,7 @@ type Ctx = {
   update: (patch: Partial<SignupData>) => void;
 };
 
-const SignupCtx = createContext<Ctx | null>(null);
+const SignupCtx = createContext < Ctx | null > (null);
 
 export const useSignup = () => {
   const ctx = useContext(SignupCtx);
@@ -53,7 +57,7 @@ export const useSignup = () => {
 };
 
 function SignupProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<SignupData>(initial);
+  const [data, setData] = useState < SignupData > (initial);
 
   const value = useMemo(
     () => ({
@@ -72,8 +76,8 @@ const theme = {
   colors: {
     ...MD3LightTheme.colors,
     primary: '#ffffff',
-    background:"#ffffff",
-    outline: '#d1d5db', 
+    background: "#ffffff",
+    outline: '#d1d5db',
   },
   roundness: 6,
 };
@@ -83,7 +87,7 @@ export default function SignupLayout() {
     <SignupProvider >
       <PaperProvider theme={theme}>
         <Stack screenOptions={{ headerShown: false }} />
-      </PaperProvider>  
+      </PaperProvider>
     </SignupProvider>
   );
 }

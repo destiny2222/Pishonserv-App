@@ -1,5 +1,5 @@
+import { completePayment, createBooking, initializePayment } from "@/libs/endpoints/booking";
 import { Property, getPropertyDetails } from "@/libs/endpoints/property";
-import { createBooking } from "@/libs/endpoints/booking";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -11,20 +11,23 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
-  Alert
+  View
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
-import icons from "@/constants/icons";
-import images from "@/constants/images";
 import BookingModal from "@/components/BookingModal";
 import CustomAlert from "@/components/CustomAlert";
+import PaymentWebView from "@/components/PaymentWebView";
+import icons from "@/constants/icons";
 
+
+
+import { useAuth } from "@/hooks/useAuth";
 
 const Properties = () => {
   const params = useLocalSearchParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const { user } = useAuth();
   const [item, setItem] = useState < Property | null > (null);
   const [error, setError] = useState < string | null > (null);
   const [loading, setLoading] = useState(true);
@@ -34,14 +37,29 @@ const Properties = () => {
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
+  const [alertAction, setAlertAction] = useState < (() => void) | null > (null);
   const windowHeight = Dimensions.get("window").height;
   const windowWidth = Dimensions.get("window").width;
+  const [paymentUrl, setPaymentUrl] = useState("");
+  const [paymentVisible, setPaymentVisible] = useState(false);
+  const [currentReference, setCurrentReference] = useState("");
+  const [bookingId, setBookingId] = useState < number | null > (null);
+
   const property = item;
 
-  const showAlert = (title: string, message: string) => {
+  const showAlert = (title: string, message: string, action?: () => void) => {
     setAlertTitle(title);
     setAlertMessage(message);
+    if (action) setAlertAction(() => action);
     setAlertVisible(true);
+  };
+
+  const handleAlertClose = () => {
+    setAlertVisible(false);
+    if (alertAction) {
+      alertAction();
+      setAlertAction(null);
+    }
   };
 
   useEffect(() => {
@@ -65,6 +83,12 @@ const Properties = () => {
   }, [id]);
 
   const handleBookNow = () => {
+    if (!user) {
+      showAlert("Login Required", "You must be logged in to book a property.", () => {
+        router.push("/(auth)/login");
+      });
+      return;
+    }
     setBookingModalVisible(true);
   };
 
@@ -73,30 +97,65 @@ const Properties = () => {
 
     setBookingLoading(true);
     try {
-      const response = await createBooking({
+      const bookingResponse = await createBooking({
         property_id: property.id,
         check_in: checkIn,
         check_out: checkOut,
       });
 
-      if (response.status === 'ok' || response.status === 'success') {
-        setBookingModalVisible(false);
-        
-        showAlert(
-          'Booking Successful',
-          `Your booking has been created!\nBooking ID: ${response.data.booking_id}\nAmount: ₦${response.data.amount.toLocaleString()}`
-        );
-
-        // TODO: Navigate to payment or booking details
-        // You can integrate payment here if needed
-      } else {
-        showAlert('Booking Failed', 'Unable to create booking. Please try again.');
+      if (bookingResponse.status !== "ok") {
+        showAlert("Booking Failed", "Unable to create booking. Please try again.");
+        return;
       }
+
+      setBookingId(bookingResponse.data.booking_id);
+
+      const paymentResponse = await initializePayment({
+        booking_id: bookingResponse.data.booking_id,
+      });
+
+      if (paymentResponse.status !== "ok") {
+        showAlert("Payment Failed", "Unable to initialize payment. Please try again.");
+        return;
+      }
+      setCurrentReference(paymentResponse.data.reference);
+      setPaymentUrl(paymentResponse.data.authorization_url);
+      setBookingModalVisible(false);
+      setPaymentVisible(true);
     } catch (error: any) {
-      const errorMessage = error?.message || 'An error occurred while creating your booking.';
-      showAlert('Error', errorMessage);
+      showAlert("Error", error?.message || "Something went wrong.");
     } finally {
       setBookingLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (reference: string) => {
+    setPaymentVisible(false);
+    setLoading(true);
+
+    if (!bookingId) {
+      showAlert("Error", "Booking ID not found. Contact support.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const complete = await completePayment({
+        booking_id: bookingId,
+        reference
+      });
+
+      if (complete.data.success) {
+        showAlert("Payment Successful 🎉", "Your booking has been confirmed!", () => {
+          router.push('/(root)/(tabs)/home');
+        });
+      } else {
+        showAlert("Payment Pending", "Your payment is being processed.");
+      }
+    } catch (error) {
+      showAlert("Verification Failed", "Could not verify payment. Contact support.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -348,7 +407,7 @@ const Properties = () => {
             </Text>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleBookNow}
             className="flex-1 bg-primary py-4 rounded-full shadow-lg shadow-primary/30"
           >
@@ -374,7 +433,14 @@ const Properties = () => {
         visible={alertVisible}
         title={alertTitle}
         message={alertMessage}
-        onClose={() => setAlertVisible(false)}
+        onClose={handleAlertClose}
+      />
+
+      <PaymentWebView
+        visible={paymentVisible}
+        authorizationUrl={paymentUrl}
+        onSuccess={handlePaymentSuccess}
+        onClose={() => setPaymentVisible(false)}
       />
     </View>
   )

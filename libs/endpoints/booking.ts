@@ -44,9 +44,11 @@ export interface PaymentVerifyResponse {
 /**
  * Create a new booking
  */
-export async function createBooking(payload: BookingPayload): Promise<BookingResponse> {
-  return apiRequest<BookingResponse>('/bookings', {
-    method: 'POST',
+export async function createBooking(
+  payload: BookingPayload,
+): Promise<BookingResponse> {
+  return apiRequest<BookingResponse>("/bookings", {
+    method: "POST",
     body: payload,
     auth: true,
   });
@@ -55,9 +57,11 @@ export async function createBooking(payload: BookingPayload): Promise<BookingRes
 /**
  * Initialize Paystack payment for a booking
  */
-export async function initializePayment(payload: PaymentInitPayload): Promise<PaymentInitResponse> {
-  return apiRequest<PaymentInitResponse>('/payments/init', {
-    method: 'POST',
+export async function initializePayment(
+  payload: PaymentInitPayload,
+): Promise<PaymentInitResponse> {
+  return apiRequest<PaymentInitResponse>("/payments/init", {
+    method: "POST",
     body: payload,
     auth: true,
   });
@@ -66,10 +70,36 @@ export async function initializePayment(payload: PaymentInitPayload): Promise<Pa
 /**
  * Verify Paystack payment
  */
-export async function verifyPayment(payload: PaymentVerifyPayload): Promise<PaymentVerifyResponse> {
-  return apiRequest<PaymentVerifyResponse>('/payments/verify', {
-    method: 'POST',
+export async function verifyPayment(
+  payload: PaymentVerifyPayload,
+): Promise<PaymentVerifyResponse> {
+  return apiRequest<PaymentVerifyResponse>("/payments/verify", {
+    method: "POST",
     body: payload,
     auth: true,
   });
+}
+/**
+ * Mobile-only: Verify Paystack and complete booking
+ */
+export async function completePayment(
+  payload: PaymentCompletePayload,
+): Promise<PaymentCompleteResponse> {
+  return apiRequest<PaymentCompleteResponse>("/payments/complete", {
+    method: "POST",
+    body: payload,
+    auth: true,
+  });
+}
+
+export interface PaymentCompletePayload {
+  booking_id: number;
+  reference: string;
+}
+
+export interface PaymentCompleteResponse {
+  status: string;
+  data: {
+    success: boolean;
+  };
 }

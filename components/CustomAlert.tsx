@@ -6,9 +6,20 @@ interface CustomAlertProps {
   title: string;
   message: string;
   onClose: () => void;
+  onCancel?: () => void;      
+  cancelText?: string;        
+  confirmText?: string; 
 }
 
-const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, onClose }) => {
+const CustomAlert: React.FC<CustomAlertProps> = ({ 
+  visible, 
+  title, 
+  message, 
+  onClose,
+  onCancel,        
+  cancelText,
+  confirmText
+}) => {
   return (
     <Modal
       animationType="fade"
@@ -20,9 +31,27 @@ const CustomAlert: React.FC<CustomAlertProps> = ({ visible, title, message, onCl
         <View style={styles.modalContainer}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>OK</Text>
-          </TouchableOpacity>
+
+          <View style={styles.buttonContainer}>
+            {/* Cancel button - only shows if onCancel is passed */}
+            {onCancel && (
+              <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+                <Text style={styles.cancelButtonText}>
+                  {cancelText || "Cancel"}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Confirm button */}
+            <TouchableOpacity 
+              style={[styles.button, onCancel && styles.buttonFlex]} 
+              onPress={onClose}
+            >
+              <Text style={styles.buttonText}>
+                {confirmText || "OK"}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -43,10 +72,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
@@ -62,11 +88,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
   button: {
     backgroundColor: '#C9A24D',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonFlex: {
+    flex: 1,  // ← takes equal space when both buttons are shown
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+  },
+  cancelButtonText: {
+    color: '#6B7280',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   buttonText: {
     color: 'white',

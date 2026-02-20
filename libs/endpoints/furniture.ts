@@ -28,7 +28,7 @@ export async function getFurnitureList(): Promise<FurnitureResponse> {
     });
     return response;
   } catch (error) {
-    console.error("Error fetching furniture list:", error);
+    // console.error("Error fetching furniture list:", error);
     throw error;
   }
 }
@@ -53,7 +53,7 @@ export async function getFurnitureDetail(
     });
     return response;
   } catch (error) {
-    console.error("Error fetching furniture detail:", error);
+    // console.error("Error fetching furniture detail:", error);
     throw error;
   }
 }
