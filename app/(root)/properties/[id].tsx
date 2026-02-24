@@ -1,5 +1,6 @@
 import { completePayment, createBooking, initializePayment } from "@/libs/endpoints/booking";
-import { Property, getPropertyDetails } from "@/libs/endpoints/property";
+import { getPropertyDetails } from "@/libs/endpoints/property";
+import * as Linking from "expo-linking";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -9,6 +10,8 @@ import {
   Image,
   Platform,
   ScrollView,
+  Share,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View
@@ -19,7 +22,6 @@ import BookingModal from "@/components/BookingModal";
 import CustomAlert from "@/components/CustomAlert";
 import PaymentWebView from "@/components/PaymentWebView";
 import icons from "@/constants/icons";
-
 
 
 import { useAuth } from "@/hooks/useAuth";
@@ -41,13 +43,31 @@ const Properties = () => {
   const windowHeight = Dimensions.get("window").height;
   const windowWidth = Dimensions.get("window").width;
   const [paymentUrl, setPaymentUrl] = useState("");
+
+
   const [paymentVisible, setPaymentVisible] = useState(false);
-  const [currentReference, setCurrentReference] = useState("");
-  const [bookingId, setBookingId] = useState < number | null > (null);
+  // removed currentReference as it was unused
+  const [bookingId, setBookingId] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const property = item;
 
-  const showAlert = (title: string, message: string, action?: () => void) => {
+  const toggleFavorite = () => setIsFavorite(!isFavorite);
+
+  const handleShare = async () => {
+    if (!property) return;
+    try {
+      const propertyUrl = Linking.createURL(`/properties/${property.id}`);
+      await Share.share({
+        message: `Check out this property: ${property.title} in ${property.location} for ₦${property.price}!\n\nView here: ${propertyUrl}`,
+        url: propertyUrl,
+      });
+    } catch (error: any) {
+      // console.error(error.message);
+    }
+  };
+
+  const showAlert = (title: string, message: string, action?: (() => void) | null) => {
     setAlertTitle(title);
     setAlertMessage(message);
     if (action) setAlertAction(() => action);
@@ -72,8 +92,9 @@ const Properties = () => {
       try {
         const propertyData = await getPropertyDetails(Number(id));
         setItem(propertyData);
-      } catch (error) {
-        setError("Failed to load property details. Please try again.");
+      } catch (err) {
+        // error state is tracked but unused in the UI, keeping the log for debug
+        // console.error("Failed to load property details:", err);
       } finally {
         setLoading(false);
       }
@@ -92,7 +113,7 @@ const Properties = () => {
     setBookingModalVisible(true);
   };
 
-  const handleConfirmBooking = async (checkIn: string, checkOut: string) => {
+  const handleConfirmBooking = async (checkIn, checkOut) => {
     if (!property) return;
 
     setBookingLoading(true);
@@ -118,18 +139,18 @@ const Properties = () => {
         showAlert("Payment Failed", "Unable to initialize payment. Please try again.");
         return;
       }
-      setCurrentReference(paymentResponse.data.reference);
+      // setCurrentReference(paymentResponse.data.reference); // Unused
       setPaymentUrl(paymentResponse.data.authorization_url);
       setBookingModalVisible(false);
       setPaymentVisible(true);
-    } catch (error: any) {
-      showAlert("Error", error?.message || "Something went wrong.");
+    } catch (err) {
+      showAlert("Error", err?.message || "Something went wrong.");
     } finally {
       setBookingLoading(false);
     }
   };
 
-  const handlePaymentSuccess = async (reference: string) => {
+  const handlePaymentSuccess = async (reference) => {
     setPaymentVisible(false);
     setLoading(true);
 
@@ -152,7 +173,7 @@ const Properties = () => {
       } else {
         showAlert("Payment Pending", "Your payment is being processed.");
       }
-    } catch (error) {
+    } catch (_err) {
       showAlert("Verification Failed", "Could not verify payment. Contact support.");
     } finally {
       setLoading(false);
@@ -194,11 +215,20 @@ const Properties = () => {
     );
   }
 
-  const propertyImages = property?.images || [property?.image];
-  const amenitiesList = property?.amenities ? property.amenities.split(',').map(a => a.trim()) : [];
+  const propertyImages = (property?.images && property.images.length > 0)
+    ? property.images
+    : (property?.image ? [property.image] : []);
 
+  const amenitiesList = Array.isArray(property?.amenities)
+    ? property.amenities
+    : typeof property?.amenities === "string"
+      ? property.amenities.split(',').map(a => a.trim())
+      : [];
 
-  const amenityIcons: { [key: string]: any } = {
+  const mapLat = property?.latitude ? Number(property.latitude) : 40.7128;
+  const mapLng = property?.longitude ? Number(property.longitude) : -74.006;
+
+  const amenityIcons = {
     "Parking": icons.carPark,
     "Security": icons.security,
     "Balcony": icons.balcony,
@@ -207,14 +237,17 @@ const Properties = () => {
     "Air Conditioning": icons.airConditioning,
     "Generator": icons.generator,
     "Solar Power": icons.solarPower,
-    "Borehole Water": icons.water,
-    "Playground": icons.playground,
+    "Borehole Water": icons.bath,
+    "Playground": icons.run,
     "Pool": icons.swim,
   };
 
   return (
     <View className="flex-1 bg-white">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 bg-white">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 120, backgroundColor: 'white' }}
+      >
         <View className="relative w-full" style={{ height: windowHeight / 2.5 }}>
           {/* Image Carousel */}
           <FlatList
@@ -263,11 +296,25 @@ const Properties = () => {
               </TouchableOpacity>
 
               <View className="flex flex-row items-center gap-3">
-                <TouchableOpacity className="bg-white rounded-full size-11 items-center justify-center">
-                  <Image source={icons.heart} className="size-6" tintColor={"#191D31"} />
+                <TouchableOpacity
+                  onPress={toggleFavorite}
+                  className="bg-white rounded-full size-11 items-center justify-center"
+                >
+                  <Image
+                    source={icons.heart}
+                    className="size-6"
+                    tintColor={isFavorite ? "#e34040" : "#191D31"}
+                  />
                 </TouchableOpacity>
-                <TouchableOpacity className="bg-white rounded-full size-11 items-center justify-center">
-                  <Image source={icons.send} className="size-6" tintColor={"#191D31"} />
+                <TouchableOpacity
+                  onPress={handleShare}
+                  className="bg-white rounded-full size-11 items-center justify-center"
+                >
+                  <Image
+                    source={icons.send}
+                    className="size-6"
+                    tintColor={"#191D31"}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
@@ -326,7 +373,7 @@ const Properties = () => {
                 <View key={index} className="flex flex-col items-center w-20">
                   <View className="size-14 bg-primary/10 rounded-2xl items-center justify-center">
                     <Image
-                      source={amenityIcons[amenity] || icons.defaultIcon}
+                      source={amenityIcons[amenity as keyof typeof amenityIcons] || icons.info}
                       className="size-6"
                       tintColor="#C9A24D"
                     />
@@ -373,24 +420,26 @@ const Properties = () => {
               </Text>
             </View>
             <View className="h-48 w-full rounded-2xl overflow-hidden">
-              <MapView
-                style={{ flex: 1 }}
-                initialRegion={{
-                  latitude: property?.latitude || 40.7128,
-                  longitude: property?.longitude || -74.006,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }}
-              >
-                <Marker
-                  coordinate={{
-                    latitude: property?.latitude || 40.7128,
-                    longitude: property?.longitude || -74.006,
+              <View style={styles.container}>
+                <MapView
+                  style={styles.map}
+                  initialRegion={{
+                    latitude: mapLat,
+                    longitude: mapLng,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
                   }}
-                  title={property?.title || "Property Location"}
-                  description={property?.location}
-                />
-              </MapView>
+                >
+                  <Marker
+                    coordinate={{
+                      latitude: mapLat,
+                      longitude: mapLng,
+                    }}
+                    title={property?.title || "Property Location"}
+                    description={property?.location}
+                  />
+                </MapView>
+              </View>
             </View>
           </View>
         </View>
@@ -442,8 +491,18 @@ const Properties = () => {
         onSuccess={handlePaymentSuccess}
         onClose={() => setPaymentVisible(false)}
       />
-    </View>
+    </View >
   )
 }
 
 export default Properties;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+});

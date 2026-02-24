@@ -83,18 +83,18 @@ const FurnitureDetail = () => {
     return (
         <SafeAreaView className="flex-1 bg-gray-200" edges={['top']}>
             {/* Header */}
-            <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
+            <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
                 <TouchableOpacity onPress={() => router.back()} className="p-2 rounded-full bg-gray-100">
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text className="text-lg font-poppins-semibold text-gray-900">Furniture Details</Text>
-                <TouchableOpacity onPress={handleToggleFavorite} className="p-2 rounded-full bg-gray-100">
+                <Text className="text-lg font-poppins-semibold text-gray-900 ps-4">Furniture Details</Text>
+                {/* <TouchableOpacity onPress={handleToggleFavorite} className="p-2 rounded-full bg-gray-100">
                     <Ionicons 
                         name={isFavorite ? "heart" : "heart-outline"} 
                         size={24} 
                         color={isFavorite ? "#FF6B6B" : "#000"} 
                     />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

@@ -1,6 +1,6 @@
 import icons from "@/constants/icons";
 import images from "@/constants/images";
-import { logout } from "@/libs/endpoints/auth";
+import { useAuth } from "@/hooks/useAuth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -18,6 +18,7 @@ const MENU_ITEMS = [
 const AgentHeader = () => {
   const [openMenu, setOpenMenu] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
+  const { logout } = useAuth();
 
   useEffect(() => {
     if (openMenu) {
@@ -34,8 +35,8 @@ const AgentHeader = () => {
 
   const handleLogout = async () => {
     try {
+      setOpenMenu(false);
       await logout();
-      // reload the app
       router.replace("/(auth)/login");
     } catch (error) {
       // console.error("Logout failed:", error);

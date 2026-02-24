@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 
 interface FurnitureCardProps {
     item: FurnitureItem;
-    onPress: () => void;
+    onPress: (id: number) => void;
 }
 
 export const FurnitureCard = ({ item, onPress }: FurnitureCardProps) => {
@@ -32,7 +32,7 @@ export const FurnitureCard = ({ item, onPress }: FurnitureCardProps) => {
                     </View>
                 </View>
                 <View className='flex-row mt-0 justify-between items-center px-4 py-4'>
-                    <TouchableOpacity className="px-6 py-2.5 bg-primary rounded-lg" >
+                    <TouchableOpacity className="px-6 py-2.5 bg-primary rounded-lg" onPress={() => onPress(item.id)}>
                         <Text className="text-sm font-poppins-semibold text-white">View Details</Text>
                     </TouchableOpacity>
                     {/* <TouchableOpacity className="p-2.5 bg-gray-100 rounded-lg" >

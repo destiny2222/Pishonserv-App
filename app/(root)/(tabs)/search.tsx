@@ -11,15 +11,15 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 
 const search = () => {
-  const params = useLocalSearchParams<{ 
+  const params = useLocalSearchParams < {
     filter?: string;
     query?: string;
     type?: string;
     location?: string;
     minPrice?: string;
     maxPrice?: string;
-  }>();
-  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  } > ();
+  const [allProperties, setAllProperties] = useState < Property[] > ([]);
   const [loading, setLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,11 +98,11 @@ const search = () => {
 
   return (
     <SafeAreaView className='h-full bg-gray-200' edges={['top']}>
-      <FlatList 
+      <FlatList
         data={filterLoading ? [] : filteredProperties}
-        renderItem={({ item }) => 
+        renderItem={({ item }) =>
           <Card item={item} onPress={() => router.push(`/properties/${item.id}`)} />
-        } 
+        }
         numColumns={2}
         keyExtractor={(item) => item.id.toString()}
         contentContainerClassName="pb-32"
@@ -111,7 +111,7 @@ const search = () => {
         refreshing={refreshing}
         onRefresh={handleRefresh}
         ListHeaderComponent={
-          <View className='px-4 pt-4'>
+          <View className='px-4 pt-4 bg-white'>
             <TopHeader title='Search for your ideal property' />
             <Search />
             <View className='py-3'>
@@ -119,10 +119,10 @@ const search = () => {
               <Text className="text-xl font-rubik-bold text-black-300 mt-5">
                 {loading ? <ActivityIndicator size="large" color="#C9A24D" /> : `${filteredProperties.length} related properties found`}
               </Text>
-              
+
             </View>
 
-          </View> 
+          </View>
         }
         ListEmptyComponent={
           filterLoading ? (

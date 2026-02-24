@@ -5,6 +5,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './global.css';
 
 
@@ -26,14 +27,16 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return <ActivityIndicator size="large" color="#C9A24D"  className='flex-1 justify-center items-center' />;
+    return <ActivityIndicator size="large" color="#C9A24D" className='flex-1 justify-center items-center' />;
   }
   // return <Stack screenOptions={{ headerShown: false }} />;
   return (
-    <UserProvider>
-      <AuthGuard>
-        <Stack  screenOptions={{ headerShown: false }} />
-      </AuthGuard>
-    </UserProvider>
+    <SafeAreaProvider>
+      <UserProvider>
+        <AuthGuard>
+          <Stack screenOptions={{ headerShown: false }} />
+        </AuthGuard>
+      </UserProvider>
+    </SafeAreaProvider>
   )
 }

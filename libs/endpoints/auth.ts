@@ -1,4 +1,4 @@
-import { apiRequest } from '@/libs/api/clients';
+import { apiRequest } from "@/libs/api/clients";
 import type {
   LoginPayload,
   LoginResponse,
@@ -9,16 +9,19 @@ import type {
   RegisterPayload,
   RegisterResponse,
   ResendOtpPayload,
+  User,
   UserResponse,
-} from '@/types/auth';
+} from "@/types/auth";
 import * as SecureStore from "expo-secure-store";
 
 /**
  * Register a new user
  */
-export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
-  return apiRequest<RegisterResponse>('/auth/register', {
-    method: 'POST',
+export async function register(
+  payload: RegisterPayload,
+): Promise<RegisterResponse> {
+  return apiRequest<RegisterResponse>("/auth/register", {
+    method: "POST",
     body: payload,
     auth: false,
   });
@@ -28,14 +31,14 @@ export async function register(payload: RegisterPayload): Promise<RegisterRespon
  * Login user and store token
  */
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
-  const response = await apiRequest<LoginResponse>('/auth/login', {
-    method: 'POST',
+  const response = await apiRequest<LoginResponse>("/auth/login", {
+    method: "POST",
     body: payload,
     auth: false,
   });
   // Store the token securely
   if (response.data.token) {
-    await SecureStore.setItemAsync('access_token', response.data.token);
+    await SecureStore.setItemAsync("access_token", response.data.token);
   }
 
   return response;
@@ -44,16 +47,18 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
 /**
  * Verify OTP after registration
  */
-export async function verifyOtp(payload: OtpPayload): Promise<OtpVerifyResponse> {
-  const response = await apiRequest<OtpVerifyResponse>('/auth/otp/verify', {
-    method: 'POST',
+export async function verifyOtp(
+  payload: OtpPayload,
+): Promise<OtpVerifyResponse> {
+  const response = await apiRequest<OtpVerifyResponse>("/auth/otp/verify", {
+    method: "POST",
     body: payload,
     auth: false,
   });
 
   // Store the token securely
   if (response.data.token) {
-    await SecureStore.setItemAsync('access_token', response.data.token);
+    await SecureStore.setItemAsync("access_token", response.data.token);
   }
 
   return response;
@@ -62,9 +67,11 @@ export async function verifyOtp(payload: OtpPayload): Promise<OtpVerifyResponse>
 /**
  * Resend OTP to user email
  */
-export async function resendOtp(payload: ResendOtpPayload): Promise<{ status: string; message?: string }> {
-  return apiRequest('/auth/otp/resend', {
-    method: 'POST',
+export async function resendOtp(
+  payload: ResendOtpPayload,
+): Promise<{ status: string; message?: string }> {
+  return apiRequest("/auth/otp/resend", {
+    method: "POST",
     body: payload,
     auth: false,
   });
@@ -73,9 +80,11 @@ export async function resendOtp(payload: ResendOtpPayload): Promise<{ status: st
 /**
  * Request password reset OTP
  */
-export async function requestPasswordReset(payload: PasswordResetRequestPayload): Promise<{ status: string; message?: string }> {
-  return apiRequest('/auth/password/request-reset', {
-    method: 'POST',
+export async function requestPasswordReset(
+  payload: PasswordResetRequestPayload,
+): Promise<{ status: string; message?: string }> {
+  return apiRequest("/auth/password/request-reset", {
+    method: "POST",
     body: payload,
     auth: false,
   });
@@ -84,9 +93,11 @@ export async function requestPasswordReset(payload: PasswordResetRequestPayload)
 /**
  * Reset password using OTP
  */
-export async function resetPassword(payload: PasswordResetPayload): Promise<{ status: string; message?: string }> {
-  return apiRequest('/auth/password/reset', {
-    method: 'POST',
+export async function resetPassword(
+  payload: PasswordResetPayload,
+): Promise<{ status: string; message?: string }> {
+  return apiRequest("/auth/password/reset", {
+    method: "POST",
     body: payload,
     auth: false,
   });
@@ -96,8 +107,8 @@ export async function resetPassword(payload: PasswordResetPayload): Promise<{ st
  * Get current authenticated user
  */
 export async function getCurrentUser(): Promise<UserResponse> {
-  return apiRequest<UserResponse>('/users/me', {
-    method: 'GET',
+  return apiRequest<UserResponse>("/users/me", {
+    method: "GET",
     auth: true,
   });
 }
@@ -105,9 +116,11 @@ export async function getCurrentUser(): Promise<UserResponse> {
 /**
  * Update current authenticated user
  */
-export async function updateCurrentUser(payload: Partial<UserResponse>): Promise<UserResponse> {
-  return apiRequest<UserResponse>('/users/me', {
-    method: 'PATCH',
+export async function updateCurrentUser(
+  payload: Partial<User>,
+): Promise<UserResponse> {
+  return apiRequest<UserResponse>("/users/me", {
+    method: "PATCH",
     body: payload,
     auth: true,
   });
@@ -117,5 +130,5 @@ export async function updateCurrentUser(payload: Partial<UserResponse>): Promise
  * Logout user (clear stored token)
  */
 export async function logout(): Promise<void> {
-  await SecureStore.deleteItemAsync('access_token');
+  await SecureStore.deleteItemAsync("access_token");
 }

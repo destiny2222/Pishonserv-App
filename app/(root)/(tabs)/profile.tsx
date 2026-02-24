@@ -3,9 +3,12 @@ import { settings } from "@/constants/data";
 import icons from "@/constants/icons";
 import images from "@/constants/images";
 import { useAuth } from "@/hooks/useAuth";
-import { Href, router } from "expo-router";
-import React from "react";
+import { updateCurrentUser } from "@/libs/endpoints/auth";
+import * as ImagePicker from "expo-image-picker";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ImageSourcePropType,
@@ -15,7 +18,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// import { getCurrentUser } from "@/libs/endpoints/auth";
 
 interface SettingsItemProps {
   icon: ImageSourcePropType;
@@ -48,21 +50,57 @@ const SettingsItem = ({
   </TouchableOpacity>
 );
 
-const profile = () => {
-  const { logout, user, isAuthenticated } = useAuth();
-
+const Profile = () => {
+  const { logout, user, isAuthenticated, refreshUser } = useAuth();
+  // const [uploadingImage, setUploadingImage] = useState(false);
   const handleLogout = async () => {
     try {
       await logout();
-      router.replace("/(auth)/login");
-    } catch (error) {
-      // console.error("Error logging out:", error);
+      router.replace("/login");
+    } catch {
+      // console.error("Error logging out:", error)
     }
   };
 
   const handleLogin = () => {
-    router.push("/(auth)/login");
+    router.push("/login");
   };
+
+  // const handleEditImage = async () => {
+  //   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  //   if (!perm.granted) {
+  //     Alert.alert("Permission Required", "Please allow access to your photos.");
+  //     return;
+  //   }
+
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ["images"],
+  //     quality: 0.6,
+  //     allowsEditing: true,
+  //     aspect: [1, 1],
+  //     base64: true,
+  //   });
+
+  //   if (result.canceled || !result.assets[0]) return;
+
+  //   // const asset = result.assets[0];
+  //   // const base64Image = `data:${asset.mimeType ?? "image/jpeg"};base64,${asset.base64}`;
+
+  //   setUploadingImage(true);
+  //   try {
+  //     await updateCurrentUser({ profile_image: result.assets[0] });
+  //     await refreshUser();
+  //     Alert.alert("Success", "Profile image updated successfully");
+  //   } catch {
+  //     // Alert.alert("Error", e?.data?.message || e?.message || "Could not update profile image.");
+  //   } finally {
+  //     setUploadingImage(false);
+  //   }
+  // };
+
+  const profileImageSource = user?.profile_image
+    ? { uri: user.profile_image }
+    : images.avatar;
 
   // Guest user view
   if (!isAuthenticated) {
@@ -110,17 +148,28 @@ const profile = () => {
   // Authenticated user view
   return (
     <SafeAreaView className="h-full bg-gray-200" edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}  contentContainerClassName="pb-32 px-2" >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 px-2" >
         <TopHeader title="Profile" />
         <View className="flex flex-col items-center relative mt-5">
           <View className="flex flex-col items-center">
-            <Image
-              source={{ uri: user?.profile_image  }}
-              className="size-44 relative rounded-full"
-            />
-            <TouchableOpacity className="absolute bottom-11 right-2">
-              <Image source={icons.edit} className="size-9" />
-            </TouchableOpacity>
+            <View className="relative">
+              <Image
+                source={profileImageSource}
+                className="size-44 rounded-full"
+              />
+              {/* {uploadingImage && (
+                <View className="absolute inset-0 rounded-full bg-black/40 items-center justify-center">
+                  <ActivityIndicator color="#fff" size="large" />
+                </View>
+              )} */}
+              {/* <TouchableOpacity
+                className="absolute bottom-1 right-1 bg-white rounded-full p-1 shadow"
+                onPress={handleEditImage}
+                disabled={uploadingImage}
+              >
+                <Image source={icons.edit} className="size-7" />
+              </TouchableOpacity> */}
+            </View>
             <Text className="pt-4 font-poppins-semibold text-2xl text-secondary font-semibold">
               {user?.name || ""} {user?.lname || ""}
             </Text>
@@ -133,7 +182,7 @@ const profile = () => {
               key={index}
               icon={item.icon}
               title={item.title}
-              onPress={() => router.push(item.href as Href)}
+              onPress={() => router.push(item.href as any)}
             />
           ))}
         </View>
@@ -152,4 +201,4 @@ const profile = () => {
   );
 };
 
-export default profile;
+export default Profile;

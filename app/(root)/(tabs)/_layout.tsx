@@ -5,7 +5,7 @@ import icons from '@/constants/icons'
 
 const TabIcon = ({ focused, icon, title }: { focused: boolean; icon: any, title: string }) => {
   return (
-    <View className='flex-1 flex-col flex items-center mt-3'>
+    <View className='flex-1 flex-col flex items-center pt-2'>
       <Image source={icon} className='w-7 h-7' tintColor={focused ? '#C9A24D' : '#0D3B66'} resizeMode='contain' />
       <Text className={`mt-1 font-medium font-poppins-medium text-center w-full text-base ${focused ? 'text-primary-300' : 'text-gray-500'}`}>{title}</Text>
     </View>
@@ -18,11 +18,12 @@ const  TabsLayout = () => {
       <Tabs screenOptions={{
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor:'white',
+          backgroundColor:'#fff',
           position: 'absolute',
           borderTopColor: '#0061FF1a',
           borderTopWidth: 1,
           minHeight: 80,
+          paddingTop: 2,
         }
       }}>
         <Tabs.Screen name='home' options={{ headerShown: false, title: "Home", 
