@@ -36,7 +36,7 @@ interface PropertiesResponse {
 
 const PROPERTY_TOKEN = process.env.EXPO_PUBLIC_API_ACCESS_TOKEN;
 
-function propertyAuthHeaders() {
+function propertyAuthHeaders(): Record<string, string> {
   if (!PROPERTY_TOKEN) {
     // console.warn("Missing EXPO_PUBLIC_API_ACCESS_TOKEN (properties will fail if backend requires it)");
     return {};
@@ -114,12 +114,18 @@ export async function getFeaturedProperties() {
   }
 }
 
-export async function getPropertyDetails(id: number): Promise<Property> {
-  const endpoint = ENDPOINTS.GET_PROPERTY_DETAILS(id);
-  const response = await apiRequest<ApiResponse<Property>>(endpoint, {
-    auth: false,
-    headers: propertyAuthHeaders(),
-  });
-
-  return response.data;
+export async function getPropertyDetails(id: number): Promise<Property | null> {
+  try {
+    const response = await apiRequest<ApiResponse<Property>>(
+      ENDPOINTS.GET_PROPERTY_DETAILS(id),
+      {
+        auth: false,
+        headers: propertyAuthHeaders(),
+      },
+    );
+    return response.data ?? null;
+  } catch (error) {
+    // console.error("Error fetching property details:", error);
+    return null;
+  }
 }

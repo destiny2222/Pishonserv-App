@@ -11,7 +11,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function home() {
+export default function Home() {
   const params = useLocalSearchParams < { filter?: string } > ();
   const [featuredProperties, setFeaturedProperties] = useState < Property[] > ([]);
   const [wishlistIds, setWishlistIds] = useState < number[] > ([]);
@@ -97,7 +97,7 @@ export default function home() {
         ListHeaderComponent={
           <View className="px-3">
             {user?.role === 'agent' || user?.role === 'owner' ? <AgentHeader /> : <Header />}
-            <HeroBanner className="mb-96" autoplay interval={4000} showsVerticalScrollIndicator={false} />
+            <HeroBanner autoplay interval={4000} />
             <View className='px-2'>
               <View className="flex flex-row justify-between items-center px-2 mb-3 mt-10">
                 <Text className="text-secondary text-lg font-poppins-semibold font-bold">

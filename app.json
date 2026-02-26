@@ -24,7 +24,12 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.destiny2222.Pishonserv"
+      "package": "com.destiny2222.Pishonserv",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyD3uukGP2qQ0S9KHJGfIapiT7caPGKMZv0"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -57,14 +62,14 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "0369acbf-de9a-4e12-8bbb-1214b4d0b5ea"
+        "projectId": "005ceb43-eb5c-4e25-bb2c-e7e2e1a1b995"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/0369acbf-de9a-4e12-8bbb-1214b4d0b5ea"
+      "url": "https://u.expo.dev/005ceb43-eb5c-4e25-bb2c-e7e2e1a1b995"
     }
   }
 }

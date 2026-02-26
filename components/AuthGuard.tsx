@@ -28,7 +28,6 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
     // Protected routes that require authentication
     const protectedRoutes = [
-      "profile",
       "editprofile",
       "security",
       "transactions",

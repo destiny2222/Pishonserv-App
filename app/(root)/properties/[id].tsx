@@ -16,15 +16,13 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
 
 import BookingModal from "@/components/BookingModal";
 import CustomAlert from "@/components/CustomAlert";
 import PaymentWebView from "@/components/PaymentWebView";
 import icons from "@/constants/icons";
-
-
 import { useAuth } from "@/hooks/useAuth";
+import MapView, { Marker } from 'react-native-maps';
 
 const Properties = () => {
   const params = useLocalSearchParams();
@@ -55,7 +53,7 @@ const Properties = () => {
   const toggleFavorite = () => setIsFavorite(!isFavorite);
 
   const handleShare = async () => {
-    if (!property) return;
+    if (!property || !property?.id) return;
     try {
       const propertyUrl = Linking.createURL(`/properties/${property.id}`);
       await Share.share({
@@ -114,7 +112,7 @@ const Properties = () => {
   };
 
   const handleConfirmBooking = async (checkIn, checkOut) => {
-    if (!property) return;
+    if (!property || !property?.id) return;
 
     setBookingLoading(true);
     try {
@@ -224,9 +222,6 @@ const Properties = () => {
     : typeof property?.amenities === "string"
       ? property.amenities.split(',').map(a => a.trim())
       : [];
-
-  const mapLat = property?.latitude ? Number(property.latitude) : 40.7128;
-  const mapLng = property?.longitude ? Number(property.longitude) : -74.006;
 
   const amenityIcons = {
     "Parking": icons.carPark,
@@ -419,27 +414,36 @@ const Properties = () => {
                 {property?.location || "Grand City St. 100, New York, United States"}
               </Text>
             </View>
-            <View className="h-48 w-full rounded-2xl overflow-hidden">
-              <View style={styles.container}>
+            <View className="h-48 w-full rounded-2xl overflow-hidden mt-4">
+              {property?.latitude && property?.longitude ? (
                 <MapView
-                  style={styles.map}
+                  style={{ width: '100%', height: '100%' }}
                   initialRegion={{
-                    latitude: mapLat,
-                    longitude: mapLng,
+                    latitude: Number(property.latitude),
+                    longitude: Number(property.longitude),
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
                   }}
                 >
                   <Marker
                     coordinate={{
-                      latitude: mapLat,
-                      longitude: mapLng,
+                      latitude: Number(property.latitude),
+                      longitude: Number(property.longitude),
                     }}
-                    title={property?.title || "Property Location"}
-                    description={property?.location}
+                    title={property.title}
+                    description={property.location}
                   />
                 </MapView>
-              </View>
+              ) : (
+                <View style={[styles.container, { backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }]}>
+                  <View className="flex-1 items-center justify-center p-4">
+                    <Image source={icons.location} className="size-10 mb-2 opacity-50" tintColor="#C9A24D" />
+                    <Text className="text-gray-500 font-poppins text-center text-sm">
+                      Location view unavailable
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -500,9 +504,5 @@ export default Properties;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  map: {
-    width: '100%',
-    height: '100%',
   },
 });
