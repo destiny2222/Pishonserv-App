@@ -23,7 +23,7 @@ export function UserProvider({ children }) {
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      // console.error("Auth check failed:", error);
       // Clear invalid token
       await SecureStore.deleteItemAsync("access_token");
       setUser(null);

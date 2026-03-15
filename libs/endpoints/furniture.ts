@@ -44,13 +44,16 @@ export interface FurnitureDetailResponse {
  * Get details of a specific furniture item by ID
  */
 export async function getFurnitureDetail(
-  furnitureId: number ,
-): Promise<FurnitureDetailResponse> { 
-    try {
-    const response = await apiRequest<FurnitureDetailResponse>(`/products/${furnitureId}`, {
-      method: "GET",
-      auth: true,
-    });
+  furnitureId: number,
+): Promise<FurnitureDetailResponse> {
+  try {
+    const response = await apiRequest<FurnitureDetailResponse>(
+      `/products/${furnitureId}`,
+      {
+        method: "GET",
+        auth: false,
+      },
+    );
     return response;
   } catch (error) {
     // console.error("Error fetching furniture detail:", error);

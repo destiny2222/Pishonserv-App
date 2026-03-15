@@ -79,20 +79,20 @@ export default function Header() {
           </View>
         </View>
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => setCountryOpen(true)} className="flex-row items-center mr-4" style={{ color: "#eee" }}>
+          {/* <TouchableOpacity onPress={() => setCountryOpen(true)} className="flex-row items-center mr-4" style={{ color: "#eee" }}>
             <Text className="text-xl mr-1">{countryCode ? getFlagEmoji(countryCode) : "🏳️"}</Text>
             <Ionicons name="chevron-down" size={16} color="#111" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <Pressable onPress={() => setMenuOpen(true)} android_ripple={{ color: "#eee", borderless: true }}>
             <Ionicons name="menu-outline" size={30} color="#111" />
           </Pressable>
         </View>
       </View>
-      <CountryPicker visible={countryOpen} onClose={() => setCountryOpen(false)}
+      {/* <CountryPicker visible={countryOpen} onClose={() => setCountryOpen(false)}
         countryCode={countryCode as CountryCode}
         onSelect={onSelectCountry} withFilter withFlag withEmoji
         renderFlagButton={() => null}
-      />
+      /> */}
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable className="flex-1 bg-black/20 " onPress={() => setMenuOpen(false)}>
           <Pressable

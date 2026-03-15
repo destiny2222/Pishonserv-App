@@ -11,9 +11,9 @@ const { width } = Dimensions.get('window');
 const FurnitureDetail = () => {
     const { id } = useLocalSearchParams();
     const router = useRouter();
-    const [furniture, setFurniture] = useState<FurnitureItem | null>(null);
+    const [furniture, setFurniture] = useState < FurnitureItem | null > (null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState < string | null > (null);
     const [isFavorite, setIsFavorite] = useState(false);
     const [quantity, setQuantity] = useState(1);
 
@@ -28,7 +28,8 @@ const FurnitureDetail = () => {
             setLoading(true);
             setError(null);
             const response = await getFurnitureDetail(Number(id));
-            setFurniture(response.data);
+            // console.log(response.data.item);
+            setFurniture(response.data.item);
         } catch (err) {
             // console.error('Error fetching furniture detail:', err);
             setError('Failed to load furniture details');
@@ -100,8 +101,8 @@ const FurnitureDetail = () => {
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                 {/* Image Section */}
                 <View className="relative">
-                    <Image 
-                        source={furniture.images ? { uri: furniture.images } : images.featured1} 
+                    <Image
+                        source={furniture.images ? { uri: furniture.images } : images.featured1}
                         className="w-full h-96"
                         resizeMode="cover"
                     />
@@ -209,7 +210,7 @@ const FurnitureDetail = () => {
                     >
                         <Ionicons name="call-outline" size={20} color="#fff" />
                     </TouchableOpacity> */}
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         className="flex-1 bg-primary py-4 rounded-xl items-center justify-center flex-row gap-2"
                     >
                         <Ionicons name="call-outline" size={20} color="#fff" />
