@@ -36,7 +36,7 @@ const Home = () => {
                     processChartData(transactionsData.items);
                 }
             } catch (error) {
-                // console.error("Failed to fetch dashboard data", error);
+
             }
         };
         fetchData();
@@ -62,7 +62,7 @@ const Home = () => {
                         last6Months[monthIndex].value += t.amount;
                     }
                 } catch (e) {
-                    // console.warn("Invalid date in transaction:", t.created_at);
+
                 }
             }
         });

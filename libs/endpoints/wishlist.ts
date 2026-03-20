@@ -6,7 +6,7 @@ export interface WishlistItem {
   title: string;
   location: string;
   price: string;
-  images: string;
+  images: string | string[];
   created_at: string;
 }
 
@@ -38,7 +38,7 @@ export async function getWishlist(): Promise<WishlistResponse> {
     return response;
     
   } catch (error) {
-    // console.error("Error fetching wishlist:", error);
+    
     throw error;
   }
 }
@@ -57,7 +57,7 @@ export async function addToWishlist(
     });
     return response;
   } catch (error) {
-    // console.error("Error toggling wishlist:", error);
+    
     throw error;
   }
 }
@@ -76,7 +76,7 @@ export async function removeFromWishlist(
     });
     return response;
   } catch (error) {
-    // console.error("Error removing from wishlist:", error);
+      
     throw error;
   }
 }

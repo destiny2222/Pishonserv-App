@@ -27,7 +27,7 @@ export default function Header() {
       await logout();
       router.replace("/login");
     } catch (error) {
-      // console.error("Error logging out:", error);
+     
     }
   }, [logout]);
 
@@ -70,9 +70,11 @@ export default function Header() {
   return (
     <View className="w-full">
       {/* style={{ paddingTop: insets.top + 2 }} */}
-      <View className='w-full flex-row justify-between items-center px-4 py-6 overflow-hidden  bg-white shadow-white' >
+      <View className='w-full flex-row justify-between items-center px-4 py-6 overflow-hidden 
+        bg-white shadow-white' >
         <View className='flex-row items-center gap-5'>
-          <Image source={user?.profile_image ? { uri: user.profile_image } : images.avatar} className="w-12 h-12 rounded-full size-5" resizeMode="cover" />
+          <Image source={user?.profile_image ? { uri: user.profile_image } : images.avatar} className="w-12 
+            h-12 rounded-full size-5" resizeMode="cover" />
           <View className=''>
             <Text className='text-2xl font-semibold poppins-semibold'>{user ? `${user.name} ${user.lname}` : "Guest"}</Text>
             <Text className='text-sm font-normal poppins-regular'>Good Morning</Text>

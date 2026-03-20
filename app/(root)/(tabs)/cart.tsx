@@ -23,7 +23,6 @@ const Cart = () => {
       const response = await getWishlist();
       setFavorites(response.data.items);
     } catch (error) {
-      // console.error("Failed to fetch wishlist:", error);
       setFavorites([]);
     } finally {
       setLoading(false);

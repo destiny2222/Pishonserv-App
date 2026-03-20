@@ -55,7 +55,7 @@ export default function Profile() {
       await logout();
       router.replace("/(auth)/login");
     } catch (error) {
-      // console.log("Logout error", error);
+
     }
   };
 

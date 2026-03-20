@@ -6,7 +6,7 @@ export interface Property {
   price: number;
   location: string;
   type: string;
-  listing_type: "for_sale" | "for_rent" | "short_let" | "hotel";
+  listing_type: "for_sale" | "for_rent" | "short_let" | "hotel" | "land";
   description?: string;
   bedrooms?: number;
   bathrooms?: number;
@@ -21,6 +21,9 @@ export interface Property {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  requires_inspection?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface ApiResponse<T> {
@@ -38,7 +41,7 @@ const PROPERTY_TOKEN = process.env.EXPO_PUBLIC_API_ACCESS_TOKEN;
 
 function propertyAuthHeaders(): Record<string, string> {
   if (!PROPERTY_TOKEN) {
-    // console.warn("Missing EXPO_PUBLIC_API_ACCESS_TOKEN (properties will fail if backend requires it)");
+    
     return {};
   }
   return { Authorization: `Bearer ${PROPERTY_TOKEN}` };
@@ -82,6 +85,7 @@ export async function getProperties({
 
     const endpoint = `${ENDPOINTS.GET_PROPERTIES}?${params.toString()}`;
 
+
     const response = await apiRequest<ApiResponse<PropertiesResponse>>(
       endpoint,
       {
@@ -89,10 +93,10 @@ export async function getProperties({
         headers: propertyAuthHeaders(),
       },
     );
-    // console.log("Fetched properties:", response.data.items);
+    
     return response.data.items ?? [];
   } catch (error) {
-    // console.error("Error fetching properties:", error);
+    
     return [];
   }
 }
@@ -109,7 +113,7 @@ export async function getFeaturedProperties() {
 
     return response.data.items ?? [];
   } catch (error) {
-    // console.error("Error fetching featured properties:", error);
+    
     return [];
   }
 }
@@ -125,7 +129,7 @@ export async function getPropertyDetails(id: number): Promise<Property | null> {
     );
     return response.data ?? null;
   } catch (error) {
-    // console.error("Error fetching property details:", error);
+    
     return null;
   }
 }

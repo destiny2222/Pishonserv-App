@@ -1,7 +1,6 @@
-import { View, Text, ActivityIndicator } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, Slot, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import React, { useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 export default function AppLayout() {
     const [isLoading, setIsLoading] = useState(false)
@@ -29,5 +28,5 @@ export default function AppLayout() {
         );
     }
 
-    return <Stack  screenOptions={{ headerShown: false }} />;
+    return <Stack screenOptions={{ headerShown: false }} />;
 }

@@ -3,14 +3,35 @@ import { UserProvider } from '@/contexts/UserContext';
 import { useFonts } from 'expo-font';
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { ActivityIndicator } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActivityIndicator, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import './global.css';
 
+// Prevent splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync();
+
+function StatusBarWrapper({ children }: { children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View className="flex-1 ">
+      <StatusBar animated style="auto" />
+      {children}
+    </View>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <View className="flex-1 justify-center items-center bg-white">
+      <ActivityIndicator size="large" color="#C9A24D" />
+    </View>
+  );
+}
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     poppins: require('../assets/fonts/Poppins-Regular.ttf'),
     'poppins-bold': require('../assets/fonts/Poppins-Bold.ttf'),
     'poppins-semibold': require('../assets/fonts/Poppins-SemiBold.ttf'),
@@ -21,22 +42,28 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) {
-    return <ActivityIndicator size="large" color="#C9A24D" className='flex-1 justify-center items-center' />;
+  if (!fontsLoaded && !fontError) {
+    return (
+      <SafeAreaProvider>
+        <LoadingScreen />
+      </SafeAreaProvider>
+    );
   }
-  // return <Stack screenOptions={{ headerShown: false }} />;
+
   return (
     <SafeAreaProvider>
-      <UserProvider>
-        <AuthGuard>
-          <Stack screenOptions={{ headerShown: false }} />
-        </AuthGuard>
-      </UserProvider>
+      <StatusBarWrapper>
+        <UserProvider>
+          <AuthGuard>
+            <Stack screenOptions={{ headerShown: false }} />
+          </AuthGuard>
+        </UserProvider>
+      </StatusBarWrapper>
     </SafeAreaProvider>
-  )
+  );
 }

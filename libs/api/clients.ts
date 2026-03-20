@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_ACCESS_TOKEN = process.env.EXPO_PUBLIC_API_ACCESS_TOKEN;
 
 if (!BASE_URL) {
   throw new Error("Missing EXPO_PUBLIC_API_BASE_URL in your env");
@@ -25,20 +26,22 @@ type RequestOptions = {
   headers?: Record<string, string>;
   auth?: boolean;
   token?: string;
+  noToken?: boolean;
   signal?: AbortSignal;
 };
 
 async function getAccessToken() {
   try {
-    const token = await SecureStore.getItemAsync("access_token");
-    return token;
-  } catch (error) {
-    // console.error("Error retrieving access token:", error);
+    return await SecureStore.getItemAsync("access_token");
+  } catch {
     return null;
   }
 }
 
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
   const url = `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
   const method = options.method ?? "GET";
 
@@ -51,9 +54,21 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (useAuth) {
     const token = await getAccessToken();
     if (token) headers.Authorization = `Bearer ${token}`;
+  } else if (API_ACCESS_TOKEN && !options.noToken) {
+    // respect noToken
+    headers.Authorization = `Bearer ${API_ACCESS_TOKEN}`;
   }
 
-  const hasBody = options.body !== undefined && method !== "GET" && method !== "HEAD";
+  // const useAuth = options.auth !== false;
+  // if (useAuth) {
+  //   const token = await getAccessToken();
+  //   if (token) headers.Authorization = `Bearer ${token}`;
+  // } else if (API_ACCESS_TOKEN) {
+  //   // Use API access token for public endpoints that require it
+  //   headers.Authorization = `Bearer ${API_ACCESS_TOKEN}`;
+  // }
+
+  const hasBody = options.body !== undefined && method !== "GET";
   if (hasBody) headers["Content-Type"] = "application/json";
 
   const res = await fetch(url, {
@@ -76,17 +91,36 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!res.ok) {
-    const message =
-      data && typeof data === "object" && "message" in data
-        ? String(data.message)
-        : `Request failed (${res.status})`;
+    let message = `Request failed (${res.status})`;
+
+    if (data && typeof data === "object") {
+      if ("message" in data) {
+        message = String(data.message);
+      }
+
+      // Extract more specific error from validation errors if present (Laravel-style)
+      if (
+        res.status === 422 &&
+        "errors" in data &&
+        data.errors &&
+        typeof data.errors === "object"
+      ) {
+        const errors = data.errors as Record<string, string[]>;
+        const firstErrorKey = Object.keys(errors)[0];
+        if (
+          firstErrorKey &&
+          Array.isArray(errors[firstErrorKey]) &&
+          errors[firstErrorKey].length > 0
+        ) {
+          message = errors[firstErrorKey][0];
+        }
+      }
+    }
 
     throw new ApiError(message, res.status, data);
   }
 
   return data as T;
 }
-
-
 
 export const apiEndpoint = apiRequest;

@@ -20,10 +20,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
   propertyPrice,
   listingType,
 }) => {
-  const [checkInDate, setCheckInDate] = useState(new Date());
-  const [checkOutDate, setCheckOutDate] = useState(new Date(Date.now() + 86400000)); // +1 day
+  const [checkInDate, setCheckInDate] = useState(new Date(Date.now() + 86400000));
+  const [checkOutDate, setCheckOutDate] = useState(new Date(Date.now() + 172800000)); // +2 days
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
   const [showCheckOutPicker, setShowCheckOutPicker] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
 
   const formatDate = (date: Date): string => {
     const year = date.getFullYear();
@@ -44,7 +46,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
   const calculateNights = (): number => {
     const diffTime = checkOutDate.getTime() - checkInDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(1, diffDays);
+    return Math.max(0, diffDays);
   };
 
   const calculateTotalAmount = (): number => {
@@ -53,11 +55,46 @@ const BookingModal: React.FC<BookingModalProps> = ({
     return pricePerNight * nights;
   };
 
+  const isDateRangeValid = (): boolean => {
+    const nights = calculateNights();
+    return nights > 0;
+  };
+
   const handleConfirm = () => {
+    if (!isDateRangeValid()) {
+      setError('Check-out date must be after check-in date.');
+      return;
+    }
+    setError(null);
     const checkIn = formatDate(checkInDate);
     const checkOut = formatDate(checkOutDate);
     onConfirm(checkIn, checkOut);
   };
+
+  const handleCheckInChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowCheckInPicker(false);
+    }
+    if (selectedDate) {
+      setCheckInDate(selectedDate);
+      setError(null);
+      if (selectedDate >= checkOutDate) {
+        setCheckOutDate(new Date(selectedDate.getTime() + 86400000));
+      }
+    }
+  };
+
+  const handleCheckOutChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowCheckOutPicker(false);
+    }
+    if (selectedDate) {
+      setCheckOutDate(selectedDate);
+      setError(null);
+    }
+  };
+
+  const isValid = isDateRangeValid();
 
   return (
     <Modal
@@ -77,6 +114,15 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <Ionicons name="close" size={24} color="#666" />
             </TouchableOpacity>
           </View>
+
+          {/* Error Message */}
+          {error && (
+            <View className="mb-4 p-3 bg-red-50 rounded-xl border border-red-100">
+              <Text className="text-red-500 text-sm font-rubik text-center">
+                {error}
+              </Text>
+            </View>
+          )}
 
           {/* Check-in Date */}
           <View className="mb-4">
@@ -116,7 +162,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <Text className="text-sm font-rubik text-gray-600">
                 Number of Nights
               </Text>
-              <Text className="text-base font-rubik-bold text-black-300">
+              <Text className={`text-base font-rubik-bold ${!isValid ? 'text-red-500' : 'text-black-300'}`}>
                 {calculateNights()}
               </Text>
             </View>
@@ -124,7 +170,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <Text className="text-sm font-rubik text-gray-600">
                 Total Amount
               </Text>
-              <Text className="text-xl font-rubik-bold text-primary">
+              <Text className={`text-xl font-rubik-bold ${!isValid ? 'text-red-300' : 'text-primary'}`}>
                 ₦{calculateTotalAmount().toLocaleString()}
               </Text>
             </View>
@@ -133,9 +179,8 @@ const BookingModal: React.FC<BookingModalProps> = ({
           {/* Confirm Button */}
           <TouchableOpacity
             onPress={handleConfirm}
-            disabled={loading}
-            className="bg-primary py-4 rounded-full"
-            style={{ opacity: loading ? 0.7 : 1 }}
+            disabled={loading || !isValid}
+            className={`py-4 rounded-full ${(!isValid || loading) ? 'bg-gray-300' : 'bg-primary'}`}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -146,39 +191,81 @@ const BookingModal: React.FC<BookingModalProps> = ({
             )}
           </TouchableOpacity>
 
-          {/* Date Pickers */}
-          {showCheckInPicker && (
-            <DateTimePicker
-              value={checkInDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              minimumDate={new Date()}
-              onChange={(event, selectedDate) => {
-                setShowCheckInPicker(Platform.OS === 'ios');
-                if (selectedDate) {
-                  setCheckInDate(selectedDate);
-                  if (selectedDate >= checkOutDate) {
-                    setCheckOutDate(new Date(selectedDate.getTime() + 86400000));
-                  }
-                }
-              }}
-            />
-          )}
+          {/* Material Design Date Picker Modal - Check-in */}
+          <Modal
+            visible={showCheckInPicker}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowCheckInPicker(false)}
+          >
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, width: '85%', maxWidth: 340, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 16, textAlign: 'center', color: '#333' }}>
+                  Select Check-in Date
+                </Text>
+                <DateTimePicker
+                  value={checkInDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  minimumDate={new Date()}
+                  onChange={handleCheckInChange}
+                  style={{ alignSelf: 'center' }}
+                />
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16, gap: 12 }}>
+                  <TouchableOpacity 
+                    onPress={() => setShowCheckInPicker(false)}
+                    style={{ paddingVertical: 10, paddingHorizontal: 20 }}
+                  >
+                    <Text style={{ color: '#666', fontSize: 16, fontWeight: '500' }}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => setShowCheckInPicker(false)}
+                    style={{ backgroundColor: '#C9A24D', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>OK</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
 
-          {showCheckOutPicker && (
-            <DateTimePicker
-              value={checkOutDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              minimumDate={new Date(checkInDate.getTime() + 86400000)}
-              onChange={(event, selectedDate) => {
-                setShowCheckOutPicker(Platform.OS === 'ios');
-                if (selectedDate) {
-                  setCheckOutDate(selectedDate);
-                }
-              }}
-            />
-          )}
+          {/* Material Design Date Picker Modal - Check-out */}
+          <Modal
+            visible={showCheckOutPicker}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowCheckOutPicker(false)}
+          >
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, width: '85%', maxWidth: 340, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 16, textAlign: 'center', color: '#333' }}>
+                  Select Check-out Date
+                </Text>
+                <DateTimePicker
+                  value={checkOutDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  minimumDate={new Date(checkInDate.getTime() + 86400000)}
+                  onChange={handleCheckOutChange}
+                  style={{ alignSelf: 'center' }}
+                />
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16, gap: 12 }}>
+                  <TouchableOpacity 
+                    onPress={() => setShowCheckOutPicker(false)}
+                    style={{ paddingVertical: 10, paddingHorizontal: 20 }}
+                  >
+                    <Text style={{ color: '#666', fontSize: 16, fontWeight: '500' }}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => setShowCheckOutPicker(false)}
+                    style={{ backgroundColor: '#C9A24D', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>OK</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
       </View>
     </Modal>

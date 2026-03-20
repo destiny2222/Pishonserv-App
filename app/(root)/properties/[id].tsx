@@ -1,5 +1,6 @@
-import { completePayment, createBooking, initializePayment } from "@/libs/endpoints/booking";
-import { getPropertyDetails } from "@/libs/endpoints/property";
+import { BookingMobileDisabledResponse, completePayment, createBooking, createInspection, createWhatsAppInquiry, initializePayment, requiresInspection, supportsDirectBooking } from "@/libs/endpoints/booking";
+import { ApiError } from "@/libs/api/clients";
+import { getPropertyDetails, Property } from "@/libs/endpoints/property";
 import * as Linking from "expo-linking";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -19,6 +20,7 @@ import {
 
 import BookingModal from "@/components/BookingModal";
 import CustomAlert from "@/components/CustomAlert";
+import InspectionModal from "@/components/InspectionModal";
 import PaymentWebView from "@/components/PaymentWebView";
 import icons from "@/constants/icons";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,14 +40,19 @@ const Properties = () => {
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertAction, setAlertAction] = useState < (() => void) | null > (null);
+  const [alertCancelAction, setAlertCancelAction] = useState < (() => void) | null > (null);
+  const [alertCancelText, setAlertCancelText] = useState("");
+  const [alertConfirmText, setAlertConfirmText] = useState("");
   const windowHeight = Dimensions.get("window").height;
   const windowWidth = Dimensions.get("window").width;
   const [paymentUrl, setPaymentUrl] = useState("");
+  const [inspectionModalVisible, setInspectionModalVisible] = useState(false);
+  const [inspectionLoading, setInspectionLoading] = useState(false);
 
 
   const [paymentVisible, setPaymentVisible] = useState(false);
   // removed currentReference as it was unused
-  const [bookingId, setBookingId] = useState(null);
+  const [bookingId, setBookingId] = useState<number | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
 
   const property = item;
@@ -60,16 +67,34 @@ const Properties = () => {
         message: `Check out this property: ${property.title} in ${property.location} for ₦${property.price}!\n\nView here: ${propertyUrl}`,
         url: propertyUrl,
       });
-    } catch (error: any) {
-      // console.error(error.message);
+    } catch {
+      // error state is tracked but unused in the UI, keeping the log for debug
     }
   };
 
-  const showAlert = (title: string, message: string, action?: (() => void) | null) => {
+  const showAlert = (
+    title: string, 
+    message: string, 
+    action?: (() => void) | null,
+    cancelAction?: (() => void) | null,
+    confirmText?: string,
+    cancelText?: string
+  ) => {
     setAlertTitle(title);
     setAlertMessage(message);
-    if (action) setAlertAction(() => action);
+    setAlertAction(action ? () => action : null);
+    setAlertCancelAction(cancelAction ? () => cancelAction : null);
+    setAlertConfirmText(confirmText || "OK");
+    setAlertCancelText(cancelText || "Cancel");
     setAlertVisible(true);
+  };
+
+  const handleAlertCancel = () => {
+    setAlertVisible(false);
+    if (alertCancelAction) {
+      alertCancelAction();
+      setAlertCancelAction(null);
+    }
   };
 
   const handleAlertClose = () => {
@@ -90,9 +115,8 @@ const Properties = () => {
       try {
         const propertyData = await getPropertyDetails(Number(id));
         setItem(propertyData);
-      } catch (err) {
+      } catch {
         // error state is tracked but unused in the UI, keeping the log for debug
-        // console.error("Failed to load property details:", err);
       } finally {
         setLoading(false);
       }
@@ -101,18 +125,74 @@ const Properties = () => {
     fetchProperty();
   }, [id]);
 
-  const handleBookNow = () => {
+  const handleBookNow = async () => {
     if (!user) {
       showAlert("Login Required", "You must be logged in to book a property.", () => {
         router.push("/(auth)/login");
       });
       return;
     }
+
+    if (!property) {
+      showAlert("Error", "Property information not available.");
+      return;
+    }
+
+    // 1. WhatsApp flow for short_let/hotel
+    if (!supportsDirectBooking(property.listing_type)) {
+      setBookingLoading(true);
+      try {
+        const whatsappResponse = await createWhatsAppInquiry(property.id);
+        if (whatsappResponse.status === "ok" && whatsappResponse.data.whatsapp_inquiry_url) {
+          showAlert(
+            "Redirecting to WhatsApp",
+            "You will be redirected to WhatsApp to complete your inquiry.",
+            () => Linking.openURL(whatsappResponse.data.whatsapp_inquiry_url),
+            () => {},
+            "Continue",
+            "Cancel"
+          );
+        } else {
+          showAlert("Error", "Unable to generate WhatsApp inquiry link. Please contact support.");
+        }
+      } catch (err: any) {
+        // Handle "Direct Booking Disabled" 403 error
+        if (err instanceof ApiError && err.status === 403) {
+          const data = err.data as BookingMobileDisabledResponse;
+          if (data && data.whatsapp_inquiry_url) {
+            showAlert(
+              "Booking via WhatsApp",
+              data.error || "Direct booking is currently disabled for mobile. Please continue via WhatsApp inquiry.",
+              () => Linking.openURL(data.whatsapp_inquiry_url),
+              () => {},
+              "Continue",
+              "Cancel"
+            );
+            return;
+          }
+        }
+        showAlert("Error", err?.message || "Failed to generate WhatsApp inquiry.");
+      } finally {
+        setBookingLoading(false);
+      }
+      return;
+    }
+
+    // 2. Inspection flow for for_sale/for_rent/land if flag is set
+    if (requiresInspection(property.requires_inspection, property.listing_type)) {
+      setInspectionModalVisible(true);
+      return;
+    }
+
+    // 3. Direct booking flow
     setBookingModalVisible(true);
   };
 
-  const handleConfirmBooking = async (checkIn, checkOut) => {
-    if (!property || !property?.id) return;
+  const handleConfirmBooking = async (checkIn: string, checkOut: string) => {
+    if (!property || !property?.id) {
+      showAlert("Error", "Property information not available.");
+      return;
+    }
 
     setBookingLoading(true);
     try {
@@ -124,6 +204,7 @@ const Properties = () => {
 
       if (bookingResponse.status !== "ok") {
         showAlert("Booking Failed", "Unable to create booking. Please try again.");
+        setBookingLoading(false);
         return;
       }
 
@@ -135,20 +216,73 @@ const Properties = () => {
 
       if (paymentResponse.status !== "ok") {
         showAlert("Payment Failed", "Unable to initialize payment. Please try again.");
+        setBookingLoading(false);
         return;
       }
-      // setCurrentReference(paymentResponse.data.reference); // Unused
+
+      if (!paymentResponse.data.authorization_url) {
+        showAlert("Error", "Invalid payment URL received. Please contact support.");
+        setBookingLoading(false);
+        return;
+      }
+
       setPaymentUrl(paymentResponse.data.authorization_url);
       setBookingModalVisible(false);
       setPaymentVisible(true);
-    } catch (err) {
-      showAlert("Error", err?.message || "Something went wrong.");
+    } catch (err: any) {
+      // Handle "Direct Booking Disabled" 403 error
+      if (err instanceof ApiError && err.status === 403) {
+        const data = err.data as BookingMobileDisabledResponse;
+        if (data && data.whatsapp_inquiry_url) {
+          setBookingModalVisible(false);
+          showAlert(
+            "Booking via WhatsApp",
+            data.error || "Direct booking is currently disabled for mobile. Please continue via WhatsApp inquiry.",
+            () => Linking.openURL(data.whatsapp_inquiry_url),
+            () => {},
+            "Continue",
+            "Cancel"
+          );
+          setBookingLoading(false);
+          return;
+        }
+      }
+
+      const errorMessage = err?.message || "Something went wrong. Please try again.";
+      showAlert("Booking Error", errorMessage);
     } finally {
       setBookingLoading(false);
     }
   };
 
-  const handlePaymentSuccess = async (reference) => {
+  const handleConfirmInspection = async (data: any) => {
+    if (!property || !property.id) return;
+
+    setInspectionLoading(true);
+    try {
+      const response = await createInspection({
+        property_id: property.id,
+        ...data,
+      });
+
+      if (response.status === "ok") {
+        setInspectionModalVisible(false);
+        showAlert(
+          "Inspection Booked",
+          `Your inspection request has been received. Your code is: ${response.data.inspection_code}. We will contact you soon.`,
+          () => router.push('/(root)/(tabs)/home')
+        );
+      } else {
+        showAlert("Error", "Failed to book inspection. Please try again.");
+      }
+    } catch (err: any) {
+      showAlert("Inspection Booking Failed", err?.message || "An error occurred while booking the inspection.");
+    } finally {
+      setInspectionLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (reference: string) => {
     setPaymentVisible(false);
     setLoading(true);
 
@@ -171,8 +305,8 @@ const Properties = () => {
       } else {
         showAlert("Payment Pending", "Your payment is being processed.");
       }
-    } catch (_err) {
-      showAlert("Verification Failed", "Could not verify payment. Contact support.");
+    } catch (err: any) {
+      showAlert("Verification Failed", err?.message || "Could not verify payment. Contact support.");
     } finally {
       setLoading(false);
     }
@@ -219,8 +353,8 @@ const Properties = () => {
 
   const amenitiesList = Array.isArray(property?.amenities)
     ? property.amenities
-    : typeof property?.amenities === "string"
-      ? property.amenities.split(',').map(a => a.trim())
+    : typeof (property?.amenities as any) === "string"
+      ? (property?.amenities as unknown as string).split(',').map((a: string) => a.trim())
       : [];
 
   const amenityIcons = {
@@ -364,7 +498,7 @@ const Properties = () => {
             </Text>
 
             <View className="flex flex-row flex-wrap gap-4">
-              {amenitiesList.slice(0, 8).map((amenity, index) => (
+              {amenitiesList.slice(0, 8).map((amenity: string, index: number) => (
                 <View key={index} className="flex flex-col items-center w-20">
                   <View className="size-14 bg-primary/10 rounded-2xl items-center justify-center">
                     <Image
@@ -477,8 +611,15 @@ const Properties = () => {
         onClose={() => setBookingModalVisible(false)}
         onConfirm={handleConfirmBooking}
         loading={bookingLoading}
-        propertyPrice={property?.price || "0"}
+        propertyPrice={property?.price ? String(property.price) : "0"}
         listingType={property?.listing_type}
+      />
+
+      <InspectionModal
+        visible={inspectionModalVisible}
+        onClose={() => setInspectionModalVisible(false)}
+        onConfirm={handleConfirmInspection}
+        loading={inspectionLoading}
       />
 
       {/* Alert */}
@@ -487,6 +628,9 @@ const Properties = () => {
         title={alertTitle}
         message={alertMessage}
         onClose={handleAlertClose}
+        onCancel={alertCancelAction ? handleAlertCancel : undefined}
+        confirmText={alertConfirmText}
+        cancelText={alertCancelText}
       />
 
       <PaymentWebView

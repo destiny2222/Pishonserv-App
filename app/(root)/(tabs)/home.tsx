@@ -21,8 +21,6 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
 
-  // console.log(user);
-
   useFocusEffect(
     useCallback(() => {
       const fetchWishlistIds = async () => {
@@ -31,7 +29,6 @@ export default function Home() {
           const ids = response.data.items.map((item) => item.id);
           setWishlistIds(ids);
         } catch (error) {
-          // console.error("Failed to fetch wishlist:", error);
         }
       };
       fetchWishlistIds();
@@ -49,7 +46,6 @@ export default function Home() {
       const all = await getProperties({ limit: 100 });
       setAllProperties(all);
     } catch (error) {
-      // console.error('Error fetching properties:', error);
     } finally {
       setLoading(false);
     }

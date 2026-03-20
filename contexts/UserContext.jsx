@@ -23,7 +23,6 @@ export function UserProvider({ children }) {
         setIsAuthenticated(true);
       }
     } catch (error) {
-      // console.error("Auth check failed:", error);
       // Clear invalid token
       await SecureStore.deleteItemAsync("access_token");
       setUser(null);
@@ -43,7 +42,6 @@ export function UserProvider({ children }) {
       }
       return { success: true, data: response.data };
     } catch (error) {
-      // console.error("Login failed:", error);
       
       // Customize error message based on status code
       let errorMessage = "Login failed";
@@ -69,7 +67,6 @@ export function UserProvider({ children }) {
       const response = await authApi.register(userData);
       return { success: true, data: response.data };
     } catch (error) {
-      // console.error("Registration failed:", error);
       
       let errorMessage = "Registration failed";
       
@@ -94,7 +91,6 @@ export function UserProvider({ children }) {
       setIsAuthenticated(true);
       return { success: true, data: response.data };
     } catch (error) {
-      // console.error("OTP verification failed:", error);
       
       let errorMessage = "Verification failed";
       
@@ -117,7 +113,6 @@ export function UserProvider({ children }) {
       const response = await authApi.resendOtp({ email });
       return { success: true, data: response };
     } catch (error) {
-      // console.error("Resend OTP failed:", error);
       return { success: false, error: error.message || "Failed to resend OTP" };
     }
   }
@@ -127,7 +122,6 @@ export function UserProvider({ children }) {
       const response = await authApi.requestPasswordReset({ email });
       return { success: true, data: response };
     } catch (error) {
-      // console.error("Password reset request failed:", error);
       
       let errorMessage = "Failed to request password reset";
       
@@ -148,7 +142,6 @@ export function UserProvider({ children }) {
       const response = await authApi.resetPassword({ email, otp, password });
       return { success: true, data: response };
     } catch (error) {
-      // console.error("Password reset failed:", error);
       
       let errorMessage = "Password reset failed";
       
@@ -171,7 +164,6 @@ export function UserProvider({ children }) {
       setIsAuthenticated(false);
       return { success: true };
     } catch (error) {
-      // console.error("Logout failed:", error);
       return { success: false, error: error.message || "Logout failed" };
     }
   }
@@ -182,7 +174,6 @@ export function UserProvider({ children }) {
       setUser(response.data.user);
       return { success: true, data: response.data.user };
     } catch (error) {
-      // console.error("Failed to refresh user:", error);
       return { success: false, error: error.message || "Failed to refresh user" };
     }
   }
@@ -196,7 +187,6 @@ export function UserProvider({ children }) {
       setUser(response.data.user);
       return { success: true, data: response.data.user };
     } catch (error) {
-      // console.error("Failed to update user:", error);
       // Revert the optimistic update by refreshing from server
       await refreshUser();
       return { success: false, error: error.message || "Failed to update user" };

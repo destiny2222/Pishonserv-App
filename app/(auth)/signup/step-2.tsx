@@ -26,7 +26,6 @@ export default function Step2() {
   const [isLoading, setIsLoading] = useState(false);
 
   const onSelectCountry = (c: Country) => {
-    // console.log("Country", c.callingCode?.[0])
     update({
       country: c.name ?? "",
       countryCode: c.cca2 ?? "",

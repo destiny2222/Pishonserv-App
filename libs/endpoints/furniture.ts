@@ -7,6 +7,8 @@ export interface FurnitureItem {
   sale_price: string;
   regular_price: string;
   image_url: string;
+  images?: string;
+  visibility?: string;
   created_at: string;
 }
 
@@ -28,7 +30,7 @@ export async function getFurnitureList(): Promise<FurnitureResponse> {
     });
     return response;
   } catch (error) {
-    // console.error("Error fetching furniture list:", error);
+      
     throw error;
   }
 }
@@ -45,18 +47,24 @@ export interface FurnitureDetailResponse {
  */
 export async function getFurnitureDetail(
   furnitureId: number,
-): Promise<FurnitureDetailResponse> {
+): Promise<FurnitureItem | null> {
   try {
-    const response = await apiRequest<FurnitureDetailResponse>(
-      `/products/${furnitureId}`,
-      {
-        method: "GET",
-        auth: false,
-      },
-    );
-    return response;
+    const response = await apiRequest<any>(`/products/${furnitureId}`, {
+      method: "GET",
+      auth: false,
+    });
+    
+    // Handle different response structures
+    if (response?.data?.item) {
+      return response.data.item;
+    } else if (response?.data) {
+      return response.data;
+    } else if (response?.item) {
+      return response.item;
+    }
+    return response ?? null;
   } catch (error) {
-    // console.error("Error fetching furniture detail:", error);
-    throw error;
+    
+    return null;
   }
 }

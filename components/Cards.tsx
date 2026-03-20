@@ -100,14 +100,14 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
       const newFavoriteState = !isFavorite;
       setIsFavorite(newFavoriteState);
       onWishlistToggle?.(item.id, newFavoriteState);
-      
+
       // Check response to determine if added or removed
-      const message = response.data?.added 
-        ? 'Added to wishlist' 
-        : response.data?.removed 
-        ? 'Removed from wishlist'
-        : response.message || 'Wishlist updated';
-      
+      const message = response.data?.added
+        ? 'Added to wishlist'
+        : response.data?.removed
+          ? 'Removed from wishlist'
+          : response.message || 'Wishlist updated';
+
       showAlert('Success', message);
     } catch (error: any) {
       const errorMessage = error?.data?.message || error?.message || 'Failed to update wishlist';
@@ -119,7 +119,7 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
     }
   };
 
-  
+
 
   return (
     <TouchableOpacity onPress={onPress} className='w-60 h-80 bg-white rounded-2xl mr-7  items-start relative flex flex-col gap-6'>
@@ -140,10 +140,10 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Ionicons 
-                name={isFavorite ? "heart" : "heart-outline"} 
-                size={20} 
-                color={isFavorite ? "#FF6B6B" : "#fff"} 
+              <Ionicons
+                name={isFavorite ? "heart" : "heart-outline"}
+                size={20}
+                color={isFavorite ? "#FF6B6B" : "#fff"}
               />
             )}
           </TouchableOpacity>
@@ -169,46 +169,46 @@ export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: 
   const formattedPrice = item?.price ? `₦${Number(item.price).toLocaleString()}` : '₦0';
 
   useEffect(() => {
-  setIsFavorite(isInWishlist);
-}, [isInWishlist]);
+    setIsFavorite(isInWishlist);
+  }, [isInWishlist]);
 
-    const showAlert = (title: string, message: string) => {
-      setAlertTitle(title);
-      setAlertMessage(message);
-      setAlertVisible(true);
-    };
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
 
-    const handleWishlistToggle = async (e: any) => {
-      e.stopPropagation();
-      if (!item?.id || loading) return;
-  
-      const token = await SecureStore.getItemAsync('access_token');
-      if (!token) {
-        showAlert('Authentication Required', 'Please log in to add items to your wishlist.');
-        return;
-      }
-  
-      setLoading(true);
-      try {
-        const response = await addToWishlist(item.id);
-        const newFavoriteState = !isFavorite;
-        setIsFavorite(newFavoriteState);
-        onWishlistToggle?.(item.id, newFavoriteState);
-        const message = response.data?.added 
-          ? 'Added to wishlist' 
-          : response.data?.removed 
+  const handleWishlistToggle = async (e: any) => {
+    e.stopPropagation();
+    if (!item?.id || loading) return;
+
+    const token = await SecureStore.getItemAsync('access_token');
+    if (!token) {
+      showAlert('Authentication Required', 'Please log in to add items to your wishlist.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await addToWishlist(item.id);
+      const newFavoriteState = !isFavorite;
+      setIsFavorite(newFavoriteState);
+      onWishlistToggle?.(item.id, newFavoriteState);
+      const message = response.data?.added
+        ? 'Added to wishlist'
+        : response.data?.removed
           ? 'Removed from wishlist'
           : response.message || 'Wishlist updated';
-        
-        showAlert('Success', message);
-      } catch (error: any) {
-        const errorMessage = error?.data?.message || error?.message || 'Failed to update wishlist';
-        showAlert('Error', errorMessage);
-        setIsFavorite(isFavorite);
-      } finally {
-        setLoading(false);
-      }
-    };
+
+      showAlert('Success', message);
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || error?.message || 'Failed to update wishlist';
+      showAlert('Error', errorMessage);
+      setIsFavorite(isFavorite);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <TouchableOpacity onPress={onPress} className='w-full flex-1 mt-4 px-3 py-4 rounded-lg bg-white shadow-lg shadow-black-100/70 relative'>
@@ -224,10 +224,10 @@ export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: 
             {loading ? (
               <ActivityIndicator size="small" color="#C9A24D" />
             ) : (
-              <Ionicons 
-                name={isFavorite ? "heart" : "heart-outline"} 
-                size={20} 
-                color={isFavorite ? "#FF6B6B" : "#C9A24D"} 
+              <Ionicons
+                name={isFavorite ? "heart" : "heart-outline"}
+                size={20}
+                color={isFavorite ? "#FF6B6B" : "#C9A24D"}
               />
             )}
           </TouchableOpacity>
@@ -249,15 +249,20 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [confirmVisible, setConfirmVisible] = useState(false);
-  
+
   if (!item) return null;
 
-  const firstImage = item.images ? item.images.split(',')[0].trim() : undefined;
-  const imageSource = firstImage 
-  ? { uri: `https://yourdomain.com/storage/${firstImage}` } 
-  : images.featured1;
+  const firstImage = Array.isArray(item.images)
+    ? item.images[0]
+    : typeof item.images === 'string'
+      ? item.images.split(',')[0].trim()
+      : undefined;
 
-  
+  const imageSource = firstImage
+    ? { uri: firstImage }
+    : images.featured1;
+
+
   const formattedPrice = `₦${Number(item.price).toLocaleString()}`;
 
   const showAlert = (title: string, message: string) => {
@@ -270,16 +275,16 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
   const handleDelete = async (e: any) => {
     e.stopPropagation();
     if (!item?.id || loading) return;
-    try {      
+    try {
       setLoading(true);
       const response = await removeFromWishlist(item.id);
       showAlert('Removed', 'Property removed from wishlist');
-       onDelete?.(item.id);
+      onDelete?.(item.id);
     } catch (error: any) {
       const errorMessage = error?.data?.message || error?.message || 'Failed to remove from wishlist';
       showAlert('Error', errorMessage);
     }
-    finally {      
+    finally {
       setLoading(false);
     }
   };
@@ -297,7 +302,7 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
       setLoading(false);
     }
   };
-  
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View className="relative bg-slate-50 py-4 mx-4 shadow-slate-100 shadow-xl rounded-2xl px-3 mb-10 flex-row items-center overflow-hidden">
@@ -315,7 +320,7 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
             {formattedPrice}
           </Text>
         </View>
-        <TouchableOpacity  onPress={handleDelete} disabled={loading} className="absolute right-4"  style={{ top: "50%", transform: [{ translateY: 22 }] }} >
+        <TouchableOpacity onPress={handleDelete} disabled={loading} className="absolute right-4" style={{ top: "50%", transform: [{ translateY: 22 }] }} >
           <View className="bg-red-50 p-3 rounded-full">
             {loading ? (
               <ActivityIndicator size="small" color="#EF4444" />
@@ -341,9 +346,9 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
   );
 };
 
-export const ListingPropertyCard  = ({onPress, item}: ListingProperty ) => {
+export const ListingPropertyCard = ({ onPress, item }: ListingProperty) => {
   const imageSource = toImageSource(item?.image, images.featured1);
-  
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View className="relative bg-slate-50 py-4 mx-4 shadow-slate-100 shadow-xl rounded-2xl px-3 mb-10 flex-row items-center overflow-hidden">
@@ -366,7 +371,7 @@ export const ListingPropertyCard  = ({onPress, item}: ListingProperty ) => {
             {item?.type}
           </Text>
         </View>
-        <TouchableOpacity  onPress={() => { }}  className="absolute right-4"  style={{ top: "50%", transform: [{ translateY: 22 }] }} >
+        <TouchableOpacity onPress={() => { }} className="absolute right-4" style={{ top: "50%", transform: [{ translateY: 22 }] }} >
           <View className="bg-red-50 p-3 rounded-full">
             <Image source={icons.deleteicon} className="w-6 h-6" tintColor="#EF4444" />
           </View>

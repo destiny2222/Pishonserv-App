@@ -19,7 +19,6 @@ const TransactionHistory = () => {
           setTransactions(data.items);
         }
       } catch (error) {
-        // console.error("Failed to fetch transactions:", error);
       } finally {
         setLoading(false);
       }

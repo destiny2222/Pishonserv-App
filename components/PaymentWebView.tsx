@@ -1,5 +1,5 @@
 // components/PaymentWebView.tsx
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -22,28 +22,93 @@ interface Props {
 
 const PaymentWebView = ({ visible, authorizationUrl, onSuccess, onClose }: Props) => {
     const [loading, setLoading] = useState(true);
+    const webViewRef = useRef<WebView>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    // Validate URL before rendering WebView
+    const isValidUrl = (url: string): boolean => {
+        try {
+            const parsedUrl = new URL(url);
+            return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    };
+
+    // Reset error when URL changes
+    useEffect(() => {
+        if (authorizationUrl) {
+            setError(null);
+            if (!isValidUrl(authorizationUrl)) {
+                setError('Invalid payment URL. Please contact support.');
+            }
+        }
+    }, [authorizationUrl]);
+    
+    // Helper function to extract reference from URL
+    const extractReference = (url: string): string | null => {
+        try {
+            // Handle various URL formats
+            let queryString = "";
+            
+            if (url.includes("?")) {
+                queryString = url.split("?")[1];
+            } else if (url.includes("&")) {
+                // URL might have params without ? (unlikely but handle it)
+                queryString = url;
+            }
+            
+            if (!queryString) return null;
+            
+            const urlParams = new URLSearchParams(queryString);
+            
+            // Try different parameter names used by payment providers
+            const reference = urlParams.get("reference") 
+                || urlParams.get("trxref") 
+                || urlParams.get("ref")
+                || urlParams.get("tx_ref")
+                || urlParams.get("transaction_id");
+                
+            return reference;
+        } catch (error) {
+           
+            return null;
+        }
+    };
+
     const handleNavigationChange = (navState: any) => {
         const { url } = navState;
+        
+        if (!url || url.startsWith("about:blank")) {
+            return;
+        }
 
-        // Handle Paystack "cancel" or "close" or "failed" redirects
+        
+
+        // Handle payment cancellation/failure
+        const lowerUrl = url.toLowerCase();
         if (
-            url.includes("cancel") ||
-            url.includes("close") ||
-            url.includes("failed") ||
-            url.includes("error") ||
-            url === "about:blank"
+            lowerUrl.includes("cancel") ||
+            lowerUrl.includes("close") ||
+            lowerUrl.includes("failed") ||
+            lowerUrl.includes("error") ||
+            lowerUrl.includes("abandon")
         ) {
             onClose();
             return;
         }
 
-        // Paystack redirects to this URL after payment
-        if (url.includes("callback") || url.includes("verify") || url.includes("reference=")) {
-            // Extract reference from URL
-            const urlParams = new URLSearchParams(url.split("?")[1]);
-            const reference = urlParams.get("reference") || urlParams.get("trxref");
-
+        // Handle successful payment - check for callback/verification URLs
+        if (
+            lowerUrl.includes("callback") || 
+            lowerUrl.includes("verify") || 
+            lowerUrl.includes("reference=") ||
+            lowerUrl.includes("trxref=") ||
+            lowerUrl.includes("transaction_id=")
+        ) {
+            const reference = extractReference(url);
             if (reference) {
+                
                 onSuccess(reference);
             }
         }
@@ -68,54 +133,64 @@ const PaymentWebView = ({ visible, authorizationUrl, onSuccess, onClose }: Props
         );
     };
 
-    // Removed handleConfirmCancel
-
     const handleShouldStartLoadWithRequest = (request: any) => {
         const { url } = request;
+        
+        if (!url || url.startsWith("about:blank")) {
+            return true;
+        }
+
         const lowerUrl = url.toLowerCase();
 
+        // Handle cancellation
         if (
             lowerUrl.includes("cancel") ||
             lowerUrl.includes("close") ||
             lowerUrl.includes("failed") ||
             lowerUrl.includes("error") ||
-            lowerUrl === "about:blank"
+            lowerUrl.includes("abandon")
         ) {
             onClose();
-            return false; // Prevent loading the cancel URL
+            return false;
         }
 
-        if (lowerUrl.includes("callback") || lowerUrl.includes("verify") || lowerUrl.includes("reference=")) {
-            const urlParams = new URLSearchParams(url.split("?")[1]);
-            const reference = urlParams.get("reference") || urlParams.get("trxref");
+        // Handle successful payment
+        if (
+            lowerUrl.includes("callback") || 
+            lowerUrl.includes("verify") || 
+            lowerUrl.includes("reference=") ||
+            lowerUrl.includes("trxref=") ||
+            lowerUrl.includes("transaction_id=")
+        ) {
+            const reference = extractReference(url);
             if (reference) {
                 onSuccess(reference);
-                return false; // Prevent loading the success URL
+                return false;
             }
         }
+        
         return true;
     };
 
-    const injectedJavaScript = `
-      (function() {
-        // Override window.close
-        window.close = function() {
-          window.ReactNativeWebView.postMessage("window.close");
-        };
-
-        // Listen for postMessages from Paystack
-        window.addEventListener("message", function(event) {
-          if (event.data && (event.data === "close" || event.data.event === "close")) {
-             window.ReactNativeWebView.postMessage("window.close");
-          }
-        });
-      })();
-    `;
-
     const handleMessage = (event: any) => {
-        if (event.nativeEvent.data === "window.close") {
-            onClose();
+        try {
+            const data = event.nativeEvent.data;
+           
+            
+            if (data === "window.close" || data === "close") {
+                onClose();
+            }
+        } catch (error) {
+            
         }
+    };
+
+    const handleLoadStart = () => {
+        setLoading(true);
+    };
+
+    const handleLoadEnd = () => {
+        setLoading(false);
     };
 
     return (
@@ -147,22 +222,56 @@ const PaymentWebView = ({ visible, authorizationUrl, onSuccess, onClose }: Props
                     </View>
                 )}
 
-                {/* Paystack WebView */}
+                {/* Error State */}
+                {error ? (
+                    <View className="flex-1 justify-center items-center bg-white p-6">
+                        <Ionicons name="alert-circle" size={64} color="#EF4444" />
+                        <Text className="mt-4 text-lg font-poppins-bold text-gray-800 text-center">
+                            Payment Error
+                        </Text>
+                        <Text className="mt-2 text-gray-600 font-poppins text-center">
+                            {error}
+                        </Text>
+                        <TouchableOpacity
+                            onPress={onClose}
+                            className="mt-6 bg-primary px-8 py-3 rounded-full"
+                        >
+                            <Text className="text-white font-poppins-bold">
+                                Close
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : !authorizationUrl ? (
+                    <View className="flex-1 justify-center items-center bg-white p-6">
+                        <ActivityIndicator size="large" color="#C9A24D" />
+                        <Text className="mt-3 text-gray-500 font-poppins">
+                            Preparing payment...
+                        </Text>
+                    </View>
+                ) : (
+                /* Paystack WebView */
                 <WebView
+                    ref={webViewRef}
                     source={{ uri: authorizationUrl }}
-                    onLoadEnd={() => setLoading(false)}
+                    onLoadStart={handleLoadStart}
+                    onLoadEnd={handleLoadEnd}
                     onNavigationStateChange={handleNavigationChange}
                     onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
-                    injectedJavaScript={injectedJavaScript}
                     onMessage={handleMessage}
-                    javaScriptEnabled
-                    domStorageEnabled
-                    startInLoadingState
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    startInLoadingState={true}
                     originWhitelist={['*']}
+                    allowsInlineMediaPlayback={false}
+                    mediaPlaybackRequiresUserAction={true}
+                    allowsBackForwardNavigationGestures={false}
+                    cacheEnabled={false}
                     className="flex-1"
+                    bounces={true}
+                    scalesPageToFit={true}
                 />
+                )}
             </View>
-            {/* Removed CustomAlert component */}
         </Modal>
     );
 };

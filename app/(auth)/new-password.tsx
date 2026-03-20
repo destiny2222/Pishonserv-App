@@ -24,7 +24,6 @@ export default function NewPassword() {
     setAlertVisible(true);
   };
 
-  // console.log('Reset Params:', params);
 
   const handleSubmit = async () => {
     // Validate inputs
@@ -50,7 +49,6 @@ export default function NewPassword() {
 
     setIsLoading(true);
     try {
-        // console.log('Submitting new password for:', params.email, 'with OTP:', params.otp);
       const response = await resetPassword({
         email: params.email,
         otp: params.otp,

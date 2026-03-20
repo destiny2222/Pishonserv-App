@@ -1,5 +1,5 @@
 import images from '@/constants/images';
-import { getFurnitureDetail } from '@/libs/endpoints/furniture';
+import { FurnitureItem, getFurnitureDetail } from '@/libs/endpoints/furniture';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -11,9 +11,9 @@ const { width } = Dimensions.get('window');
 const FurnitureDetail = () => {
     const { id } = useLocalSearchParams();
     const router = useRouter();
-    const [furniture, setFurniture] = useState < FurnitureItem | null > (null);
+    const [furniture, setFurniture] = useState<FurnitureItem | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState < string | null > (null);
+    const [error, setError] = useState<string | null>(null);
     const [isFavorite, setIsFavorite] = useState(false);
     const [quantity, setQuantity] = useState(1);
 
@@ -27,12 +27,16 @@ const FurnitureDetail = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await getFurnitureDetail(Number(id));
-            // console.log(response.data.item);
-            setFurniture(response.data.item);
-        } catch (err) {
-            // console.error('Error fetching furniture detail:', err);
-            setError('Failed to load furniture details');
+            const furnitureItem = await getFurnitureDetail(Number(id));
+            
+            if (furnitureItem) {
+                setFurniture(furnitureItem);
+            } else {
+                setError('Furniture not found');
+            }
+        } catch (err: any) {
+            const errorMessage = err?.message || err?.data?.message || 'Failed to load furniture details';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -40,7 +44,7 @@ const FurnitureDetail = () => {
 
     const handleAddToCart = () => {
         // Implement add to cart logic
-        // console.log('Add to cart:', furniture?.name, 'Quantity:', quantity);
+        
     };
 
     const handleToggleFavorite = () => {
@@ -102,7 +106,7 @@ const FurnitureDetail = () => {
                 {/* Image Section */}
                 <View className="relative">
                     <Image
-                        source={furniture.images ? { uri: furniture.images } : images.featured1}
+                        source={furniture.image_url ? { uri: furniture.image_url } : images.featured1}
                         className="w-full h-96"
                         resizeMode="cover"
                     />

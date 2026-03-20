@@ -10,7 +10,7 @@ const MENU_ITEMS = [
   { label: "Dashboard", route: "/dashboard" },
   // { label: "Download MOU", route: "/mou" },
   { label: "Manage Properties", route: "/listing" },
-  { label: "Inquiries", route: "/inquiries" },
+  // { label: "Inquiries", route: "/inquiries" },
   { label: "Earnings", route: "/earnings" },
   { label: "Transactions", route: "/settings/transactions" },
 ];
@@ -39,7 +39,6 @@ const AgentHeader = () => {
       await logout();
       router.replace("/(auth)/login");
     } catch (error) {
-      // console.error("Logout failed:", error);
     }
   };
 
@@ -54,9 +53,9 @@ const AgentHeader = () => {
         <Image source={images.logo} className="w-40 h-20" resizeMode="contain" />
 
         <View className="flex-row items-center gap-6">
-          <TouchableOpacity hitSlop={12}>
+          {/* <TouchableOpacity hitSlop={12}>
             <Image source={icons.bell} className="w-6 h-6" resizeMode="contain" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity hitSlop={12} onPress={() => setOpenMenu(true)}>
             <Ionicons name="menu-outline" size={40} color="#111" />

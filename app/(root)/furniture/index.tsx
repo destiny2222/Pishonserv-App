@@ -66,7 +66,6 @@ const index = () => {
             const response = await getFurnitureList();
             setFurnitureList(response.data.items);
         } catch (err) {
-            // console.error('Error fetching furniture:', err);
             setError('Failed to load furniture items');
         } finally {
             setLoading(false);

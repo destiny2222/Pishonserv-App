@@ -54,7 +54,7 @@ const ManageBank = () => {
         setBankAccounts(data);
       }
     } catch (error) {
-      // console.error("Failed to fetch bank accounts", error);
+        
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +93,7 @@ const ManageBank = () => {
       setAccountName("");
       fetchBankAccounts(); // Refresh list
     } catch (error: any) {
-      // console.error("Failed to add bank account", error);
+      
       showAlert("Error", "Failed to add bank account. Please try again.");
     } finally {
       setIsAdding(false);

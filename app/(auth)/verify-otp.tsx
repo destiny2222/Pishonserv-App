@@ -81,7 +81,6 @@ const VerifyOtp = () => {
       }
     } catch (error) {
       showAlert('Error', 'An unexpected error occurred')
-      // console.error('OTP verification error:', error)
     } finally {
       setIsLoading(false)
     }
@@ -101,7 +100,6 @@ const VerifyOtp = () => {
       }
     } catch (error) {
       showAlert('Error', 'Failed to resend OTP')
-      // console.error('Resend OTP error:', error)
     } finally {
       setIsResending(false)
     }

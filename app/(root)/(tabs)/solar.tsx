@@ -2,12 +2,47 @@ import Header from '@/components/Header'
 import InverterComparisonSection from '@/components/InverterComparisonSection'
 import images from '@/constants/images'
 import { Activity, Award, CheckCircle, FileText, Gem, HandHeart, Leaf, Lightbulb, Medal, Play, Settings, ShieldCheck, ShoppingCart, Users, Zap } from 'lucide-react-native'
-
-import React from 'react'
-import { Image, ImageBackground, ScrollView, Text, View } from 'react-native'
+import React, { useState } from 'react'
+import { Alert, Image, ImageBackground, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import SolarQuoteModal from '@/components/SolarQuoteModal'
+import { submitSolarQuote, SolarQuotePayload } from '@/libs/endpoints/solar'
+import CustomAlert from '@/components/CustomAlert'
 
 function Solar() {
+  const [quoteModalVisible, setQuoteModalVisible] = useState(false);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertTitle, setAlertTitle] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const showAlert = (title: string, message: string) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+  };
+
+  const handleQuoteConfirm = async (data: SolarQuotePayload) => {
+    setQuoteLoading(true);
+    try {
+      const response = await submitSolarQuote(data);
+      if (response.status === "ok" && response.data.success) {
+        setQuoteModalVisible(false);
+        showAlert(
+          "Request Submitted", 
+          `Your solar quote request has been received!\n\nQuote ID: ${response.data.quote_id}\n\n${response.data.message || "We will contact you shortly."}`
+        );
+      } else {
+        showAlert("Error", "Failed to submit quote request. Please try again.");
+      }
+    } catch (error: any) {
+      showAlert("Error", error?.message || "An unexpected error occurred.");
+    } finally {
+      setQuoteLoading(false);
+    }
+  };
+
   const coreValues = [
     {
       title: 'Sustainability',
@@ -152,7 +187,7 @@ function Solar() {
 
   return (
     <SafeAreaView className='flex-1 bg-gray-200' edges={['left', 'right', 'top']} >
-      <Header title='Solar Panel Installation' />
+      <Header />
       <ScrollView className='flex-1' contentContainerStyle={{ paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
         <View className='w-full h-[400px] relative '>
           <ImageBackground source={images.heroSolar} resizeMode="cover" className='w-full h-full justify-center items-center'>
@@ -161,6 +196,13 @@ function Solar() {
             <Text className='text-white font-poppins-medium font-medium text-center text-lg'>
               Reliable Solar Power for Every Need
             </Text>
+            <TouchableOpacity 
+              onPress={() => setQuoteModalVisible(true)}
+              className='bg-[#E6C975] px-10 py-5 rounded-full mt-6 shadow-md'
+            >
+              <Text className='text-secondary font-poppins-semibold font-bold text-xl'>Get free quote</Text>
+            </TouchableOpacity>
+            
           </ImageBackground>
         </View>
         <View className='px-5 pt-8'>
@@ -286,9 +328,12 @@ function Solar() {
           <Text className='text-white/80 text-center font-poppins-regular mb-8 leading-6'>
             Contact Pishonserv Solar Inverter Solutions today for a free consultation and discover how we can empower your home or business with clean, reliable, and affordable solar power.
           </Text>
-          <View className='bg-[#E6C975] px-8 py-3 rounded-full'>
+          <TouchableOpacity 
+            onPress={() => setQuoteModalVisible(true)}
+            className='bg-[#E6C975] px-8 py-3 rounded-full'
+          >
             <Text className='text-secondary font-poppins-semibold font-bold text-base'>Get free quote</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View className='w-full h-[300px] relative overflow-hidden  mb-10'>
@@ -430,6 +475,20 @@ function Solar() {
           </View>
         </View>
       </ScrollView>
+
+      <SolarQuoteModal 
+        visible={quoteModalVisible}
+        onClose={() => setQuoteModalVisible(false)}
+        onConfirm={handleQuoteConfirm}
+        loading={quoteLoading}
+      />
+
+      <CustomAlert 
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
     </SafeAreaView>
   )
 }

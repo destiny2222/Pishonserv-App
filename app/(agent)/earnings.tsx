@@ -56,7 +56,7 @@ const Earnings = () => {
             const data = await getWalletBalance();
             setBalanceData(data);
         } catch (error) {
-            // console.error("Failed to fetch wallet balance", error);
+            
         }
     };
 
@@ -71,7 +71,7 @@ const Earnings = () => {
                 }
             }
         } catch (error: any) {
-            // console.error("Failed to fetch bank accounts", error);
+            
             if (error?.status === 403) {
                 showAlert("Access Denied", "You do not have permission to access bank accounts. Please ensure you are logged in as an Agent or Owner.");
             }

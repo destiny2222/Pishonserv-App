@@ -252,8 +252,7 @@ export default function CreateListing() {
                 images: imageBase64s,
             };
 
-            // console.log("Submitting payload...", { ...payload, images: `[${payload.images?.length} images]` });
-
+        
             const response = await createListing(payload);
 
             if (response.status === 'success' || response.status === 'ok' || (response as any).success) {
@@ -263,9 +262,8 @@ export default function CreateListing() {
             }
 
         } catch (error: any) {
-            // console.error("Create listing error:", error);
+            
             if (error.status === 400 && error.data) {
-                // console.log("Validation errors:", JSON.stringify(error.data, null, 2));
                 showAlert("Validation Error", error.data.message || "Please check your inputs.");
             } else {
                 const msg = error?.data?.message || error?.message || "An unknown error occurred.";

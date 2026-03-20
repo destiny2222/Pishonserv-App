@@ -72,8 +72,7 @@ const Listing = () => {
                 setProperties(response.data.items);
             }
         } catch (error) {
-            // console.error("Failed to fetch properties:", error);
-            // Optional: Alert.alert("Error", "Failed to load properties");
+            
         } finally {
             setLoading(false);
             setRefreshing(false);
