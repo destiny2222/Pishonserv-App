@@ -120,6 +120,7 @@ const FilterSheet = ({ visible, onClose, onApply }: Props) => {
         <SelectField
           value={type}
           placeholder="Property Type"
+          className={`font-poppins text-base text-black-300 ${type ? "text-black-300" : "text-gray-600"}`}
           open={openType}
           setOpen={(v: boolean) => {
             setOpenType(v);
@@ -132,6 +133,7 @@ const FilterSheet = ({ visible, onClose, onApply }: Props) => {
         <SelectField
           value={location}
           placeholder="Location"
+          className={`font-poppins text-base text-black-300 ${location ? "text-black-300" : "text-gray-600"}`}
           open={openLocation}
           setOpen={(v: boolean) => {
             setOpenLocation(v);
@@ -148,7 +150,7 @@ const FilterSheet = ({ visible, onClose, onApply }: Props) => {
               keyboardType="numeric"
               value={minPrice}
               onChangeText={setMinPrice}
-              className="font-poppins text-base text-black-300"
+              className={`font-poppins text-base text-black-300 ${minPrice ? "text-black-300" : "text-gray-600"}`}
             />
           </View>
 
@@ -158,7 +160,7 @@ const FilterSheet = ({ visible, onClose, onApply }: Props) => {
               keyboardType="numeric"
               value={maxPrice}
               onChangeText={setMaxPrice}
-              className="font-poppins text-base text-black-300"
+              className={`font-poppins text-base text-black-300 ${maxPrice ? "text-black-300" : "text-gray-600"}`}
             />
           </View>
         </View>
