@@ -73,10 +73,11 @@ module.exports = function withAndroidSecurity(config) {
 <network-security-config>
     <domain-config>
         <domain includeSubdomains="true">pishonserv.com</domain>
-        <pin-set expiration="2026-12-31">
+        <!-- Certificate Pinning disabled temporarily for verification -->
+        <!-- <pin-set expiration="2026-12-31">
             <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
             <pin digest="SHA-256">BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=</pin>
-        </pin-set>
+        </pin-set> -->
     </domain-config>
 </network-security-config>`;
       fs.writeFileSync(path.join(resXmlPath, 'network_security_config.xml'), networkSecurityConfig);
