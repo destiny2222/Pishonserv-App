@@ -45,7 +45,7 @@ export default function Home() {
       // Fetch all properties without filter
       const all = await getProperties({ limit: 100 });
       setAllProperties(all);
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -70,11 +70,12 @@ export default function Home() {
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [params.filter]);
+  }, [params.filter, loading]);
 
   // Filter properties based on selected filter
-  const filteredProperties = params.filter && params.filter !== 'All'
-    ? allProperties.filter(property => property.listing_type === params.filter)
+  const filterVal = params.filter;
+  const filteredProperties = filterVal && filterVal.toLowerCase() !== 'all'
+    ? allProperties.filter(property => property.listing_type?.toLowerCase() === filterVal.toLowerCase())
     : allProperties;
   return (
     <SafeAreaView className='h-full mb-72 bg-gray-200' edges={['top']}>
@@ -83,7 +84,7 @@ export default function Home() {
         data={filterLoading ? [] : filteredProperties}
         renderItem={({ item }) =>
           <Card item={typeof item === 'number' ? undefined : item} onPress={() => typeof item !== 'number' && router.push(`/properties/${item.id}`)} />}
-        keyExtractor={(item) => typeof item === 'number' ? item.toString() : item.id.toString()}
+        keyExtractor={(item) => typeof item === 'number' ? String(item) : item.id.toString()}
         numColumns={2}
         contentContainerClassName='pb-32'
         columnWrapperClassName='flex gap-5 px-5'

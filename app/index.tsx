@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { Redirect } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -9,7 +9,7 @@ export default function Index() {
     useEffect(() => {
         const checkFirstLaunch = async () => {
             try {
-                const hasSeenOnboarding = await AsyncStorage.getItem('hasSeenOnboarding');
+                const hasSeenOnboarding = await SecureStore.getItemAsync('hasSeenOnboarding');
                 setIsFirstLaunch(hasSeenOnboarding !== 'true');
             } catch {
                 setIsFirstLaunch(true);

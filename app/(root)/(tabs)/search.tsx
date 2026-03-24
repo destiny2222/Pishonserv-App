@@ -5,12 +5,12 @@ import TopHeader from '@/components/TopHeader'
 import { getProperties, Property } from '@/libs/endpoints/property'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 
 
-const search = () => {
+const SearchTab = () => {
   const params = useLocalSearchParams < {
     filter?: string;
     query?: string;
@@ -29,7 +29,7 @@ const search = () => {
       setLoading(true);
       const all = await getProperties({ limit: 100 });
       setAllProperties(all);
-    } catch (error) {
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -54,13 +54,15 @@ const search = () => {
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [params.filter]);
+  }, [params.filter, loading]);
 
   // Filter properties based on all filters
   const filteredProperties = allProperties.filter(property => {
     // Filter by listing type
-    if (params.filter && params.filter !== 'All' && property.listing_type !== params.filter) {
-      return false;
+    if (params.filter && params.filter.toLowerCase() !== 'all') {
+      const propListingType = property.listing_type?.toLowerCase();
+      const paramFilter = params.filter.toLowerCase();
+      if (propListingType !== paramFilter) return false;
     }
 
     // Filter by search query (title, location)
@@ -74,22 +76,32 @@ const search = () => {
     }
 
     // Filter by property type
-    if (params.type && property.type !== params.type) {
-      return false;
+    if (params.type) {
+      const propType = property.type?.toLowerCase();
+      const paramType = params.type.toLowerCase();
+      if (propType !== paramType && !propType?.includes(paramType)) {
+        return false;
+      }
     }
 
-    // Filter by location
-    if (params.location && !property.location?.toLowerCase().includes(params.location.toLowerCase())) {
-      return false;
+    // Filter by location (exact or partial from filters)
+    if (params.location) {
+      const propLoc = property.location?.toLowerCase();
+      const paramLoc = params.location.toLowerCase();
+      if (!propLoc?.includes(paramLoc)) {
+        return false;
+      }
     }
 
     // Filter by price range
     const price = Number(property.price);
-    if (params.minPrice && price < Number(params.minPrice)) {
-      return false;
-    }
-    if (params.maxPrice && price > Number(params.maxPrice)) {
-      return false;
+    if (!isNaN(price)) {
+      if (params.minPrice && price < Number(params.minPrice)) {
+        return false;
+      }
+      if (params.maxPrice && price > Number(params.maxPrice)) {
+        return false;
+      }
     }
 
     return true;
@@ -129,10 +141,23 @@ const search = () => {
               <ActivityIndicator size="large" color="#C9A24D" />
             </View>
           ) : !loading ? (
-            <View className="py-20 px-5">
-              <Text className="text-center text-gray-500 font-poppins-medium text-base">
+            <View className="py-20 px-5 items-center">
+              <Text className="text-center text-gray-500 font-poppins-medium text-base mb-5">
                 No properties found for this filter
               </Text>
+              <TouchableOpacity 
+                onPress={() => router.setParams({ 
+                  filter: "All", 
+                  query: "", 
+                  type: "", 
+                  location: "", 
+                  minPrice: "", 
+                  maxPrice: "" 
+                })}
+                className="bg-primary px-10 py-4 rounded-full"
+              >
+                <Text className="text-white font-poppins-bold text-base">Clear Filters</Text>
+              </TouchableOpacity>
             </View>
           ) : null
         }
@@ -141,4 +166,4 @@ const search = () => {
   )
 }
 
-export default search
+export default SearchTab

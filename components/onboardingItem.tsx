@@ -1,6 +1,6 @@
 import images from '@/constants/images';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import React from "react";
 import { Image, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
@@ -37,7 +37,7 @@ export default function OnboardingItem({ item, currentIndex, onboardingData, han
   const isLast = currentIndex === onboardingData.length - 1;
 
   const finishOnboarding = async () => {
-    await AsyncStorage.setItem("hasSeenOnboarding", "true");
+    await SecureStore.setItemAsync("hasSeenOnboarding", "true");
     router.replace("/(root)/(tabs)/home");
   };
 

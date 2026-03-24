@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Modal, View, Text,  Pressable,  Animated,  Dimensions, TextInput,
-  TouchableOpacity, Image, } from "react-native";
-import icons from "@/constants/icons";
+  TouchableOpacity, } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
   visible: boolean;
@@ -43,7 +43,14 @@ const FilterSheet = ({ visible, onClose, onApply }: Props) => {
     } else {
       translateY.setValue(height);
     }
-  }, [visible]);
+  }, [visible, translateY]);
+
+  const reset = () => {
+    setType("");
+    setLocation("");
+    setMinPrice("");
+    setMaxPrice("");
+  };
 
   const close = () => {
     Animated.timing(translateY, {
@@ -68,10 +75,10 @@ const FilterSheet = ({ visible, onClose, onApply }: Props) => {
         }}
         className="bg-white rounded-xl px-4 py-5 flex-row items-center justify-between shadow-sm"
       >
-        <Text className={`font-poppins text-base ${value ? "text-black-300" : "text-gray-300"}`}>
+        <Text className={`font-poppins text-base ${value ? "text-black-300" : "text-gray-600"}`}>
           {value || placeholder}
         </Text>
-        <Image source={icons.chevronDown ?? icons.arrowDown ?? icons.down} className="w-5 h-5" />
+        <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
       </Pressable>
 
       {open && (
@@ -103,7 +110,12 @@ const FilterSheet = ({ visible, onClose, onApply }: Props) => {
         style={{ transform: [{ translateY }] }}
         className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl px-6 pt-6 pb-8"
       >
-        <Text className="text-3xl font-poppins-bold text-primary-300 mb-6">Filter</Text>
+        <View className="flex-row justify-between items-center mb-6">
+          <Text className="text-3xl font-poppins-bold text-primary-300">Filter</Text>
+          <TouchableOpacity onPress={reset}>
+             <Text className="text-primary-300 font-poppins-medium text-base">Reset</Text>
+          </TouchableOpacity>
+        </View>
 
         <SelectField
           value={type}

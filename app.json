@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "Pishonserv.com",
+      "bundleIdentifier": "com.pishonserv.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,8 +24,14 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [],
-      "package": "Pishonserv.com",
+      "permissions": [
+        "INTERNET",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.pishonserv.app",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyD3uukGP2qQ0S9KHJGfIapiT7caPGKMZv0"
@@ -54,7 +60,16 @@
         }
       ],
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "allowBackup": false
+          }
+        }
+      ],
+      "./plugins/withAndroidSecurity.js"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity } from 'react-native';
 
 // Map listing_type values to readable labels
 const listingTypeLabels: Record<string, string> = {
@@ -16,10 +16,32 @@ const Filters = () => {
   const params = useLocalSearchParams<{filter?: string}>();
   const [selectedCategory, setSelectedCategory] = useState(params.filter || 'All');
   
+  // Sync state with URL params
+  React.useEffect(() => {
+    if (params.filter) {
+      setSelectedCategory(params.filter);
+    } else {
+      setSelectedCategory('All');
+    }
+  }, [params.filter]);
+  
   // Use all listing types from the mapping
   const listingTypes = Object.keys(listingTypeLabels);
 
   const handleCategory = (category: string) => {
+    if (category === 'All') {
+      setSelectedCategory('All');
+      router.setParams({ 
+        filter: "All",
+        type: "",
+        location: "",
+        minPrice: "",
+        maxPrice: "",
+        query: ""
+      });
+      return;
+    }
+
     if (selectedCategory === category) {
       setSelectedCategory('All');
       router.setParams({ filter: "All" });
