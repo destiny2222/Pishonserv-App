@@ -9,8 +9,8 @@ export default function TextInputField({className, style, ...props}: props) {
   
   return (
     <TextInput 
-      className={className}
-      style={[{ borderRadius: 8, padding: 20}, style]}
+      className={`text-black ${className}`}
+      style={[{ borderRadius: 8, padding: 20, color: '#000000'}, style]}
       {...props}
     />
   );

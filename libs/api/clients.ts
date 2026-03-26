@@ -26,7 +26,7 @@ type RequestOptions = {
   headers?: Record<string, string>;
   auth?: boolean;
   token?: string;
-  noToken?: boolean;
+  noStaticToken?: boolean;
   signal?: AbortSignal;
 };
 
@@ -54,8 +54,8 @@ export async function apiRequest<T>(
   if (useAuth) {
     const token = await getAccessToken();
     if (token) headers.Authorization = `Bearer ${token}`;
-  } else if (API_ACCESS_TOKEN && !options.noToken) {
-    // respect noToken
+  } else if (API_ACCESS_TOKEN && !options.noStaticToken) {
+    // respect noStaticToken
     headers.Authorization = `Bearer ${API_ACCESS_TOKEN}`;
   }
 
@@ -96,6 +96,8 @@ export async function apiRequest<T>(
     if (data && typeof data === "object") {
       if ("message" in data) {
         message = String(data.message);
+      } else if ("error" in data) {
+        message = String(data.error);
       }
 
       // Extract more specific error from validation errors if present (Laravel-style)
@@ -115,6 +117,12 @@ export async function apiRequest<T>(
           message = errors[firstErrorKey][0];
         }
       }
+    }
+
+    if (res.status >= 500) {
+      console.error(`[API ERROR 500] URL: ${url}`);
+      console.error(`[API ERROR 500] Status: ${res.status}`);
+      console.error(`[API ERROR 500] Body:`, JSON.stringify(data, null, 2));
     }
 
     throw new ApiError(message, res.status, data);

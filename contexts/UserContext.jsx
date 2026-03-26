@@ -22,7 +22,7 @@ export function UserProvider({ children }) {
         setUser(response.data.user);
         setIsAuthenticated(true);
       }
-    } catch (error) {
+    } catch (_error) {
       // Clear invalid token
       await SecureStore.deleteItemAsync("access_token");
       setUser(null);
@@ -32,9 +32,9 @@ export function UserProvider({ children }) {
     }
   }
 
-  async function login(email, password) {
+  async function login(email, password, turnstile_token) {
     try {
-      const response = await authApi.login({ email, password });      
+      const response = await authApi.login({ email, password, turnstile_token });      
       // Only set user if verification is not required
       if (!response.data.verification_required) {
         setUser(response.data.user);
@@ -52,10 +52,10 @@ export function UserProvider({ children }) {
         errorMessage = "Account not found. Please check your email or sign up.";
       } else if (error.status === 403) {
         errorMessage = error.data?.message || "Access denied. Your account may be inactive.";
-      } else if (error.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
       } else if (error.message) {
         errorMessage = error.message;
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
       }
       
       return { success: false, error: errorMessage, status: error.status };
@@ -65,7 +65,7 @@ export function UserProvider({ children }) {
   async function register(userData) {
     try {
       const response = await authApi.register(userData);
-      return { success: true, data: response.data };
+      return { success: true, data: response.data, existing_unverified: response.existing_unverified };
     } catch (error) {
       
       let errorMessage = "Registration failed";
@@ -74,10 +74,10 @@ export function UserProvider({ children }) {
         errorMessage = error.data?.message || "Invalid registration data. Please check your information.";
       } else if (error.status === 409) {
         errorMessage = "Email already exists. Please use a different email or login.";
-      } else if (error.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
       } else if (error.message) {
         errorMessage = error.message;
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
       }
       
       return { success: false, error: errorMessage, status: error.status };
@@ -98,10 +98,10 @@ export function UserProvider({ children }) {
         errorMessage = error.data?.message || "Invalid or expired OTP. Please try again.";
       } else if (error.status === 404) {
         errorMessage = "Verification request not found. Please request a new OTP.";
-      } else if (error.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
       } else if (error.message) {
         errorMessage = error.message;
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
       }
       
       return { success: false, error: errorMessage, status: error.status };
@@ -127,10 +127,10 @@ export function UserProvider({ children }) {
       
       if (error.status === 404) {
         errorMessage = "Email not found. Please check your email or sign up.";
-      } else if (error.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
       } else if (error.message) {
         errorMessage = error.message;
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
       }
       
       return { success: false, error: errorMessage, status: error.status };
@@ -147,10 +147,10 @@ export function UserProvider({ children }) {
       
       if (error.status === 400) {
         errorMessage = error.data?.message || "Invalid or expired OTP. Please request a new one.";
-      } else if (error.status >= 500) {
-        errorMessage = "Server error. Please try again later.";
       } else if (error.message) {
         errorMessage = error.message;
+      } else if (error.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
       }
       
       return { success: false, error: errorMessage, status: error.status };

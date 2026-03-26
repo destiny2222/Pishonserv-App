@@ -24,6 +24,7 @@ export async function register(
     method: "POST",
     body: payload,
     auth: false,
+    noStaticToken: true,
   });
 }
 
@@ -35,6 +36,7 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
     method: "POST",
     body: payload,
     auth: false,
+    noStaticToken: true,
   });
   // Store the token securely
   if (response.data.token) {
@@ -54,6 +56,7 @@ export async function verifyOtp(
     method: "POST",
     body: payload,
     auth: false,
+    noStaticToken: true,
   });
 
   // Store the token securely
@@ -74,6 +77,7 @@ export async function resendOtp(
     method: "POST",
     body: payload,
     auth: false,
+    noStaticToken: true,
   });
 }
 
@@ -87,6 +91,7 @@ export async function requestPasswordReset(
     method: "POST",
     body: payload,
     auth: false,
+    noStaticToken: true,
   });
 }
 
@@ -100,6 +105,7 @@ export async function resetPassword(
     method: "POST",
     body: payload,
     auth: false,
+    noStaticToken: true,
   });
 }
 

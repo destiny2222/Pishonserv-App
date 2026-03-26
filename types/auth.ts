@@ -54,14 +54,17 @@ export interface RegisterPayload {
   state: string;
   city: string;
   password: string;
-  role: 'buyer' | 'agent' | 'owner' | 'hotel_owner' | 'developer' | 'host';
-  agree_mou?: boolean;
+  role: 'buyer' | 'agent' | 'owner' | 'hotel_owner' | 'developer' | 'host' | 'admin' | 'superadmin';
+  agree_mou?: boolean | number;
   signed_name?: string;
+  turnstile_token?: string;
+  referral_code?: string;
 }
 
 export interface LoginPayload {
   email: string;
   password: string;
+  turnstile_token?: string;
 }
 
 export interface OtpPayload {

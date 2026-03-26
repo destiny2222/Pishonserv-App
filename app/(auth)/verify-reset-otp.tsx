@@ -127,7 +127,7 @@ export default function VerifyResetOtp() {
               Verify OTP
             </Text>
             <Text className='text-gray-600 font-poppins text-center mt-3'>
-              We've sent a 6-digit code to{'\n'}
+              We&apos;ve sent a 6-digit code to{'\n'}
               <Text className='font-poppins-semibold text-primary'>{params.email}</Text>
             </Text>
           </View>
@@ -137,8 +137,8 @@ export default function VerifyResetOtp() {
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={(ref) => (inputRefs.current[index] = ref)}
-                className='w-12 h-14 border-2 border-gray-300 rounded-lg text-center text-xl font-poppins-semibold focus:border-primary'
+                ref={(ref) => { inputRefs.current[index] = ref; }}
+                className='w-12 h-14 border-2 border-gray-300 rounded-lg text-center text-xl font-poppins-semibold focus:border-primary text-secondary'
                 maxLength={1}
                 keyboardType='number-pad'
                 value={digit}
@@ -152,7 +152,7 @@ export default function VerifyResetOtp() {
           {/* Resend OTP */}
           <View className='flex-row justify-center items-center mb-8'>
             <Text className='text-gray-600 font-poppins'>
-              Didn't receive the code?{' '}
+              Didn&apos;t receive the code?{' '}
             </Text>
             {canResend ? (
               <TouchableOpacity onPress={handleResendOtp} disabled={resending}>

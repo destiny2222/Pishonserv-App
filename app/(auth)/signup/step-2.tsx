@@ -4,7 +4,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { State } from "country-state-city";
 import { Link, router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { Keyboard, Pressable, Text, TouchableOpacity, TouchableWithoutFeedback, View, ActivityIndicator } from "react-native";
+import { Keyboard, Text, TouchableOpacity, TouchableWithoutFeedback, View, ActivityIndicator, ScrollView } from "react-native";
 import CountryPicker, { Country } from "react-native-country-picker-modal";
 import { Dropdown } from "react-native-paper-dropdown";
 import { useSignup } from "./_layout";
@@ -22,7 +22,7 @@ function getFlagEmoji(countryCode: string) {
 export default function Step2() {
   const { data, update } = useSignup();
   const [open, setOpen] = useState(false);
-  const [statePickerOpen, setStatePickerOpen] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
 
   const onSelectCountry = (c: Country) => {
@@ -53,7 +53,8 @@ export default function Step2() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View className="flex-1 bg-white justify-center items-center">
+      {/* <ScrollView className="pb-32"> */}
+        <View className="flex-1 bg-white justify-center items-center">
         <Watermarks showTopRight showBottomLeft />
 
         <TouchableOpacity onPress={() => router.back()} className="absolute top-20 left-6 z-10">
@@ -80,6 +81,7 @@ export default function Step2() {
           </TouchableOpacity>
           <CountryPicker visible={open} onClose={() => setOpen(false)} renderFlagButton={() => null}
             onSelect={onSelectCountry} withFilter withFlag withCallingCode withEmoji
+            countryCode={data.countryCode as any || "NG"}
           />
         </View>
 
@@ -174,6 +176,7 @@ export default function Step2() {
           </Text>
         </View>
       </View>
+    {/* </ScrollView> */}
     </TouchableWithoutFeedback>
   );
 }

@@ -21,6 +21,7 @@ type SignupData = {
   role: string;
   agree_mou?: number;
   signed_name?: string;
+  referral_code?: string;
 };
 
 const initial: SignupData = {
@@ -40,6 +41,7 @@ const initial: SignupData = {
   role: "",
   agree_mou: 0,
   signed_name: "",
+  referral_code: "",
 };
 
 type Ctx = {
