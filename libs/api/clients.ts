@@ -120,9 +120,9 @@ export async function apiRequest<T>(
     }
 
     if (res.status >= 500) {
-      console.error(`[API ERROR 500] URL: ${url}`);
-      console.error(`[API ERROR 500] Status: ${res.status}`);
-      console.error(`[API ERROR 500] Body:`, JSON.stringify(data, null, 2));
+      // console.error(`[API ERROR 500] URL: ${url}`);
+      // console.error(`[API ERROR 500] Status: ${res.status}`);
+      // console.error(`[API ERROR 500] Body:`, JSON.stringify(data, null, 2));
     }
 
     throw new ApiError(message, res.status, data);

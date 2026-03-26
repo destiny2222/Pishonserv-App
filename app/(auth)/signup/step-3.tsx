@@ -123,8 +123,8 @@ export default function Step3() {
     // console.log("Role:", data.role);
     // console.log("Turnstile Token:", !!turnstileToken);
     
-    if (data.role !== 'buyer') console.log("MOU agreed:", data.agree_mou === 1);
-    console.log("------------------------");
+    // if (data.role !== 'buyer') console.log("MOU agreed:", data.agree_mou === 1);
+    // console.log("------------------------");
 
     if (!basicValid) return false;
 
