@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useState, useRef } from "react";
-import { ActivityIndicator, FlatList, Keyboard, Modal, Text, TouchableOpacity, TouchableWithoutFeedback, View, ScrollView } from "react-native";
+import { ActivityIndicator, FlatList, Modal, Text, TouchableOpacity, TouchableWithoutFeedback, View, ScrollView } from "react-native";
 import { useSignup } from "./_layout";
 import TurnstileWidget, { TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import TextInputField from "@/components/TextInputField";
@@ -116,15 +116,7 @@ export default function Step3() {
   const isFormValid = () => {
     const basicValid = data.password && data.password === data.confirmPassword && data.role && turnstileToken;
     
-    // DEBUG LOGS
-    // console.log("--- Validation Check ---");
-    // console.log("Password set:", !!data.password);
-    // console.log("Passwords match:", data.password === data.confirmPassword);
-    // console.log("Role:", data.role);
-    // console.log("Turnstile Token:", !!turnstileToken);
-    
-    // if (data.role !== 'buyer') console.log("MOU agreed:", data.agree_mou === 1);
-    // console.log("------------------------");
+   
 
     if (!basicValid) return false;
 
@@ -136,169 +128,169 @@ export default function Step3() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      {/* <ScrollView> */}
-        <View className="flex-1 bg-white px-6 pt-32 relative">
-          <Watermarks showTopRight showBottomLeft />
+      <View className="flex-1 bg-white px-6 pt-32 relative">
+        <Watermarks showTopRight showBottomLeft />
 
-          <TouchableOpacity onPress={() => router.back()} className="absolute top-16 left-6 z-10">
-            <Ionicons name="arrow-back" size={22} color="#C9A24D" />
-          </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()} className="absolute top-16 left-6 z-10">
+          <Ionicons name="arrow-back" size={22} color="#C9A24D" />
+        </TouchableOpacity>
 
-          <Text className="text-2xl font-poppins-semibold text-secondary text-center">Sign Up</Text>
-          <Text className="text-xs text-gray-300 text-center mt-2">(Security)</Text>
+        <Text className="text-2xl font-poppins-semibold text-secondary text-center">Sign Up</Text>
+        <Text className="text-xs text-gray-300 text-center mt-2">(Security)</Text>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mt-8">
-            <View>
-              <Text className="font-poppins-medium text-sm mb-2">Password <Text className="text-red-500">*</Text></Text>
-              <View className="relative">
-                <TextInputField
-                  value={data.password}
-                  onChangeText={(t) => update({ password: t })}
-                  placeholder="Input password"
-                  secureTextEntry={!showPassword}
-                  style={{ color: '#000000', paddingRight: 50 }}
-                  className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium rounded-xl"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-4"
-                >
-                  <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#666" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View className="mt-6">
-              <Text className="font-poppins-medium text-sm mb-2">Re-enter Password <Text className="text-red-500">*</Text></Text>
-              <View className="relative">
-                <TextInputField
-                  value={data.confirmPassword}
-                  onChangeText={(t) => update({ confirmPassword: t })}
-                  placeholder="Re-enter password"
-                  secureTextEntry={!showConfirmPassword}
-                  style={{ color: '#000000', paddingRight: 50 }}
-                  className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium rounded-xl"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-4"
-                >
-                  <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={22} color="#666" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View className="mt-6">
-              <Text className="font-poppins-medium text-sm mb-2">Select Role <Text className="text-red-500">*</Text></Text>
-              <TouchableOpacity
-                onPress={() => setRoleModalVisible(true)}
-                className="border border-gray-300 bg-white px-4 py-4 rounded-xl flex-row justify-between items-center"
-              >
-                <Text className={`text-base font-poppins-medium ${data.role ? 'text-black' : 'text-gray-400'}`}>
-                  {getRoleLabel(data.role)}
-                </Text>
-                <Ionicons name="chevron-down" size={20} color="#666" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Conditional Fields for Non-Buyer Roles */}
-            {data.role && data.role !== 'buyer' && (
-              <View className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <Text className="font-poppins-bold text-sm mb-4 text-secondary">Agreement</Text>
-
-                <TouchableOpacity
-                  onPress={() => update({ agree_mou: data.agree_mou === 1 ? 0 : 1 })}
-                  className="flex-row items-center mb-4"
-                >
-                  <View className={`w-6 h-6 border rounded mr-3 items-center justify-center ${data.agree_mou === 1 ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
-                    {data.agree_mou === 1 && <Ionicons name="checkmark" size={16} color="white" />}
-                  </View>
-                  <Text className="text-sm font-poppins text-gray-700 flex-1">
-                    I agree to the <Text className="text-primary font-bold">MOU</Text> terms and conditions.
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Hidden field logic: signed_name is auto-populated on submit */}
-              </View>
-            )}
-
-            <View className="mt-6">
-              <Text className="font-poppins-medium text-sm mb-2">Security Verification <Text className="text-red-500">*</Text></Text>
-              <TurnstileWidget
-                ref={turnstileRef}
-                onTokenReceived={setTurnstileToken}
-                onError={(err) => showAlert("Security Error", "Verification failed. Please try again.")}
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          className="mt-8"
+          keyboardShouldPersistTaps="handled"
+        >
+          <View>
+            <Text className="font-poppins-medium text-sm mb-2">Password <Text className="text-red-500">*</Text></Text>
+            <View className="relative">
+              <TextInputField
+                value={data.password}
+                onChangeText={(t) => update({ password: t })}
+                placeholder="Input password"
+                secureTextEntry={!showPassword}
+                style={{ color: '#000000', paddingRight: 50 }}
+                className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium rounded-xl"
               />
-            </View>
-
-            <View className="mt-10 mb-10">
-              <TouchableOpacity className={`rounded-xl py-4 items-center ${isFormValid() ? 'bg-primary' : 'bg-gray-300'}`}
-                onPress={handleSubmit}
-                disabled={isLoading || !isFormValid()}
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-4"
               >
-                {isLoading ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <Text className="text-white font-poppins-semibold text-lg">Register</Text>
-                )}
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#666" />
               </TouchableOpacity>
             </View>
-          </ScrollView>
+          </View>
 
-          <CustomAlert
-            visible={alertVisible}
-            title={alertTitle}
-            message={alertMessage}
-            onClose={() => setAlertVisible(false)}
-          />
+          <View className="mt-6">
+            <Text className="font-poppins-medium text-sm mb-2">Re-enter Password <Text className="text-red-500">*</Text></Text>
+            <View className="relative">
+              <TextInputField
+                value={data.confirmPassword}
+                onChangeText={(t) => update({ confirmPassword: t })}
+                placeholder="Re-enter password"
+                secureTextEntry={!showConfirmPassword}
+                style={{ color: '#000000', paddingRight: 50 }}
+                className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium rounded-xl"
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-4"
+              >
+                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={22} color="#666" />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-          {/* Role Selection Modal */}
-          <Modal
-            visible={roleModalVisible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={() => setRoleModalVisible(false)}
-          >
-            <TouchableWithoutFeedback onPress={() => setRoleModalVisible(false)}>
-              <View className="flex-1 bg-black/50 justify-end">
-                <TouchableWithoutFeedback>
-                  <View className="bg-white rounded-t-3xl p-6 h-1/2">
-                    <View className="flex-row justify-between items-center mb-4">
-                      <Text className="text-xl font-poppins-bold text-secondary">Select Role</Text>
-                      <TouchableOpacity onPress={() => setRoleModalVisible(false)}>
-                        <Ionicons name="close" size={24} color="#333" />
-                      </TouchableOpacity>
-                    </View>
-                    <FlatList
-                      data={roles}
-                      keyExtractor={(item) => item.value}
-                      renderItem={({ item }) => (
-                        <TouchableOpacity
-                          onPress={() => {
-                            update({ role: item.value });
-                            setRoleModalVisible(false);
-                          }}
-                          className={`py-4 border-b border-gray-100 flex-row justify-between items-center ${data.role === item.value ? 'bg-gray-50' : ''}`}
-                        >
-                          <Text className={`text-base font-poppins-medium ${data.role === item.value ? 'text-primary' : 'text-gray-700'}`}>
-                            {item.label}
-                          </Text>
-                          {data.role === item.value && (
-                            <Ionicons name="checkmark-circle" size={20} color="#C9A24D" />
-                          )}
-                        </TouchableOpacity>
-                      )}
-                      showsVerticalScrollIndicator={false}
-                    />
+          <View className="mt-6">
+            <Text className="font-poppins-medium text-sm mb-2">Select Role <Text className="text-red-500">*</Text></Text>
+            <TouchableOpacity
+              onPress={() => setRoleModalVisible(true)}
+              className="border border-gray-300 bg-white px-4 py-4 rounded-xl flex-row justify-between items-center"
+            >
+              <Text className={`text-base font-poppins-medium ${data.role ? 'text-black' : 'text-gray-400'}`}>
+                {getRoleLabel(data.role)}
+              </Text>
+              <Ionicons name="chevron-down" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Conditional Fields for Non-Buyer Roles */}
+          {data.role && data.role !== 'buyer' && (
+            <View className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <Text className="font-poppins-bold text-sm mb-4 text-secondary">Agreement</Text>
+
+              <TouchableOpacity
+                onPress={() => update({ agree_mou: data.agree_mou === 1 ? 0 : 1 })}
+                className="flex-row items-center mb-4"
+              >
+                <View className={`w-6 h-6 border rounded mr-3 items-center justify-center ${data.agree_mou === 1 ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
+                  {data.agree_mou === 1 && <Ionicons name="checkmark" size={16} color="white" />}
+                </View>
+                <Text className="text-sm font-poppins text-gray-700 flex-1">
+                  I agree to the <Text className="text-primary font-bold">MOU</Text> terms and conditions.
+                </Text>
+              </TouchableOpacity>
+
+              {/* Hidden field logic: signed_name is auto-populated on submit */}
+            </View>
+          )}
+
+          <View className="mt-6">
+            <Text className="font-poppins-medium text-sm mb-2">Security Verification <Text className="text-red-500">*</Text></Text>
+            <TurnstileWidget
+              ref={turnstileRef}
+              onTokenReceived={setTurnstileToken}
+              onError={(err) => showAlert("Security Error", "Verification failed. Please try again.")}
+            />
+          </View>
+
+          <View className="mt-10 mb-10">
+            <TouchableOpacity className={`rounded-xl py-4 items-center ${isFormValid() ? 'bg-primary' : 'bg-gray-300'}`}
+              onPress={handleSubmit}
+              disabled={isLoading || !isFormValid()}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text className="text-white font-poppins-semibold text-lg">Register</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        <CustomAlert
+          visible={alertVisible}
+          title={alertTitle}
+          message={alertMessage}
+          onClose={() => setAlertVisible(false)}
+        />
+
+        {/* Role Selection Modal */}
+        <Modal
+          visible={roleModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setRoleModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setRoleModalVisible(false)}>
+            <View className="flex-1 bg-black/50 justify-end">
+              <TouchableWithoutFeedback>
+                <View className="bg-white rounded-t-3xl p-6 h-1/2">
+                  <View className="flex-row justify-between items-center mb-4">
+                    <Text className="text-xl font-poppins-bold text-secondary">Select Role</Text>
+                    <TouchableOpacity onPress={() => setRoleModalVisible(false)}>
+                      <Ionicons name="close" size={24} color="#333" />
+                    </TouchableOpacity>
                   </View>
-                </TouchableWithoutFeedback>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
+                  <FlatList
+                    data={roles}
+                    keyExtractor={(item) => item.value}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => {
+                          update({ role: item.value });
+                          setRoleModalVisible(false);
+                        }}
+                        className={`py-4 border-b border-gray-100 flex-row justify-between items-center ${data.role === item.value ? 'bg-gray-50' : ''}`}
+                      >
+                        <Text className={`text-base font-poppins-medium ${data.role === item.value ? 'text-primary' : 'text-gray-700'}`}>
+                          {item.label}
+                        </Text>
+                        {data.role === item.value && (
+                          <Ionicons name="checkmark-circle" size={20} color="#C9A24D" />
+                        )}
+                      </TouchableOpacity>
+                    )}
+                    showsVerticalScrollIndicator={false}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
 
-        </View>
-      {/* </ScrollView> */}
-    </TouchableWithoutFeedback>
+      </View>
   );
 }

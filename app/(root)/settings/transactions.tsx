@@ -1,15 +1,24 @@
 import TopHeader from '@/components/TopHeader';
 import { getTransactions, Transaction } from '@/libs/endpoints/transaction';
 import { format, parseISO } from 'date-fns';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View, Modal, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from '@expo/vector-icons/Ionicons';
+
+const months = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
+const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
 
 const TransactionHistory = () => {
-  const [transactions, setTransactions] = useState < Transaction[] > ([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState('Dec.');
-  const [selectedYear, setSelectedYear] = useState('2025');
+  
+  // Initialize with current month and year
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'MMM.'));
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+
+  const [isMonthModalVisible, setIsMonthModalVisible] = useState(false);
+  const [isYearModalVisible, setIsYearModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchTransactionsData = async () => {
@@ -26,6 +35,15 @@ const TransactionHistory = () => {
 
     fetchTransactionsData();
   }, []);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      const date = parseISO(t.created_at);
+      const tMonth = format(date, 'MMM.');
+      const tYear = format(date, 'yyyy');
+      return tMonth === selectedMonth && tYear === selectedYear;
+    });
+  }, [transactions, selectedMonth, selectedYear]);
 
   const getStatusColor = (status: string) => {
     const normalizedStatus = status.toLowerCase();
@@ -65,6 +83,41 @@ const TransactionHistory = () => {
     return `₦${amount.toLocaleString()}`;
   };
 
+  const SelectionModal = ({ visible, data, onSelect, onClose, title }: any) => (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View className="flex-1 bg-black/50 justify-end">
+          <TouchableWithoutFeedback>
+            <View className="bg-white rounded-t-3xl p-6 h-1/2">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-poppins-bold text-secondary">{title}</Text>
+                <TouchableOpacity onPress={onClose}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={data}
+                keyExtractor={(item) => item}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      onSelect(item);
+                      onClose();
+                    }}
+                    className={`py-4 border-b border-gray-100 flex-row justify-between items-center`}
+                  >
+                    <Text className={`text-base font-poppins-medium text-gray-700`}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+
   return (
     <SafeAreaView className='flex-1 bg-white'>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName='px-4 pb-8' >
@@ -76,12 +129,18 @@ const TransactionHistory = () => {
           </TouchableOpacity>
 
           <View className='flex-row gap-3'>
-            <TouchableOpacity className='flex-row items-center border border-gray-300 px-4 py-3 rounded-full'>
+            <TouchableOpacity 
+              onPress={() => setIsMonthModalVisible(true)}
+              className='flex-row items-center border border-gray-300 px-4 py-3 rounded-full'
+            >
               <Text className='text-black text-lg font-poppins-medium mr-2'>{selectedMonth}</Text>
               <Text className='text-black text-lg font-poppins-medium'>▼</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className='flex-row items-center border border-gray-300 px-4 py-3 rounded-full'>
+            <TouchableOpacity 
+              onPress={() => setIsYearModalVisible(true)}
+              className='flex-row items-center border border-gray-300 px-4 py-3 rounded-full'
+            >
               <Text className='text-black text-lg font-poppins-medium mr-2'>{selectedYear}</Text>
               <Text className='text-black text-lg font-poppins-medium'>▼</Text>
             </TouchableOpacity>
@@ -95,7 +154,7 @@ const TransactionHistory = () => {
           </View>
         ) : (
           <View className='space-y-4'>
-            {transactions.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <View key={transaction.id} className='bg-white p-4 mb-5 rounded-lg border border-gray-100 shadow-sm'
                 style={{
                   shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
@@ -127,14 +186,30 @@ const TransactionHistory = () => {
                 </View>
               </View>
             ))}
-            {transactions.length === 0 && (
-              <Text className="text-center text-gray-500 text-lg mt-10">No transactions found</Text>
+            {filteredTransactions.length === 0 && (
+              <Text className="text-center text-gray-500 text-lg mt-10">No transactions found for {selectedMonth} {selectedYear}</Text>
             )}
           </View>
         )}
       </ScrollView>
+
+      <SelectionModal
+        visible={isMonthModalVisible}
+        data={months}
+        onSelect={setSelectedMonth}
+        onClose={() => setIsMonthModalVisible(false)}
+        title="Select Month"
+      />
+      <SelectionModal
+        visible={isYearModalVisible}
+        data={years}
+        onSelect={setSelectedYear}
+        onClose={() => setIsYearModalVisible(false)}
+        title="Select Year"
+      />
     </SafeAreaView>
   )
 }
 
 export default TransactionHistory
+

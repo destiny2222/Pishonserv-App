@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, router } from 'expo-router';
 import React, { useState, useRef } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, TouchableWithoutFeedback, View, ScrollView } from 'react-native';
+import { ActivityIndicator, Pressable, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import TurnstileWidget, { TurnstileWidgetRef } from '@/components/TurnstileWidget';
 import { StatusBar } from 'expo-status-bar';
 
@@ -62,12 +62,15 @@ export default function Login() {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className='flex-1 bg-white justify-center items-center pt-32'>
         <Watermarks showTopRight showBottomLeft />
         <Text className='font-bold text-2xl text-secondary font-poppins-semibold'>Login</Text>
 
-        <ScrollView showsVerticalScrollIndicator={false} className="w-full px-8 mt-10">
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          className="w-full px-8 mt-10"
+          keyboardShouldPersistTaps="handled"
+        >
           <View>
             <Text className='font-poppins-medium text-base mb-2'>Email</Text>
             <TextInputField placeholder='Enter your email'
@@ -140,6 +143,5 @@ export default function Login() {
           onClose={() => setAlertVisible(false)}
         />
       </View>
-    </TouchableWithoutFeedback>
   )
 }

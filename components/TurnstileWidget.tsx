@@ -78,16 +78,14 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(({ 
       if (data.type === 'token') {
         onTokenReceived(data.token);
       } else if (data.type === 'error') {
-        // console.warn('Turnstile WebView Error:', data.error);
         onError?.(data.error);
       }
-    } catch (e) {
-      // console.error('Failed to parse Turnstile message:', e);
+    } catch {
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} pointerEvents="box-none">
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
@@ -97,15 +95,14 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(({ 
         scrollEnabled={false}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        pointerEvents="auto"
         containerStyle={{ backgroundColor: 'transparent' }}
         onError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
-          // console.warn('WebView Load Error:', nativeEvent);
           onError?.('WebView Load Error: ' + nativeEvent.description);
         }}
         onHttpError={(syntheticEvent) => {
           const { nativeEvent } = syntheticEvent;
-          // console.warn('WebView HTTP Error:', nativeEvent);
           onError?.('HTTP Error: ' + nativeEvent.statusCode);
         }}
       />
