@@ -1,8 +1,9 @@
 import images from '@/constants/images';
-import { FurnitureItem, getFurnitureDetail } from '@/libs/endpoints/furniture';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { getFurnitureDetail, FurnitureItem } from '@/libs/endpoints/furniture';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import * as Linking from 'expo-linking';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,7 +11,6 @@ const { width } = Dimensions.get('window');
 
 const FurnitureDetail = () => {
     const { id } = useLocalSearchParams();
-    const router = useRouter();
     const [furniture, setFurniture] = useState<FurnitureItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,6 +40,26 @@ const FurnitureDetail = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const formatDescription = (description: string) => {
+        if (!description) return 'No description available for this item.';
+        return description
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&quot;/gi, '"')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>/gi, '\n\n')
+            .replace(/<[^>]+>/g, '')
+            .replace(/\\n/g, '\n')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    };
+
+    const handleBookCall = () => {
+        Linking.openURL('tel:08122040965');
     };
 
     const handleAddToCart = () => {
@@ -153,8 +173,8 @@ const FurnitureDetail = () => {
                         <Text className="text-lg font-poppins-semibold text-gray-900 mb-3">
                             Description
                         </Text>
-                        <Text className="text-base font-poppins text-gray-600 leading-6">
-                            {furniture.description || 'No description available for this item.'}
+                        <Text className="text-base font-poppins text-gray-600 leading-7">
+                            {formatDescription(furniture.description)}
                         </Text>
                     </View>
 
@@ -228,6 +248,7 @@ const FurnitureDetail = () => {
                         <Ionicons name="call-outline" size={20} color="#fff" />
                     </TouchableOpacity> */}
                     <TouchableOpacity
+                        onPress={handleBookCall}
                         className="flex-1 bg-primary py-4 rounded-xl items-center justify-center flex-row gap-2"
                     >
                         <Ionicons name="call-outline" size={20} color="#fff" />
