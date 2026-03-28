@@ -120,6 +120,19 @@ export async function getCurrentUser(): Promise<UserResponse> {
 }
 
 /**
+ * Update current authenticated user's profile image
+ */
+export async function updateProfileImage(
+  base64Image: string,
+): Promise<UserResponse> {
+  return apiRequest<UserResponse>("/users/me/profile-image", {
+    method: "POST",
+    body: { profile_image_base64: base64Image },
+    auth: true,
+  });
+}
+
+/**
  * Update current authenticated user
  */
 export async function updateCurrentUser(

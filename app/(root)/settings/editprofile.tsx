@@ -4,7 +4,7 @@ import TopHeader from '@/components/TopHeader'
 import icons from '@/constants/icons'
 import images from '@/constants/images'
 import { useAuth } from '@/hooks/useAuth'
-import { updateCurrentUser } from '@/libs/endpoints/auth'
+import { updateCurrentUser, updateProfileImage } from '@/libs/endpoints/auth'
 import * as ImagePicker from 'expo-image-picker'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Image, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
@@ -59,7 +59,7 @@ const EditProfile = () => {
         const base64Image = `data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}`;
         setUploadingImage(true);
         try {
-            await updateCurrentUser({ profile_image: base64Image });
+            await updateProfileImage(base64Image);
             await refreshUser();
             showAlert('Success', 'Profile image updated successfully!');
         } catch (e: any) {
