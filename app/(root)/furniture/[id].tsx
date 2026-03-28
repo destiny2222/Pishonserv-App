@@ -106,7 +106,20 @@ const FurnitureDetail = () => {
                 {/* Image Section */}
                 <View className="relative">
                     <Image
-                        source={furniture.image_url ? { uri: furniture.image_url } : images.featured1}
+                        source={(() => {
+                            if (furniture.image_url) return { uri: furniture.image_url };
+                            if (furniture.image) return { uri: furniture.image };
+                            if (furniture.images) {
+                                if (Array.isArray(furniture.images) && furniture.images.length > 0) {
+                                    return { uri: furniture.images[0] };
+                                }
+                                if (typeof furniture.images === 'string') {
+                                    const firstImage = furniture.images.split(',')[0].trim();
+                                    return { uri: firstImage };
+                                }
+                            }
+                            return images.featured1;
+                        })()}
                         className="w-full h-96"
                         resizeMode="cover"
                     />

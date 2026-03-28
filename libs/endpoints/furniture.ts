@@ -7,7 +7,8 @@ export interface FurnitureItem {
   sale_price: string;
   regular_price: string;
   image_url: string;
-  images?: string;
+  image?: string;
+  images?: string | string[];
   visibility?: string;
   created_at: string;
 }
