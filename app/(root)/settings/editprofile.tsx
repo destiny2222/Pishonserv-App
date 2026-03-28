@@ -84,7 +84,7 @@ const EditProfile = () => {
         }
     }
     return (
-        <SafeAreaView className='h-full bg-white'>
+        <SafeAreaView className='h-full bg-white pt-8'>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className='flex-1'>
                 <ScrollView showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps='handled'
