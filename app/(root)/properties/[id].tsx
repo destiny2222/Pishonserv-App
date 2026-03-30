@@ -138,43 +138,9 @@ const Properties = () => {
       return;
     }
 
-    // 1. WhatsApp flow for short_let/hotel
+    // 1. WhatsApp flow for short_let/hotel (now shows modal first)
     if (!supportsDirectBooking(property.listing_type)) {
-      setBookingLoading(true);
-      try {
-        const whatsappResponse = await createWhatsAppInquiry(property.id);
-        if (whatsappResponse.status === "ok" && whatsappResponse.data.whatsapp_inquiry_url) {
-          showAlert(
-            "Redirecting to WhatsApp",
-            "You will be redirected to WhatsApp to complete your inquiry.",
-            () => Linking.openURL(whatsappResponse.data.whatsapp_inquiry_url),
-            () => {},
-            "Continue",
-            "Cancel"
-          );
-        } else {
-          showAlert("Error", "Unable to generate WhatsApp inquiry link. Please contact support.");
-        }
-      } catch (err: any) {
-        // Handle "Direct Booking Disabled" 403 error
-        if (err instanceof ApiError && err.status === 403) {
-          const data = err.data as BookingMobileDisabledResponse;
-          if (data && data.whatsapp_inquiry_url) {
-            showAlert(
-              "Booking via WhatsApp",
-              data.error || "Direct booking is currently disabled for mobile. Please continue via WhatsApp inquiry.",
-              () => Linking.openURL(data.whatsapp_inquiry_url),
-              () => {},
-              "Continue",
-              "Cancel"
-            );
-            return;
-          }
-        }
-        showAlert("Error", err?.message || "Failed to generate WhatsApp inquiry.");
-      } finally {
-        setBookingLoading(false);
-      }
+      setBookingModalVisible(true);
       return;
     }
 
@@ -196,6 +162,28 @@ const Properties = () => {
 
     setBookingLoading(true);
     try {
+      // Check if this is a direct booking or a WhatsApp inquiry
+      if (!supportsDirectBooking(property.listing_type)) {
+        // WhatsApp Inquiry Path
+        const whatsappResponse = await createWhatsAppInquiry(property.id, checkIn, checkOut);
+        
+        if (whatsappResponse.status === "ok" && whatsappResponse.data.whatsapp_inquiry_url) {
+          setBookingModalVisible(false);
+          showAlert(
+            "Redirecting to WhatsApp",
+            "You will be redirected to WhatsApp to complete your inquiry with the selected dates.",
+            () => Linking.openURL(whatsappResponse.data.whatsapp_inquiry_url),
+            () => {},
+            "Continue",
+            "Cancel"
+          );
+        } else {
+          showAlert("Error", "Unable to generate WhatsApp inquiry link. Please try again.");
+        }
+        return;
+      }
+
+      // Direct Booking Path (Existing logic)
       const bookingResponse = await createBooking({
         property_id: property.id,
         check_in: checkIn,

@@ -45,9 +45,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
   const calculateNights = (): number => {
     const diffTime = checkOutDate.getTime() - checkInDate.getTime();
+    if (diffTime <= 0) return 0;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
+    return diffDays;
   };
+
+  const isInquiry = listingType === 'short_let' || listingType === 'hotel';
 
   const calculateTotalAmount = (): number => {
     const nights = calculateNights();
@@ -108,7 +111,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
           {/* Header */}
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-2xl font-rubik-bold text-black-300">
-              Select Dates
+              {isInquiry ? 'Select Inquiry Dates' : 'Select Booking Dates'}
             </Text>
             <TouchableOpacity onPress={onClose} className="p-2">
               <Ionicons name="close" size={24} color="#666" />
@@ -186,7 +189,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
               <ActivityIndicator color="#fff" />
             ) : (
               <Text className="text-white text-center text-base font-rubik-bold">
-                Confirm Booking
+                {isInquiry ? 'Confirm Inquiry' : 'Confirm Booking'}
               </Text>
             )}
           </TouchableOpacity>

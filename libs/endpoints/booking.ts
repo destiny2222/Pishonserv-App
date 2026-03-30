@@ -174,14 +174,25 @@ export async function createBooking(
  * Get WhatsApp inquiry URL for properties
  *
  * @param propertyId - The property ID to inquire about
+ * @param checkIn - Optional check-in date (YYYY-MM-DD)
+ * @param checkOut - Optional check-out date (YYYY-MM-DD)
  * @returns WhatsApp inquiry URL for the property
  */
 export async function createWhatsAppInquiry(
   propertyId: number,
+  checkIn?: string,
+  checkOut?: string,
 ): Promise<BookingWhatsAppResponse> {
+  const body = { 
+    property_id: propertyId,
+    check_in: checkIn,
+    check_out: checkOut,
+  };
+  
+
   return apiRequest<BookingWhatsAppResponse>("/bookings", {
     method: "POST",
-    body: { property_id: propertyId },
+    body,
     auth: true,
   });
 }
