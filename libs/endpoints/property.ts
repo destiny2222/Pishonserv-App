@@ -6,7 +6,7 @@ export interface Property {
   price: number;
   location: string;
   type: string;
-  listing_type: "for_sale" | "for_rent" | "short_let" | "hotel" | "land";
+  listing_type: "for_sale" | "for_rent" | "short_let" | "hotel" | "land" | "project";
   description?: string;
   bedrooms?: number;
   bathrooms?: number;
@@ -41,7 +41,6 @@ const PROPERTY_TOKEN = process.env.EXPO_PUBLIC_API_ACCESS_TOKEN;
 
 function propertyAuthHeaders(): Record<string, string> {
   if (!PROPERTY_TOKEN) {
-    
     return {};
   }
   return { Authorization: `Bearer ${PROPERTY_TOKEN}` };
@@ -64,7 +63,7 @@ export async function getProperties({
   page = 1,
 }: {
   type?: string;
-  listing_type?: "for_sale" | "for_rent" | "short_let" | "hotel";
+  listing_type?: "for_sale" | "for_rent" | "short_let" | "hotel" | "land" | "project";
   location?: string;
   min_price?: number;
   max_price?: number;
@@ -85,7 +84,6 @@ export async function getProperties({
 
     const endpoint = `${ENDPOINTS.GET_PROPERTIES}?${params.toString()}`;
 
-
     const response = await apiRequest<ApiResponse<PropertiesResponse>>(
       endpoint,
       {
@@ -93,11 +91,10 @@ export async function getProperties({
         headers: propertyAuthHeaders(),
       },
     );
-    
-    return response.data.items ?? [];
+
+    return response.data;
   } catch (error) {
-    
-    return [];
+    return { items: [], page, limit };
   }
 }
 
@@ -113,7 +110,6 @@ export async function getFeaturedProperties() {
 
     return response.data.items ?? [];
   } catch (error) {
-    
     return [];
   }
 }
@@ -129,7 +125,6 @@ export async function getPropertyDetails(id: number): Promise<Property | null> {
     );
     return response.data ?? null;
   } catch (error) {
-    
     return null;
   }
 }

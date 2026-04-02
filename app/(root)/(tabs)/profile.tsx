@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   ImageSourcePropType,
@@ -7,6 +7,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Linking,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -49,6 +51,7 @@ const SettingsItem = ({
 
 export default function Profile() {
   const { logout, user, isAuthenticated } = useAuth();
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -118,11 +121,23 @@ export default function Profile() {
               <Image
                 source={profileImageSource}
                 className="w-44 h-44 rounded-full"
+                onLoadStart={() => setIsImageLoading(true)}
+                onLoadEnd={() => setIsImageLoading(false)}
               />
+              {isImageLoading && (
+                <View className="absolute inset-0 items-center justify-center bg-black/10 rounded-full">
+                  <ActivityIndicator size="large" color="#0061FF" />
+                </View>
+              )}
             </View>
             <Text className="pt-4 font-poppins-semibold text-2xl text-textPrimary">
               {`${user?.name || ""} ${user?.lname || ""}`.trim()}
             </Text>
+            {user?.email && (
+              <Text className="text-textSecondary font-poppins text-base">
+                {user.email}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -133,7 +148,13 @@ export default function Profile() {
               icon={item.icon}
               title={item.title}
               onPress={() => {
-                if (item.href) router.push(item.href as any);
+                if (item.href) {
+                  if (item.href.startsWith("mailto:")) {
+                    Linking.openURL(item.href);
+                  } else {
+                    router.push(item.href as any);
+                  }
+                }
               }}
             />
           ))}

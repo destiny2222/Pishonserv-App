@@ -17,8 +17,11 @@ export default function Home() {
   const [wishlistIds, setWishlistIds] = useState < number[] > ([]);
   const [allProperties, setAllProperties] = useState < Property[] > ([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const { user } = useAuth();
 
   useFocusEffect(
@@ -35,31 +38,53 @@ export default function Home() {
     }, [])
   );
 
-  const fetchProperties = async () => {
+  const fetchProperties = async (currentPage = 1, isRefresh = false) => {
     try {
-      setLoading(true);
-      // Fetch featured properties
-      const featured = await getFeaturedProperties();
-      setFeaturedProperties(featured);
+      if (currentPage === 1 && !isRefresh) setLoading(true);
+      if (currentPage > 1) setLoadingMore(true);
+      
+      if (currentPage === 1) {
+        // Fetch featured properties only on initial load or refresh
+        const featured = await getFeaturedProperties();
+        setFeaturedProperties(featured);
+      }
 
-      // Fetch all properties without filter
-      const all = await getProperties({ limit: 100 });
-      setAllProperties(all);
+      const listingType = params.filter && params.filter.toLowerCase() !== 'all' 
+        ? params.filter.toLowerCase() as any 
+        : undefined;
+
+      const response = await getProperties({ 
+        limit: 20, 
+        page: currentPage,
+        listing_type: listingType
+      });
+
+      if (currentPage === 1) {
+        setAllProperties(response.items);
+      } else {
+        setAllProperties(prev => [...prev, ...response.items]);
+      }
+      
+      // If we got exactly the limit or more, there might be more to load
+      setHasMore(response.items.length >= 20);
+      setPage(currentPage);
     } catch {
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchProperties();
+    await fetchProperties(1, true);
     setRefreshing(false);
   };
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
+    // When filter changes, reset to page 1
+    fetchProperties(1, false);
+  }, [params.filter]);
 
   // Show loading when filter changes
   useEffect(() => {
@@ -72,11 +97,14 @@ export default function Home() {
     }
   }, [params.filter, loading]);
 
-  // Filter properties based on selected filter
-  const filterVal = params.filter;
-  const filteredProperties = filterVal && filterVal.toLowerCase() !== 'all'
-    ? allProperties.filter(property => property.listing_type?.toLowerCase() === filterVal.toLowerCase())
-    : allProperties;
+  // Filter is now applied in the API call directly, so we just use allProperties
+  const filteredProperties = allProperties;
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore && !loading && !filterLoading) {
+      fetchProperties(page + 1, false);
+    }
+  };
   return (
     <SafeAreaView className='h-full mb-72 bg-gray-200' edges={['top']}>
 
@@ -91,6 +119,13 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator size="small" color="#C9A24D" className="mt-4 mb-20" />
+          ) : null
+        }
         ListHeaderComponent={
           <View className="px-3">
             {user?.role === 'agent' || user?.role === 'owner' ? <AgentHeader /> : <Header />}
@@ -149,6 +184,3 @@ export default function Home() {
     </SafeAreaView>
   )
 }
-
-
-

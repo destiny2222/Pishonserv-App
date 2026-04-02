@@ -125,7 +125,7 @@ export const settings = [
   {
     title: "Help Center",
     icon: icons.info,
-    href: "/help",
+    href: "mailto:pishonserv@gmail.com",
   },
 ];
 

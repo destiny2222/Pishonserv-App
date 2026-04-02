@@ -1,7 +1,8 @@
-import { View, Text, Image } from 'react-native'
+import { View, Text, Image, Platform } from 'react-native'
 import React from 'react'
 import { Tabs } from 'expo-router'
 import icons from '@/constants/icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const TabIcon = ({ focused, icon, title }: { focused: boolean; icon: any, title: string }) => {
   return (
@@ -13,6 +14,8 @@ const TabIcon = ({ focused, icon, title }: { focused: boolean; icon: any, title:
 }
 
 const  TabsLayout = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <>
       <Tabs screenOptions={{
@@ -22,8 +25,11 @@ const  TabsLayout = () => {
           position: 'absolute',
           borderTopColor: '#0061FF1a',
           borderTopWidth: 1,
-          minHeight: 80,
-          paddingTop: 2,
+          height: Platform.OS === 'ios' ? 84 + (insets.bottom > 0 ? insets.bottom - 10 : 0) : 80,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+          paddingTop: 10,
+          elevation: 0,
+          shadowOpacity: 0,
         }
       }}>
         <Tabs.Screen name='home' options={{ headerShown: false, title: "Home", 

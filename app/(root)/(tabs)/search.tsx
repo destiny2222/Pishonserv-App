@@ -21,29 +21,54 @@ const SearchTab = () => {
   } > ();
   const [allProperties, setAllProperties] = useState < Property[] > ([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchProperties = async () => {
+  const fetchProperties = async (currentPage = 1, isRefresh = false) => {
     try {
-      setLoading(true);
-      const all = await getProperties({ limit: 100 });
-      setAllProperties(all);
+      if (currentPage === 1 && !isRefresh) setLoading(true);
+      if (currentPage > 1) setLoadingMore(true);
+
+      const listingType = params.filter && params.filter.toLowerCase() !== 'all' 
+        ? params.filter.toLowerCase() as any 
+        : undefined;
+
+      const response = await getProperties({ 
+        limit: 20, 
+        page: currentPage,
+        listing_type: listingType,
+        location: params.location || (params.query ? params.query : undefined),
+        type: params.type,
+        min_price: params.minPrice ? Number(params.minPrice) : undefined,
+        max_price: params.maxPrice ? Number(params.maxPrice) : undefined,
+      });
+
+      if (currentPage === 1) {
+        setAllProperties(response.items);
+      } else {
+        setAllProperties(prev => [...prev, ...response.items]);
+      }
+      setHasMore(response.items.length >= 20);
+      setPage(currentPage);
     } catch {
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchProperties();
+    await fetchProperties(1, true);
     setRefreshing(false);
   };
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
+    fetchProperties(1, false);
+  }, [params.filter, params.query, params.type, params.location, params.minPrice, params.maxPrice]);
 
   // Show loading when filter changes
   useEffect(() => {
@@ -56,56 +81,14 @@ const SearchTab = () => {
     }
   }, [params.filter, loading]);
 
-  // Filter properties based on all filters
-  const filteredProperties = allProperties.filter(property => {
-    // Filter by listing type
-    if (params.filter && params.filter.toLowerCase() !== 'all') {
-      const propListingType = property.listing_type?.toLowerCase();
-      const paramFilter = params.filter.toLowerCase();
-      if (propListingType !== paramFilter) return false;
-    }
+  // API handles the filtering now
+  const filteredProperties = allProperties;
 
-    // Filter by search query (title, location)
-    if (params.query) {
-      const query = params.query.toLowerCase();
-      const matchesTitle = property.title?.toLowerCase().includes(query);
-      const matchesLocation = property.location?.toLowerCase().includes(query);
-      if (!matchesTitle && !matchesLocation) {
-        return false;
-      }
+  const loadMore = () => {
+    if (!loadingMore && hasMore && !loading && !filterLoading) {
+      fetchProperties(page + 1, false);
     }
-
-    // Filter by property type
-    if (params.type) {
-      const propType = property.type?.toLowerCase();
-      const paramType = params.type.toLowerCase();
-      if (propType !== paramType && !propType?.includes(paramType)) {
-        return false;
-      }
-    }
-
-    // Filter by location (exact or partial from filters)
-    if (params.location) {
-      const propLoc = property.location?.toLowerCase();
-      const paramLoc = params.location.toLowerCase();
-      if (!propLoc?.includes(paramLoc)) {
-        return false;
-      }
-    }
-
-    // Filter by price range
-    const price = Number(property.price);
-    if (!isNaN(price)) {
-      if (params.minPrice && price < Number(params.minPrice)) {
-        return false;
-      }
-      if (params.maxPrice && price > Number(params.maxPrice)) {
-        return false;
-      }
-    }
-
-    return true;
-  });
+  };
 
   return (
     <SafeAreaView className='h-full bg-gray-200' edges={['top']}>
@@ -121,6 +104,13 @@ const SearchTab = () => {
         showsVerticalScrollIndicator={false}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator size="small" color="#C9A24D" className="mt-4 mb-20" />
+          ) : null
+        }
         ListHeaderComponent={
           <View className='px-4 pt-4 bg-white'>
             <TopHeader title='Search for your ideal property' />
@@ -145,14 +135,14 @@ const SearchTab = () => {
               <Text className="text-center text-gray-500 font-poppins-medium text-base mb-5">
                 No properties found for this filter
               </Text>
-              <TouchableOpacity 
-                onPress={() => router.setParams({ 
-                  filter: "All", 
-                  query: "", 
-                  type: "", 
-                  location: "", 
-                  minPrice: "", 
-                  maxPrice: "" 
+              <TouchableOpacity
+                onPress={() => router.setParams({
+                  filter: "All",
+                  query: "",
+                  type: "",
+                  location: "",
+                  minPrice: "",
+                  maxPrice: ""
                 })}
                 className="bg-primary px-10 py-4 rounded-full"
               >

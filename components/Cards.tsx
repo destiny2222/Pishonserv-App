@@ -379,4 +379,4 @@ export const ListingPropertyCard = ({ onPress, item }: ListingProperty) => {
       </View>
     </TouchableOpacity>
   );
-}
+} 
