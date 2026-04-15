@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
-import { Image, Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, Pressable, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import CountryPicker, { Country, CountryCode } from "react-native-country-picker-modal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -21,6 +21,13 @@ export default function Header() {
   const [countryOpen, setCountryOpen] = useState(false);
   const [countryCode, setCountryCode] = useState("NG");
 
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  }, []);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -68,33 +75,30 @@ export default function Header() {
   };
 
   return (
-    <View className="w-full">
-      {/* style={{ paddingTop: insets.top + 2 }} */}
-      <View className='w-full flex-row justify-between items-center px-4 py-6 overflow-hidden 
-        bg-white shadow-white' >
-        <View className='flex-row items-center gap-5'>
-          <Image source={user?.profile_image ? { uri: user.profile_image } : images.avatar} className="w-12 
-            h-12 rounded-full size-5" resizeMode="cover" />
-          <View className=''>
-            <Text className='text-2xl font-semibold poppins-semibold'>{user ? `${user.name} ${user.lname}` : "Guest"}</Text>
-            <Text className='text-sm font-normal poppins-regular'>Good Morning</Text>
+    <View style={[styles.container]}>
+      <View 
+        style={[styles.header]}
+        className='w-full px-4 border-b border-gray-100'
+      >
+        <View className='flex-row items-center flex-1 pr-4'>
+          <Image 
+            source={user?.profile_image ? { uri: user.profile_image } : images.avatar} 
+            className="w-12 h-12 rounded-full mr-3" 
+            resizeMode="cover" 
+          />
+          <View className='flex-1'>
+            <Text numberOfLines={1} ellipsizeMode='tail' className='text-xl font-semibold poppins-semibold'>
+                {user ? `${user.name}` : "Guest"}
+            </Text>
+            <Text className='text-sm font-normal poppins-regular text-gray-700'>{greeting}</Text>
           </View>
         </View>
-        <View className="flex-row items-center">
-          {/* <TouchableOpacity onPress={() => setCountryOpen(true)} className="flex-row items-center mr-4" style={{ color: "#eee" }}>
-            <Text className="text-xl mr-1">{countryCode ? getFlagEmoji(countryCode) : "🏳️"}</Text>
-            <Ionicons name="chevron-down" size={16} color="#111" />
-          </TouchableOpacity> */}
-          <Pressable onPress={() => setMenuOpen(true)} android_ripple={{ color: "#eee", borderless: true }}>
-            <Ionicons name="menu-outline" size={30} color="#111" />
+        <View>
+          <Pressable onPress={() => setMenuOpen(true)} android_ripple={{ color: "#eee", borderless: true }} className="p-2">
+            <Ionicons name="menu-outline" size={32} color="#111" />
           </Pressable>
         </View>
-      </View>
-      {/* <CountryPicker visible={countryOpen} onClose={() => setCountryOpen(false)}
-        countryCode={countryCode as CountryCode}
-        onSelect={onSelectCountry} withFilter withFlag withEmoji
-        renderFlagButton={() => null}
-      /> */}
+      </View> 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable className="flex-1 bg-black/20 " onPress={() => setMenuOpen(false)}>
           <Pressable
@@ -126,3 +130,19 @@ export default function Header() {
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+});

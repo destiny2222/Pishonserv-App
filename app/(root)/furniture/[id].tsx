@@ -1,21 +1,34 @@
+import FurnitureQuoteModal from '@/components/FurnitureQuoteModal';
 import images from '@/constants/images';
-import { getFurnitureDetail, FurnitureItem } from '@/libs/endpoints/furniture';
+import { createFurnitureQuoteRequest, FurnitureItem, FurnitureQuotePayload, getFurnitureDetail } from '@/libs/endpoints/furniture';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as Linking from 'expo-linking';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import CustomAlert from '@/components/CustomAlert';
 
 const { width } = Dimensions.get('window');
 
 const FurnitureDetail = () => {
     const { id } = useLocalSearchParams();
-    const [furniture, setFurniture] = useState<FurnitureItem | null>(null);
+    const [furniture, setFurniture] = useState < FurnitureItem | null > (null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState < string | null > (null);
     const [isFavorite, setIsFavorite] = useState(false);
     const [quantity, setQuantity] = useState(1);
+    const [quoteModalVisible, setQuoteModalVisible] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [alertConfig, setAlertConfig] = useState < {
+        visible: boolean;
+        title: string;
+        message: string;
+    } > ({
+        visible: false,
+        title: '',
+        message: '',
+    });
 
     useEffect(() => {
         if (id) {
@@ -28,7 +41,7 @@ const FurnitureDetail = () => {
             setLoading(true);
             setError(null);
             const furnitureItem = await getFurnitureDetail(Number(id));
-            
+
             if (furnitureItem) {
                 setFurniture(furnitureItem);
             } else {
@@ -57,29 +70,33 @@ const FurnitureDetail = () => {
             .replace(/\n{3,}/g, '\n\n')
             .trim();
     };
+    const handleQuoteRequest = async (formData: Omit<FurnitureQuotePayload, 'product_id'>) => {
+        if (!furniture) return;
 
-    const handleBookCall = () => {
-        Linking.openURL('tel:08122040965');
-    };
+        try {
+            setIsSubmitting(true);
+            const response = await createFurnitureQuoteRequest({
+                ...formData,
+                product_id: furniture.id,
+            });
 
-    const handleAddToCart = () => {
-        // Implement add to cart logic
-        
-    };
-
-    const handleToggleFavorite = () => {
-        setIsFavorite(!isFavorite);
-    };
-
-    const incrementQuantity = () => {
-        setQuantity(prev => prev + 1);
-    };
-
-    const decrementQuantity = () => {
-        if (quantity > 1) {
-            setQuantity(prev => prev - 1);
+            if (response.status === 'ok' || response.data?.success) {
+                setQuoteModalVisible(false);
+                setAlertConfig({
+                    visible: true,
+                    title: 'Request Sent',
+                    message: `Quote request has been submitted successfully. We will contact you shortly.`,
+                });
+            }
+        } catch (err: any) {
+            const errorMessage = err?.message || 'Failed to submit quote request. Please try again.';
+            Alert.alert('Error', errorMessage);
+        } finally {
+            setIsSubmitting(false);
         }
     };
+
+
 
     if (loading) {
         return (
@@ -248,7 +265,7 @@ const FurnitureDetail = () => {
                         <Ionicons name="call-outline" size={20} color="#fff" />
                     </TouchableOpacity> */}
                     <TouchableOpacity
-                        onPress={handleBookCall}
+                        onPress={() => setQuoteModalVisible(true)}
                         className="flex-1 bg-primary py-4 rounded-xl items-center justify-center flex-row gap-2"
                     >
                         <Ionicons name="call-outline" size={20} color="#fff" />
@@ -256,7 +273,21 @@ const FurnitureDetail = () => {
                     </TouchableOpacity>
                 </View>
             </View>
+            <FurnitureQuoteModal
+                visible={quoteModalVisible}
+                onClose={() => setQuoteModalVisible(false)}
+                onConfirm={handleQuoteRequest}
+                loading={isSubmitting}
+            />
+
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+            />
         </SafeAreaView>
+
     );
 };
 

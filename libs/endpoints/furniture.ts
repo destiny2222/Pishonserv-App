@@ -20,18 +20,27 @@ export interface FurnitureResponse {
   };
 }
 
+export interface FurnitureParams {
+  q?: string;
+  category?: string;
+  min_price?: number;
+  max_price?: number;
+  page?: number;
+  limit?: number;
+}
+
 /**
  * Get list of furniture items
  */
-export async function getFurnitureList(): Promise<FurnitureResponse> {
+export async function getFurnitureList(params?: FurnitureParams): Promise<FurnitureResponse> {
   try {
     const response = await apiRequest<FurnitureResponse>("/products/public", {
       method: "GET",
+      params: params,
       auth: false,
     });
     return response;
   } catch (error) {
-      
     throw error;
   }
 }
@@ -67,5 +76,40 @@ export async function getFurnitureDetail(
   } catch (error) {
     
     return null;
+  }
+}
+export interface FurnitureQuotePayload {
+  product_id: number;
+  full_name: string;
+  phone: string;
+  email: string;
+  delivery_address?: string;
+  preferred_contact?: string;
+  note?: string;
+}
+
+export interface FurnitureQuoteResponse {
+  status: string;
+  data: {
+    success: boolean;
+    request_id: string;
+  };
+}
+
+/**
+ * Create a furniture quote request
+ */
+export async function createFurnitureQuoteRequest(
+  payload: FurnitureQuotePayload
+): Promise<FurnitureQuoteResponse> {
+  try {
+    const response = await apiRequest<FurnitureQuoteResponse>("/products/quote-requests", {
+      method: "POST",
+      body: payload,
+      auth: false,
+    });
+    return response;
+  } catch (error) {
+    throw error;
   }
 }

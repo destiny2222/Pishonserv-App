@@ -28,6 +28,7 @@ type RequestOptions = {
   token?: string;
   noStaticToken?: boolean;
   signal?: AbortSignal;
+  params?: Record<string, any>;
 };
 
 async function getAccessToken() {
@@ -42,7 +43,21 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const url = `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  let url = `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  
+  if (options.params) {
+    const searchParams = new URLSearchParams();
+    Object.entries(options.params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url += (url.includes("?") ? "&" : "?") + queryString;
+    }
+  }
+
   const method = options.method ?? "GET";
 
   const headers: Record<string, string> = {

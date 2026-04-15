@@ -4,9 +4,11 @@ import images from '@/constants/images';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Alert, FlatList, Image, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getFurnitureList, FurnitureItem } from '@/libs/endpoints/furniture';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { getFurnitureList, FurnitureItem, FurnitureParams } from '@/libs/endpoints/furniture';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import Search from '@/components/Search';
+import FurnitureFilters from '@/components/FurnitureFilters';
 
 interface FurnitureCardProps {
     item: FurnitureItem;
@@ -48,27 +50,62 @@ export const FurnitureCard = ({ item, onPress }: FurnitureCardProps) => {
 const index = () => {
     const [furnitureList, setFurnitureList] = useState<FurnitureItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    
     const router = useRouter();
+    const params = useLocalSearchParams<{ query?: string; category?: string }>();
 
     const onPress = (id: number) => {
         router.push(`/furniture/${id}`);
     };
 
-    useEffect(() => {
-        fetchFurniture();
-    }, []);
-
-    const fetchFurniture = async () => {
+    const fetchFurniture = useCallback(async (pageNum = 1, shouldAppend = false) => {
         try {
-            setLoading(true);
+            if (pageNum === 1) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
+            
             setError(null);
-            const response = await getFurnitureList();
-            setFurnitureList(response.data.items);
-        } catch (err) {
-            setError('Failed to load furniture items');
+            
+            const fetchParams: FurnitureParams = {
+                q: params.query,
+                category: params.category && params.category !== 'All' ? params.category : undefined,
+                page: pageNum,
+                limit: 20
+            };
+
+            const response = await getFurnitureList(fetchParams);
+            const newItems = response.data.items || [];
+            
+            if (shouldAppend) {
+                setFurnitureList(prev => [...prev, ...newItems]);
+            } else {
+                setFurnitureList(newItems);
+            }
+            
+            setHasMore(newItems.length === 20);
+            setPage(pageNum);
+        } catch (err: any) {
+            const errorMessage = err?.message || err?.data?.message || 'Failed to load furniture items';
+            setError(errorMessage);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+        }
+    }, [params.query, params.category]);
+
+    useEffect(() => {
+        fetchFurniture(1, false);
+    }, [fetchFurniture]);
+
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore && !loading) {
+            fetchFurniture(page + 1, true);
         }
     };
 
@@ -106,17 +143,41 @@ const index = () => {
                     <FurnitureCard item={item} onPress={() => onPress(item.id)} />
                 )}
                 keyExtractor={(item) => item.id.toString()}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                    loadingMore ? (
+                        <View className="py-5">
+                            <ActivityIndicator size="small" color="#C9A24D" />
+                        </View>
+                    ) : null
+                }
                 contentContainerClassName='pb-32'
                 ListHeaderComponent={
                     <View className=''>
+                        <Header />
+                        <View className="px-4">
+                            <Search placeholder="Search furniture..." />
+                        </View>
+                        <View className="mt-2">
+                           <FurnitureFilters />
+                        </View>
                         <View className="px-2">
-                            <Header />
-                            <HeroBanner autoplay interval={4000} showsVerticalScrollIndicator={false} />
+                            <HeroBanner autoplay interval={4000} />
                         </View>
                         <View className='pb-5 pt-5 mt-5 px-4'>
-                            <Text className='text-2xl font-poppins-bold text-secondary px-3'>Featured Furniture</Text>
+                            <Text className='text-2xl font-poppins-bold text-secondary px-3'>
+                                {params.query ? `Search results for "${params.query}"` : 'Featured Furniture'}
+                            </Text>
                         </View>
                     </View>
+                }
+                ListEmptyComponent={
+                    !loading ? (
+                        <View className="flex-1 justify-center items-center px-4 py-20">
+                            <Text className="text-gray-500 text-lg text-center">No furniture items found matching your criteria.</Text>
+                        </View>
+                    ) : null
                 }
             />
         </SafeAreaView>
