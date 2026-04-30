@@ -6,6 +6,7 @@ import images from '@/constants/images'
 import { useAuth } from '@/hooks/useAuth'
 import { updateCurrentUser, updateProfileImage } from '@/libs/endpoints/auth'
 import * as ImagePicker from 'expo-image-picker'
+import { StatusBar } from 'expo-status-bar'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Image, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -85,6 +86,7 @@ const EditProfile = () => {
     }
     return (
         <SafeAreaView className='h-full bg-white pt-8'>
+            <StatusBar style="dark" />
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className='flex-1'>
                 <ScrollView showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps='handled'

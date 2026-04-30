@@ -9,6 +9,7 @@ import {
   View,
   Linking,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,6 +18,7 @@ import { settings } from "@/constants/data";
 import icons from "@/constants/icons";
 import images from "@/constants/images";
 import { useAuth } from "@/hooks/useAuth";
+import { StatusBar } from "expo-status-bar";
 
 interface SettingsItemProps {
   icon: ImageSourcePropType;
@@ -50,16 +52,48 @@ const SettingsItem = ({
 );
 
 export default function Profile() {
-  const { logout, user, isAuthenticated } = useAuth();
+  const { logout, deleteAccount, user, isAuthenticated } = useAuth();
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleLogout = async () => {
     try {
       await logout();
-      router.replace("/(auth)/login");
+      Alert.alert("Logout", "Logout successful");
+      router.replace("/home");
     } catch (error) {
 
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action is irreversible and will deactivate your access.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+              const result = await deleteAccount();
+              if (result.success) {
+                Alert.alert("Success", "Your account has been deleted.");
+                router.replace("/home");
+              } else {
+                Alert.alert("Error", result.error || "Failed to delete account");
+              }
+            } catch (error) {
+              Alert.alert("Error", "An unexpected error occurred.");
+            } finally {
+              setIsDeleting(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleLogin = () => {
@@ -76,6 +110,7 @@ export default function Profile() {
   if (!isAuthenticated) {
     return (
       <SafeAreaView key="guest-profile" className="flex-1 bg-background" edges={['top']}>
+        <StatusBar style="dark" />
         <View className="pb-32 px-5">
           <TopHeader title="Profile" />
           <View className="flex flex-col items-center justify-center mt-20">
@@ -147,7 +182,12 @@ export default function Profile() {
               key={index}
               icon={item.icon}
               title={item.title}
+              textStyle={item.textStyle}
               onPress={() => {
+                if (item.title === "Delete Account") {
+                  handleDeleteAccount();
+                  return;
+                }
                 if (item.href) {
                   if (item.href.startsWith("mailto:")) {
                     Linking.openURL(item.href);
@@ -161,13 +201,17 @@ export default function Profile() {
         </View>
 
         <View className="flex flex-col mt-5">
-          <SettingsItem
-            icon={icons.logout}
-            title="Logout"
-            onPress={handleLogout}
-            textStyle="text-red-500"
-            showArrow={false}
-          />
+          {isDeleting ? (
+            <ActivityIndicator size="small" color="#ef4444" />
+          ) : (
+            <SettingsItem
+              icon={icons.logout}
+              title="Logout"
+              onPress={handleLogout}
+              textStyle="text-red-500"
+              showArrow={false}
+            />
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

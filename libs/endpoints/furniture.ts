@@ -20,6 +20,18 @@ export interface FurnitureResponse {
   };
 }
 
+export interface FurnitureCategory {
+  category_path: string;
+  product_count: number;
+}
+
+export interface FurnitureCategoryResponse {
+  status: string;
+  data: {
+    items: FurnitureCategory[];
+  };
+}
+
 export interface FurnitureParams {
   q?: string;
   category?: string;
@@ -37,6 +49,21 @@ export async function getFurnitureList(params?: FurnitureParams): Promise<Furnit
     const response = await apiRequest<FurnitureResponse>("/products/public", {
       method: "GET",
       params: params,
+      auth: false,
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Get list of furniture categories
+ */
+export async function getFurnitureCategories(): Promise<FurnitureCategoryResponse> {
+  try {
+    const response = await apiRequest<FurnitureCategoryResponse>("/products/categories/public", {
+      method: "GET",
       auth: false,
     });
     return response;

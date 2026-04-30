@@ -4,6 +4,7 @@ import Search from '@/components/Search'
 import TopHeader from '@/components/TopHeader'
 import { getProperties, Property } from '@/libs/endpoints/property'
 import { router, useLocalSearchParams } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -92,6 +93,7 @@ const SearchTab = () => {
 
   return (
     <SafeAreaView className='h-full bg-gray-200' edges={['top']}>
+      <StatusBar style="dark" />
       <FlatList
         data={filterLoading ? [] : filteredProperties}
         renderItem={({ item }) =>

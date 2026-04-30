@@ -6,6 +6,7 @@ import { Link, router } from "expo-router";
 import { FavoriteCard } from "@/components/Cards";
 import { getWishlist, WishlistItem } from "@/libs/endpoints/wishlist";
 import { useFocusEffect } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
 const Cart = () => {
   const [favorites, setFavorites] = useState<WishlistItem[]>([]);
@@ -39,6 +40,7 @@ const Cart = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-200" edges={["top"]}>
+      <StatusBar style="dark" />
       <FlatList
         data={favorites}
         renderItem={({ item }) => (

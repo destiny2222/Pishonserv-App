@@ -127,6 +127,11 @@ export const settings = [
     icon: icons.info,
     href: "mailto:pishonserv@gmail.com",
   },
+  {
+    title: "Delete Account",
+    icon: icons.deleteicon,
+    textStyle: "text-red-500",
+  },
 ];
 
 export const favorites = [

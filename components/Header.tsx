@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
-import { Image, Modal, Pressable, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+import { Image, Modal, Pressable, Text, TouchableOpacity, View, StyleSheet, Alert } from 'react-native';
 import CountryPicker, { Country, CountryCode } from "react-native-country-picker-modal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -32,7 +32,8 @@ export default function Header() {
   const handleLogout = useCallback(async () => {
     try {
       await logout();
-      router.replace("/login");
+      Alert.alert("Logout", "Logout successful");
+      router.replace("/home");
     } catch (error) {
      
     }

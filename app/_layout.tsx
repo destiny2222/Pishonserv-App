@@ -1,10 +1,10 @@
 import { AuthGuard } from '@/components/AuthGuard';
-import { UserProvider } from '@/contexts/UserContext';
+import { UserContext, UserProvider } from '@/contexts/UserContext';
 import { useFonts } from 'expo-font';
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import './global.css';
@@ -13,7 +13,7 @@ import './global.css';
 SplashScreen.preventAutoHideAsync();
 
 function StatusBarWrapper({ children }: { children: React.ReactNode }) {
-  const insets = useSafeAreaInsets();
+  // const insets = useSafeAreaInsets();
   return (
     <View className="flex-1 ">
       <StatusBar animated style="auto" />
@@ -30,6 +30,30 @@ function LoadingScreen() {
   );
 }
 
+function SplashScreenManager({ 
+  children, 
+  fontsLoaded, 
+  fontError 
+}: { 
+  children: React.ReactNode, 
+  fontsLoaded: boolean, 
+  fontError: Error | null 
+}) {
+  const { isLoading } = useContext(UserContext);
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && !isLoading) {
+      // Ensure splash screen shows for at least 2 seconds for branding
+      const timer = setTimeout(async () => {
+        await SplashScreen.hideAsync();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [fontsLoaded, fontError, isLoading]);
+
+  return <>{children}</>;
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     poppins: require('../assets/fonts/Poppins-Regular.ttf'),
@@ -40,12 +64,6 @@ export default function RootLayout() {
     'poppins-extrabold': require('../assets/fonts/Poppins-ExtraBold.ttf'),
     'poppins-thin': require('../assets/fonts/Poppins-Thin.ttf'),
   });
-
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
 
   if (!fontsLoaded && !fontError) {
     return (
@@ -59,9 +77,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <StatusBarWrapper>
         <UserProvider>
-          <AuthGuard>
-            <Stack screenOptions={{ headerShown: false }} />
-          </AuthGuard>
+          <SplashScreenManager fontsLoaded={fontsLoaded} fontError={fontError}>
+            <AuthGuard>
+              <Stack screenOptions={{ headerShown: false }} />
+            </AuthGuard>
+          </SplashScreenManager>
         </UserProvider>
       </StatusBarWrapper>
     </SafeAreaProvider>

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import React, { useState, useRef } from "react";
-import { ActivityIndicator, FlatList, Modal, Text, TouchableOpacity, TouchableWithoutFeedback, View, ScrollView } from "react-native";
+import { ActivityIndicator, FlatList, Modal, Text, TouchableOpacity, TouchableWithoutFeedback, View, ScrollView, Linking } from "react-native";
 import { useSignup } from "./_layout";
 import TurnstileWidget, { TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import TextInputField from "@/components/TextInputField";
@@ -49,8 +49,35 @@ export default function Step3() {
     return role ? role.label : "Select a role";
   };
 
+  const openLink = (url: string) => {
+    Linking.openURL(url);
+  };
+
   const handleSubmit = async () => {
-    if (!data.password || data.password !== data.confirmPassword || !data.role) return;
+    if (!data.password) {
+      showAlert("Password Required", "Please enter a password.");
+      return;
+    }
+
+    if (data.password !== data.confirmPassword) {
+      showAlert("Password Mismatch", "Passwords do not match. Please re-enter.");
+      return;
+    }
+
+    if (!data.role) {
+      showAlert("Role Required", "Please select a role to proceed.");
+      return;
+    }
+
+    if (!data.sms_consent) {
+      showAlert("Consent Required", "You must agree to receive SMS messages to proceed.");
+      return;
+    }
+
+    if (!turnstileToken) {
+      showAlert("Security Verification", "Please complete the security verification challenge.");
+      return;
+    }
 
     // Validation for non-buyer roles
     if (data.role !== 'buyer') {
@@ -73,7 +100,9 @@ export default function Step3() {
         password: data.password,
         role: data.role,
         turnstile_token: turnstileToken,
-        referral_code: data.referral_code || ""
+        referral_code: data.referral_code || "",
+        sms_consent: data.sms_consent ? true : false,
+        nin: data.nin || ""
       };
 
       if (data.role !== 'buyer') {
@@ -86,7 +115,7 @@ export default function Step3() {
 
       if (result.success) {
         const msg = result.existing_unverified
-          ? "Account exists but unverified. A new OTP has been sent."
+          ? "Account created successfully. A verification code has been sent to your email."
           : "Registration successful! Please verify your email.";
 
         showAlert("Success", msg);
@@ -96,11 +125,15 @@ export default function Step3() {
         });
       } else {
         if (result.status === 422) {
-          showAlert("Verification Failed", "Security verification failed. Please try the challenge again.");
-          turnstileRef.current?.reload();
-          setTurnstileToken("");
+          if (result.error?.toLowerCase().includes("turnstile")) {
+            showAlert("Verification Failed", "Security verification failed. Please try the challenge again.");
+            turnstileRef.current?.reload();
+            setTurnstileToken("");
+          } else {
+            showAlert("Validation Error", result.error || "Please check all required fields.");
+          }
         } else {
-          const errorMessage = result.error.includes("409")
+          const errorMessage = result.error?.includes("409")
             ? "This email is already registered. Please use a different email."
             : result.error || "An error occurred. Please try again.";
           showAlert("Error", errorMessage);
@@ -114,10 +147,9 @@ export default function Step3() {
   };
 
   const isFormValid = () => {
-    const basicValid = data.password && data.password === data.confirmPassword && data.role && turnstileToken;
+    const basicValid = data.password && data.password === data.confirmPassword && data.role && turnstileToken && data.sms_consent;
     
    
-
     if (!basicValid) return false;
 
     if (data.role !== 'buyer') {
@@ -131,7 +163,7 @@ export default function Step3() {
       <View className="flex-1 bg-white px-6 pt-32 relative">
         <Watermarks showTopRight showBottomLeft />
 
-        <TouchableOpacity onPress={() => router.back()} className="absolute top-16 left-6 z-10">
+        <TouchableOpacity onPress={() => router.back()} className="absolute top-20 left-6 z-10">
           <Ionicons name="arrow-back" size={22} color="#C9A24D" />
         </TouchableOpacity>
 
@@ -217,6 +249,35 @@ export default function Step3() {
             </View>
           )}
 
+          <View className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <Text className="font-poppins-bold text-sm mb-4 text-secondary">SMS Consent</Text>
+            <TouchableOpacity
+              onPress={() => update({ sms_consent: !data.sms_consent })}
+              className="flex-row items-start"
+            >
+              <View className={`w-6 h-6 border rounded mt-1 mr-3 items-center justify-center ${data.sms_consent ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
+                {data.sms_consent && <Ionicons name="checkmark" size={16} color="white" />}
+              </View>
+              <View className="flex-1">
+                <Text className="text-[11px] font-poppins text-gray-700 leading-4">
+                  I agree to receive SMS messages from Pishonserv Property Hub regarding my registration, property inquiries, booking updates, and customer support. Message frequency varies. Reply STOP to opt out and HELP for assistance. Message and data rates may apply.
+                  <Text className="text-red-500"> *</Text>
+                </Text>
+              </View>
+            </TouchableOpacity>
+            
+            <View className="flex-row flex-wrap mt-3">
+              <Text className="text-[10px] text-gray-500">By checking this, you also agree to our </Text>
+              <TouchableOpacity onPress={() => openLink('https://pishonserv.com/privacy-policy.php')}>
+                <Text className="text-[10px] text-primary font-poppins-semibold underline">Privacy Policy</Text>
+              </TouchableOpacity>
+              <Text className="text-[10px] text-gray-500"> and </Text>
+              <TouchableOpacity onPress={() => openLink('https://pishonserv.com/terms-conditions.php')}>
+                <Text className="text-[10px] text-primary font-poppins-semibold underline">Terms/SMS Terms</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View className="mt-6">
             <Text className="font-poppins-medium text-sm mb-2">Security Verification <Text className="text-red-500">*</Text></Text>
             <TurnstileWidget
@@ -229,7 +290,7 @@ export default function Step3() {
           <View className="mt-10 mb-10">
             <TouchableOpacity className={`rounded-xl py-4 items-center ${isFormValid() ? 'bg-primary' : 'bg-gray-300'}`}
               onPress={handleSubmit}
-              disabled={isLoading || !isFormValid()}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#ffffff" />

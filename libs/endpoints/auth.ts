@@ -151,3 +151,13 @@ export async function updateCurrentUser(
 export async function logout(): Promise<void> {
   await SecureStore.deleteItemAsync("access_token");
 }
+
+/**
+ * Delete (soft delete) current authenticated user account
+ */
+export async function deleteAccount(): Promise<{ status: string; data: { success: boolean; message: string } }> {
+  return apiRequest<{ status: string; data: { success: boolean; message: string } }>("/users/me", {
+    method: "DELETE",
+    auth: true,
+  });
+}

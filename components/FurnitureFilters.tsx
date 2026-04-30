@@ -1,69 +1,106 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { getFurnitureCategories, FurnitureCategory } from '@/libs/endpoints/furniture';
 
-const furnitureCategories = [
-  { label: 'All', value: 'All' },
-  { label: 'Sofa', value: 'Sofa' },
-  { label: 'Chair', value: 'Chair' },
-  { label: 'Table', value: 'Table' },
-  { label: 'Bed', value: 'Bed' },
-  { label: 'Wardrobe', value: 'Wardrobe' },
-  { label: 'Office', value: 'Office' },
-];
+import { router, useLocalSearchParams } from 'expo-router';
 
 const FurnitureFilters = () => {
-  const params = useLocalSearchParams<{ category?: string }>();
-  const [selectedCategory, setSelectedCategory] = useState(params.category || 'All');
+    const params = useLocalSearchParams < { category?: string } > ();
+    const [selectedCategory, setSelectedCategory] = useState(params.category || 'All');
+    const [categories, setCategories] = useState < Array < { label: string; value: string; count?: number } >> ([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (params.category) {
-      setSelectedCategory(params.category);
-    } else {
-      setSelectedCategory('All');
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await getFurnitureCategories();
+                const items = response.data.items;
+
+                if (!Array.isArray(items)) {
+                    setCategories([{ label: 'All', value: 'All' }]);
+                    return;
+                }
+
+                const formattedCategories = items.map((cat: FurnitureCategory) => {
+                    let label = cat.category_path;
+                    if (label.includes('>')) {
+                        label = label.split('>').pop()?.trim() || label;
+                    } else if (label.includes(',')) {
+                        label = label.split(',').pop()?.trim() || label;
+                    }
+
+                    return {
+                        label: label,
+                        value: cat.category_path,
+                        count: cat.product_count
+                    };
+                });
+
+                setCategories([{ label: 'All', value: 'All' }, ...formattedCategories]);
+            } catch (error) {
+
+                setCategories([{ label: 'All', value: 'All' }]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        if (params.category) {
+            setSelectedCategory(params.category);
+        } else {
+            setSelectedCategory('All');
+        }
+    }, [params.category]);
+
+    const handleCategory = (category: string) => {
+        if (category === 'All' || selectedCategory === category) {
+            setSelectedCategory('All');
+            router.setParams({ category: undefined as any });
+            return;
+        }
+        setSelectedCategory(category);
+        router.setParams({ category });
+    };
+
+    if (loading) {
+        return (
+            <View className="mt-3 mb-2 px-4 h-10 justify-center">
+                <ActivityIndicator size="small" color="#C9A24D" />
+            </View>
+        );
     }
-  }, [params.category]);
 
-  const handleCategory = (category: string) => {
-    if (category === 'All') {
-      setSelectedCategory('All');
-      router.setParams({ category: '' }); // Clear category filter
-      return;
-    }
-
-    if (selectedCategory === category) {
-      setSelectedCategory('All');
-      router.setParams({ category: '' });
-      return;
-    }
-
-    setSelectedCategory(category);
-    router.setParams({ category: category });
-  };
-
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 mb-2 px-4">
-      {furnitureCategories.map((item, index) => (
-        <TouchableOpacity
-          key={index}
-          onPress={() => handleCategory(item.value)}
-          className={`mr-3 px-6 py-2 rounded-full border ${
-            selectedCategory === item.value 
-              ? 'bg-primary border-primary' 
-              : 'bg-white border-gray-200 shadow-sm shadow-gray-100'
-          }`}
-        >
-          <Text
-            className={`font-poppins-medium text-sm ${
-              selectedCategory === item.value ? 'text-white' : 'text-gray-600'
-            }`}
-          >
-            {item.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  );
+    return (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 mb-2 px-4">
+            {categories.map((item) => {
+                if (!item) return null;
+                const isSelected = selectedCategory === item.value;
+                
+                return (
+                    <TouchableOpacity
+                        key={item.value || item.label}
+                        onPress={() => handleCategory(item.value)}
+                        className="mr-3 px-6 py-2 rounded-full border"
+                        style={{
+                            backgroundColor: isSelected ? "#C9A24D" : "#FFFFFF",
+                            borderColor: isSelected ? "#C9A24D" : "#E5E7EB",
+                        }}
+                    >
+                        <Text 
+                            className="font-poppins-medium text-sm"
+                            style={{ color: isSelected ? "#FFFFFF" : "#4B5563" }}
+                        >
+                            {item.label} {item.count !== undefined ? `(${item.count})` : ''}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </ScrollView>
+    );
 };
 
 export default FurnitureFilters;

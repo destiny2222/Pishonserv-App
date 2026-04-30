@@ -1,14 +1,17 @@
+import React, { useEffect, useState, useCallback } from 'react';
 import Header from '@/components/Header';
 import HeroBanner from '@/components/HeroBanner';
 import images from '@/constants/images';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Alert, FlatList, Image, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { Alert, FlatList, Image, Text, TouchableOpacity, View, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getFurnitureList, FurnitureItem, FurnitureParams } from '@/libs/endpoints/furniture';
-import { useEffect, useState, useCallback } from 'react';
+import { getFurnitureList, FurnitureItem, 
+    FurnitureParams, getFurnitureCategories, 
+    FurnitureCategory } from '@/libs/endpoints/furniture';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Search from '@/components/Search';
 import FurnitureFilters from '@/components/FurnitureFilters';
+import { StatusBar } from 'expo-status-bar';
 
 interface FurnitureCardProps {
     item: FurnitureItem;
@@ -18,14 +21,10 @@ interface FurnitureCardProps {
 export const FurnitureCard = ({ item, onPress }: FurnitureCardProps) => {
     return (
         <View className='mb-8 w-full px-4'>
-            <TouchableOpacity onPress={onPress} className='w-full rounded-xl bg-white shadow-md shadow-black/20'>
+            <TouchableOpacity onPress={() => onPress(item.id)} className='w-full rounded-xl bg-white shadow-md shadow-black/20'>
                 <View className='relative'>
                     <Image source={{ uri: item.image_url }} className="w-full rounded-t-xl h-60" resizeMode="cover" />
                     <View className="absolute inset-0 bg-black/30 rounded-t-xl" />
-                    {/* <View className="absolute top-3 right-3 bg-white/90 p-1 z-10 rounded-full flex-row items-center">
-                        <Ionicons name="star" size={14} color="#C9A24D" />
-                        <Text className="ml-0.5 text-xs font-semibold text-primary-300">4.8</Text>
-                    </View> */}
                     <View className="absolute bottom-3 left-3 right-3 flex-row justify-between items-end">
                         <Text className="text-xl font-poppins-semibold text-white flex-shrink max-w-[60%]" numberOfLines={2}>
                             {item.name}
@@ -37,9 +36,6 @@ export const FurnitureCard = ({ item, onPress }: FurnitureCardProps) => {
                     <TouchableOpacity className="px-6 py-2.5 bg-primary rounded-lg" onPress={() => onPress(item.id)}>
                         <Text className="text-sm font-poppins-semibold text-white">View Details</Text>
                     </TouchableOpacity>
-                    {/* <TouchableOpacity className="p-2.5 bg-gray-100 rounded-lg" >
-                        <Ionicons name="star-outline" size={20} color="#C9A24D" />
-                    </TouchableOpacity> */}
                 </View>
             </TouchableOpacity>
         </View>
@@ -48,15 +44,15 @@ export const FurnitureCard = ({ item, onPress }: FurnitureCardProps) => {
 
 
 const index = () => {
-    const [furnitureList, setFurnitureList] = useState<FurnitureItem[]>([]);
+    const router = useRouter();
+    const params = useLocalSearchParams < { query?: string; category?: string } > ();
+
+    const [furnitureList, setFurnitureList] = useState < FurnitureItem[] > ([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState < string | null > (null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
-    
-    const router = useRouter();
-    const params = useLocalSearchParams<{ query?: string; category?: string }>();
 
     const onPress = (id: number) => {
         router.push(`/furniture/${id}`);
@@ -69,9 +65,9 @@ const index = () => {
             } else {
                 setLoadingMore(true);
             }
-            
+
             setError(null);
-            
+
             const fetchParams: FurnitureParams = {
                 q: params.query,
                 category: params.category && params.category !== 'All' ? params.category : undefined,
@@ -81,13 +77,13 @@ const index = () => {
 
             const response = await getFurnitureList(fetchParams);
             const newItems = response.data.items || [];
-            
+
             if (shouldAppend) {
                 setFurnitureList(prev => [...prev, ...newItems]);
             } else {
                 setFurnitureList(newItems);
             }
-            
+
             setHasMore(newItems.length === 20);
             setPage(pageNum);
         } catch (err: any) {
@@ -98,6 +94,8 @@ const index = () => {
             setLoadingMore(false);
         }
     }, [params.query, params.category]);
+
+
 
     useEffect(() => {
         fetchFurniture(1, false);
@@ -135,8 +133,12 @@ const index = () => {
         );
     }
 
+
+
     return (
+
         <SafeAreaView className="flex-1 bg-gray-200" edges={['top']}>
+            <StatusBar style="dark" />
             <FlatList
                 data={furnitureList}
                 renderItem={({ item }) => (

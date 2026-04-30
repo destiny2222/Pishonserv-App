@@ -5,7 +5,11 @@ import React, { useState } from "react";
 import { Image, TextInput, TouchableOpacity, View } from "react-native";
 import { useDebouncedCallback } from "use-debounce";
 
-const Search = () => {
+interface SearchProps {
+  placeholder?: string;
+}
+
+const Search = ({ placeholder }: SearchProps) => {
   const params = useLocalSearchParams < { query?: string } > ();
   const [search, setSearch] = useState(params.query || "");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -27,7 +31,7 @@ const Search = () => {
           <Image source={icons.search} className="size-6 mr-3" resizeMode="contain" tintColor="#9CA3AF" />
           <TextInput
             className="font-poppins text-gray-800 text-base flex-1"
-            placeholder="Search for properties..."
+            placeholder={placeholder || "Search for properties..."}
             placeholderTextColor="#9CA3AF"
             value={search}
             onChangeText={handleSearch}

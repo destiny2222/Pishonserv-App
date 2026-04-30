@@ -99,7 +99,7 @@ const FurnitureQuoteModal: React.FC<FurnitureQuoteModalProps> = ({
 
               <Text className="text-sm font-poppins-medium text-gray-600 mb-2">Preferred Contact Method</Text>
               <View className="flex-row gap-2 mb-4">
-                {['Call', 'WhatsApp', 'Email'].map((option) => (
+                {['WhatsApp', 'Email'].map((option) => (
                   <TouchableOpacity
                     key={option}
                     onPress={() => handleInputChange('preferred_contact', option)}

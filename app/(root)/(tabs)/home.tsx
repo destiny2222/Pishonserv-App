@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getFeaturedProperties, getProperties, Property } from '@/libs/endpoints/property';
 import { getWishlist } from '@/libs/endpoints/wishlist';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -107,7 +108,7 @@ export default function Home() {
   };
   return (
     <SafeAreaView className='h-full mb-72 bg-gray-200' edges={['top']}>
-
+      <StatusBar style="dark" />
       <FlatList
         data={filterLoading ? [] : filteredProperties}
         renderItem={({ item }) =>

@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import TopHeader from '@/components/TopHeader'
 import TextInputField from '@/components/TextInputField'
+import { StatusBar } from 'expo-status-bar'
 
 const security = () => {
     const [password, setPassword] = useState('');
@@ -15,6 +16,7 @@ const security = () => {
 
     return (
         <SafeAreaView className='flex-1 bg-white'>
+            <StatusBar style="dark" />
             <KeyboardAvoidingView  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 className='flex-1'
             >

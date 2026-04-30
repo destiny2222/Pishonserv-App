@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import SolarQuoteModal from '@/components/SolarQuoteModal'
 import { submitSolarQuote, SolarQuotePayload } from '@/libs/endpoints/solar'
 import CustomAlert from '@/components/CustomAlert'
+import { StatusBar } from 'expo-status-bar'
 
 function Solar() {
   const [quoteModalVisible, setQuoteModalVisible] = useState(false);
@@ -187,6 +188,7 @@ function Solar() {
 
   return (
     <SafeAreaView className='flex-1 bg-gray-200' edges={['left', 'right', 'top']} >
+      <StatusBar style="dark" />
       <Header />
       <ScrollView className='flex-1' contentContainerStyle={{ paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
         <View className='w-full h-[400px] relative '>

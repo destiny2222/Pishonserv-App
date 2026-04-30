@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Image, Modal, Pressable, Text, TouchableOpacity, View, } from "react-native";
+import { Alert, Animated, Image, Modal, Pressable, Text, TouchableOpacity, View, } from "react-native";
 
 const MENU_ITEMS = [
   { label: "Dashboard", route: "/dashboard" },
@@ -37,7 +37,8 @@ const AgentHeader = () => {
     try {
       setOpenMenu(false);
       await logout();
-      router.replace("/(auth)/login");
+      Alert.alert("Logout", "Logout successful");
+      router.replace("/home");
     } catch (error) {
     }
   };

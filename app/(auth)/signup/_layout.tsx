@@ -15,6 +15,7 @@ type SignupData = {
   phoneCode: string;
   phoneNumber: string;
   nin?: string;
+  sms_consent: boolean;
 
   password: string;
   confirmPassword: string;
@@ -28,14 +29,15 @@ const initial: SignupData = {
   firstName: "",
   lastName: "",
   email: "",
-  country: "",
-  countryCode: "",
+  country: "Nigeria",
+  countryCode: "NG",
   state: "",
   city: "",
   address: "",
   phoneCode: "+234",
   phoneNumber: "",
   nin: "",
+  sms_consent: false,
   password: "",
   confirmPassword: "",
   role: "",

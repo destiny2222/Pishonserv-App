@@ -1,0 +1,155 @@
+{
+  "status": "ok",
+  "data": {
+    "items": [
+      { "category_path": "Accessories", "product_count": 50 },
+      { "category_path": "Accessories, UNCATEGORIZED", "product_count": 8 },
+      { "category_path": "BAR", "product_count": 24 },
+      { "category_path": "BAR, best selling", "product_count": 4 },
+      { "category_path": "BAR, best selling, promo offer", "product_count": 2 },
+      { "category_path": "Bathroom Accessories", "product_count": 18 },
+      { "category_path": "BED FRAMES", "product_count": 10 },
+      { "category_path": "BED FRAMES, best selling", "product_count": 14 },
+      {
+        "category_path": "BED FRAMES, best selling, Living room furniture",
+        "product_count": 2
+      },
+      {
+        "category_path": "BED FRAMES, best selling, mattress",
+        "product_count": 2
+      },
+      { "category_path": "best selling", "product_count": 188 },
+      { "category_path": "best selling, CENTER TABLE", "product_count": 15 },
+      {
+        "category_path": "best selling, CENTER TABLE, promo offer",
+        "product_count": 3
+      },
+      {
+        "category_path": "best selling, CHILDREN BUNK BED",
+        "product_count": 5
+      },
+      { "category_path": "best selling, Dining sets", "product_count": 12 },
+      {
+        "category_path": "best selling, Dinning sideboard\/ Console",
+        "product_count": 1
+      },
+      { "category_path": "best selling, Doors", "product_count": 4 },
+      {
+        "category_path": "best selling, Floor, UNCATEGORIZED",
+        "product_count": 4
+      },
+      {
+        "category_path": "best selling, Living room furniture",
+        "product_count": 13
+      },
+      { "category_path": "best selling, MASSAGE CHAIR", "product_count": 1 },
+      {
+        "category_path": "best selling, Office furniture",
+        "product_count": 58
+      },
+      {
+        "category_path": "best selling, Office furniture, Living room furniture",
+        "product_count": 1
+      },
+      {
+        "category_path": "best selling, Office furniture, Sofas",
+        "product_count": 1
+      },
+      {
+        "category_path": "best selling, promo offer, Living room furniture",
+        "product_count": 4
+      },
+      { "category_path": "best selling, ROYAL SOFA", "product_count": 7 },
+      { "category_path": "best selling, Rug", "product_count": 2 },
+      { "category_path": "best selling, Sofas", "product_count": 31 },
+      { "category_path": "best selling, TV STAND", "product_count": 1 },
+      { "category_path": "Cabinet", "product_count": 7 },
+      { "category_path": "Cabinet, Office furniture", "product_count": 1 },
+      { "category_path": "CENTER TABLE", "product_count": 107 },
+      { "category_path": "CENTER TABLE, promo offer", "product_count": 5 },
+      { "category_path": "CHILDREN BUNK BED", "product_count": 7 },
+      { "category_path": "CONFERENCE TABLE", "product_count": 5 },
+      { "category_path": "CONFERENCE TABLE, promo offer", "product_count": 1 },
+      { "category_path": "DINING CHAIRS", "product_count": 14 },
+      { "category_path": "DINING CHAIRS, promo offer", "product_count": 7 },
+      { "category_path": "Dining sets", "product_count": 74 },
+      { "category_path": "Dining sets > DINING CHAIRS", "product_count": 21 },
+      { "category_path": "Dining sets > DINNING TABLE", "product_count": 22 },
+      { "category_path": "Dinning sideboard\/ Console", "product_count": 37 },
+      {
+        "category_path": "Dinning sideboard\/ Console, promo offer",
+        "product_count": 2
+      },
+      { "category_path": "DINNING TABLE", "product_count": 21 },
+      { "category_path": "DINNING TABLE, promo offer", "product_count": 1 },
+      { "category_path": "Doors", "product_count": 4 },
+      { "category_path": "DRESSER", "product_count": 4 },
+      { "category_path": "FABRIC SOFA", "product_count": 44 },
+      { "category_path": "FABRIC SOFA, promo offer", "product_count": 1 },
+      { "category_path": "FIRE-PLACE", "product_count": 2 },
+      { "category_path": "Floor", "product_count": 4 },
+      { "category_path": "KITCHEN", "product_count": 8 },
+      { "category_path": "LAMP \/ LIGHT", "product_count": 9 },
+      { "category_path": "LEATHER SOFA", "product_count": 3 },
+      { "category_path": "LEATHER SOFA, Office furniture", "product_count": 1 },
+      { "category_path": "Living room furniture", "product_count": 111 },
+      {
+        "category_path": "Living room furniture > BED FRAMES",
+        "product_count": 29
+      },
+      {
+        "category_path": "Living room furniture > DRESSER",
+        "product_count": 4
+      },
+      {
+        "category_path": "Living room furniture > LAMP \/ LIGHT",
+        "product_count": 9
+      },
+      {
+        "category_path": "Living room furniture > SINGLE CHAIR",
+        "product_count": 26
+      },
+      { "category_path": "MASSAGE CHAIR", "product_count": 5 },
+      { "category_path": "mattress", "product_count": 2 },
+      { "category_path": "OFFICE CHAIR", "product_count": 46 },
+      { "category_path": "OFFICE CHAIR, promo offer", "product_count": 7 },
+      { "category_path": "Office furniture", "product_count": 139 },
+      {
+        "category_path": "Office furniture > CONFERENCE TABLE",
+        "product_count": 6
+      },
+      {
+        "category_path": "Office furniture > OFFICE CHAIR",
+        "product_count": 53
+      },
+      {
+        "category_path": "Office furniture > OFFICE TABLE",
+        "product_count": 30
+      },
+      {
+        "category_path": "Office furniture > RECEPTION DESK",
+        "product_count": 8
+      },
+      { "category_path": "OFFICE TABLE", "product_count": 28 },
+      { "category_path": "OFFICE TABLE, promo offer", "product_count": 2 },
+      { "category_path": "promo offer", "product_count": 38 },
+      {
+        "category_path": "promo offer, Living room furniture",
+        "product_count": 2
+      },
+      { "category_path": "promo offer, Office furniture", "product_count": 1 },
+      { "category_path": "RECEPTION DESK", "product_count": 8 },
+      { "category_path": "ROYAL SINGLE CHAIR", "product_count": 2 },
+      { "category_path": "ROYAL SOFA", "product_count": 17 },
+      { "category_path": "Rug", "product_count": 10 },
+      { "category_path": "SINGLE CHAIR", "product_count": 24 },
+      { "category_path": "SINGLE CHAIR, Sofas", "product_count": 2 },
+      { "category_path": "Sofas", "product_count": 70 },
+      { "category_path": "Sofas > FABRIC SOFA", "product_count": 45 },
+      { "category_path": "Sofas > LEATHER SOFA", "product_count": 4 },
+      { "category_path": "TV STAND", "product_count": 17 },
+      { "category_path": "UNCATEGORIZED", "product_count": 74 },
+      { "category_path": "WORKSTATION", "product_count": 14 }
+    ]
+  }
+}

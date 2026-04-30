@@ -17,8 +17,11 @@ export interface User {
 export interface LoginResponse {
   status: string;
   data: {
-    user: User;
-    token: string;
+    user?: User;
+    token?: string;
+    verification_required?: boolean;
+    email_verified?: boolean;
+    mfa_required?: boolean;
   };
 }
 
@@ -27,6 +30,7 @@ export interface RegisterResponse {
   data: {
     user_id: number;
     verification_required: boolean;
+    existing_unverified?: boolean;
   };
 }
 
@@ -59,6 +63,8 @@ export interface RegisterPayload {
   signed_name?: string;
   turnstile_token?: string;
   referral_code?: string;
+  sms_consent: boolean | number;
+  nin?: string;
 }
 
 export interface LoginPayload {

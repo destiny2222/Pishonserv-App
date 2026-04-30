@@ -36,7 +36,7 @@ export function UserProvider({ children }) {
     try {
       const response = await authApi.login({ email, password, turnstile_token });      
       // Only set user if verification is not required
-      if (!response.data.verification_required) {
+      if (response.data && !response.data.verification_required && response.data.user) {
         setUser(response.data.user);
         setIsAuthenticated(true);
       }
@@ -52,6 +52,8 @@ export function UserProvider({ children }) {
         errorMessage = "Account not found. Please check your email or sign up.";
       } else if (error.status === 403) {
         errorMessage = error.data?.message || "Access denied. Your account may be inactive.";
+      } else if (error.status === 422) {
+        errorMessage = error.data?.message || "Validation error. Please check your inputs.";
       } else if (error.message) {
         errorMessage = error.message;
       } else if (error.status >= 500) {
@@ -65,13 +67,19 @@ export function UserProvider({ children }) {
   async function register(userData) {
     try {
       const response = await authApi.register(userData);
-      return { success: true, data: response.data, existing_unverified: response.existing_unverified };
+      return { 
+        success: true, 
+        data: response.data, 
+        existing_unverified: response.data?.existing_unverified 
+      };
     } catch (error) {
       
       let errorMessage = "Registration failed";
       
       if (error.status === 400) {
         errorMessage = error.data?.message || "Invalid registration data. Please check your information.";
+      } else if (error.status === 422) {
+        errorMessage = error.data?.message || "Validation error. Please check all fields.";
       } else if (error.status === 409) {
         errorMessage = "Email already exists. Please use a different email or login.";
       } else if (error.message) {
@@ -193,6 +201,16 @@ export function UserProvider({ children }) {
     }
   }
 
+  async function deleteAccount() {
+    try {
+      await authApi.deleteAccount();
+      await logout();
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message || "Failed to delete account" };
+    }
+  }
+
   return (
     <UserContext.Provider 
       value={{
@@ -209,6 +227,7 @@ export function UserProvider({ children }) {
         refreshUser,
         updateUser,
         checkAuth,
+        deleteAccount,
       }}
     >
       {children}

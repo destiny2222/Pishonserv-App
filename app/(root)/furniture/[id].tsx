@@ -8,6 +8,7 @@ import { ActivityIndicator, Alert, Dimensions, Image, ScrollView, Text, Touchabl
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CustomAlert from '@/components/CustomAlert';
+import { StatusBar } from 'expo-status-bar';
 
 const { width } = Dimensions.get('window');
 
@@ -124,6 +125,7 @@ const FurnitureDetail = () => {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-200" edges={['top']}>
+            <StatusBar style="dark" />
             {/* Header */}
             <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
                 <TouchableOpacity onPress={() => router.back()} className="p-2 rounded-full bg-gray-100">
@@ -269,7 +271,7 @@ const FurnitureDetail = () => {
                         className="flex-1 bg-primary py-4 rounded-xl items-center justify-center flex-row gap-2"
                     >
                         <Ionicons name="call-outline" size={20} color="#fff" />
-                        <Text className="text-white text-base font-poppins-semibold"> Book a Call </Text>
+                        <Text className="text-white text-base font-poppins-semibold"> Request a Quote </Text>
                     </TouchableOpacity>
                 </View>
             </View>

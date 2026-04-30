@@ -25,6 +25,7 @@ import PaymentWebView from "@/components/PaymentWebView";
 import icons from "@/constants/icons";
 import { useAuth } from "@/hooks/useAuth";
 import MapView, { Marker } from 'react-native-maps';
+import { StatusBar } from "expo-status-bar";
 
 const Properties = () => {
   const params = useLocalSearchParams();
@@ -361,6 +362,7 @@ const Properties = () => {
 
   return (
     <View className="flex-1 bg-white">
+      <StatusBar style="dark" />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 120, backgroundColor: 'white' }}

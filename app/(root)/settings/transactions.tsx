@@ -5,6 +5,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View, Modal, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { StatusBar } from 'expo-status-bar';
 
 const months = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
 const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
@@ -120,6 +121,7 @@ const TransactionHistory = () => {
 
   return (
     <SafeAreaView className='flex-1 bg-white'>
+      <StatusBar style="dark" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName='px-4 pb-8' >
         <TopHeader title='Transaction History' />
         {/* Filter Section */}
