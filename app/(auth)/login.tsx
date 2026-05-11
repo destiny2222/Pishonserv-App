@@ -93,6 +93,7 @@ export default function Login() {
 
   return (
       <View className='flex-1 bg-white justify-center items-center pt-32'>
+        <StatusBar style="dark" />
         <Watermarks showTopRight showBottomLeft />
         <Text className='font-bold text-2xl text-secondary font-poppins-semibold'>Login</Text>
 
