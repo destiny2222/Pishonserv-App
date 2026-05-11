@@ -18,6 +18,8 @@ export default function Login() {
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
   const { login } = useAuth();
 
@@ -27,9 +29,37 @@ export default function Login() {
     setAlertVisible(true);
   };
 
+  // validation of email 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const validateEmail = (email: string) => emailRegex.test(email);
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+
+    if (!text) {
+      setEmailError("Email is required.");
+      return;
+    }
+
+    setEmailError(validateEmail(text) ? "" : "Please enter a valid email address.");
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    setPasswordError(text ? "" : "Password is required.");
+  };
+
   const handleSubmit = async () => {
     if (!email || !password) {
+      setEmailError(email ? "" : "Email is required.");
+      setPasswordError(password ? "" : "Password is required.");
       showAlert('Error', 'Please enter both email and password');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address.");
+      showAlert('Invalid Email', 'Please enter a valid email address.');
       return;
     }
 
@@ -75,10 +105,14 @@ export default function Login() {
             <Text className='font-poppins-medium text-base mb-2'>Email</Text>
             <TextInputField placeholder='Enter your email'
               keyboardType='email-address'
-              className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
+              autoCapitalize='none'
+              className={`border focus:border-primary ${emailError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium`}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={handleEmailChange}
             />
+            {emailError ? (
+              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{emailError}</Text>
+            ) : null}
           </View>
 
           <View className='mt-6'>
@@ -86,8 +120,8 @@ export default function Login() {
             <View className="relative">
               <TextInputField placeholder='Enter your password'
                 secureTextEntry={!showPassword}
-                className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
-                onChangeText={setPassword}
+                className={`border focus:border-primary ${passwordError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium`}
+                onChangeText={handlePasswordChange}
                 value={password}
               />
               <TouchableOpacity
@@ -97,13 +131,16 @@ export default function Login() {
                 <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#666" />
               </TouchableOpacity>
             </View>
+            {passwordError ? (
+              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{passwordError}</Text>
+            ) : null}
           </View>
 
           <View className="mt-6">
             <TurnstileWidget 
               ref={turnstileRef}
               onTokenReceived={setTurnstileToken} 
-              onError={(err) => showAlert("Security Error", "Verification failed. Please try again.")}
+              onError={(err) => showAlert("Security Error", "Verification failed. Please try again.")}   
             />
           </View>
 
