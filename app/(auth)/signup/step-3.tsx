@@ -20,6 +20,12 @@ export default function Step3() {
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [roleError, setRoleError] = useState("");
+  const [smsConsentError, setSmsConsentError] = useState("");
+  const [mouError, setMouError] = useState("");
+  const [turnstileError, setTurnstileError] = useState("");
 
   // Role Selection State
   const [roleModalVisible, setRoleModalVisible] = useState(false);
@@ -53,28 +59,87 @@ export default function Step3() {
     Linking.openURL(url);
   };
 
+  const handlePasswordChange = (text: string) => {
+    update({ password: text });
+
+    if (!text) {
+      setPasswordError("Password is required.");
+    } else {
+      setPasswordError("");
+    }
+
+    if (data.confirmPassword) {
+      setConfirmPasswordError(text === data.confirmPassword ? "" : "Passwords do not match.");
+    }
+  };
+
+  const handleConfirmPasswordChange = (text: string) => {
+    update({ confirmPassword: text });
+
+    if (!text) {
+      setConfirmPasswordError("Please re-enter your password.");
+      return;
+    }
+
+    setConfirmPasswordError(text === data.password ? "" : "Passwords do not match.");
+  };
+
+  const handleRoleChange = (role: string) => {
+    update({ role, agree_mou: role === "buyer" ? 0 : data.agree_mou });
+    setRoleError("");
+    setMouError("");
+  };
+
+  const handleSmsConsentChange = () => {
+    const nextValue = !data.sms_consent;
+    update({ sms_consent: nextValue });
+    setSmsConsentError(nextValue ? "" : "SMS consent is required.");
+  };
+
+  const handleMouChange = () => {
+    const nextValue = data.agree_mou === 1 ? 0 : 1;
+    update({ agree_mou: nextValue });
+    setMouError(nextValue === 1 ? "" : "MOU agreement is required.");
+  };
+
+  const handleTurnstileTokenReceived = (token: string) => {
+    setTurnstileToken(token);
+    setTurnstileError(token ? "" : "Security verification is required.");
+  };
+
   const handleSubmit = async () => {
     if (!data.password) {
+      setPasswordError("Password is required.");
       showAlert("Password Required", "Please enter a password.");
       return;
     }
 
+    if (!data.confirmPassword) {
+      setConfirmPasswordError("Please re-enter your password.");
+      showAlert("Password Required", "Please re-enter your password.");
+      return;
+    }
+
     if (data.password !== data.confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
       showAlert("Password Mismatch", "Passwords do not match. Please re-enter.");
       return;
     }
 
     if (!data.role) {
+      setRoleError("Role is required.");
       showAlert("Role Required", "Please select a role to proceed.");
       return;
     }
 
     if (!data.sms_consent) {
+      setSmsConsentError("SMS consent is required.");
       showAlert("Consent Required", "You must agree to receive SMS messages to proceed.");
       return;
     }
 
     if (!turnstileToken) {
+      setTurnstileError("Security verification is required.");
       showAlert("Security Verification", "Please complete the security verification challenge.");
       return;
     }
@@ -82,6 +147,7 @@ export default function Step3() {
     // Validation for non-buyer roles
     if (data.role !== 'buyer') {
       if (!data.agree_mou) {
+        setMouError("MOU agreement is required.");
         showAlert("MOU Required", "You must agree to the MOU to proceed.");
         return;
       }
@@ -129,6 +195,7 @@ export default function Step3() {
             showAlert("Verification Failed", "Security verification failed. Please try the challenge again.");
             turnstileRef.current?.reload();
             setTurnstileToken("");
+            setTurnstileError("Security verification failed. Please try again.");
           } else {
             showAlert("Validation Error", result.error || "Please check all required fields.");
           }
@@ -180,11 +247,11 @@ export default function Step3() {
             <View className="relative">
               <TextInputField
                 value={data.password}
-                onChangeText={(t) => update({ password: t })}
+                onChangeText={handlePasswordChange}
                 placeholder="Input password"
                 secureTextEntry={!showPassword}
                 style={{ color: '#000000', paddingRight: 50 }}
-                className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium rounded-xl"
+                className={`border focus:border-primary ${passwordError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium rounded-xl`}
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
@@ -193,6 +260,9 @@ export default function Step3() {
                 <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#666" />
               </TouchableOpacity>
             </View>
+            {passwordError ? (
+              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{passwordError}</Text>
+            ) : null}
           </View>
 
           <View className="mt-6">
@@ -200,11 +270,11 @@ export default function Step3() {
             <View className="relative">
               <TextInputField
                 value={data.confirmPassword}
-                onChangeText={(t) => update({ confirmPassword: t })}
+                onChangeText={handleConfirmPasswordChange}
                 placeholder="Re-enter password"
                 secureTextEntry={!showConfirmPassword}
                 style={{ color: '#000000', paddingRight: 50 }}
-                className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium rounded-xl"
+                className={`border focus:border-primary ${confirmPasswordError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium rounded-xl`}
               />
               <TouchableOpacity
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -213,19 +283,25 @@ export default function Step3() {
                 <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={22} color="#666" />
               </TouchableOpacity>
             </View>
+            {confirmPasswordError ? (
+              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{confirmPasswordError}</Text>
+            ) : null}
           </View>
 
           <View className="mt-6">
             <Text className="font-poppins-medium text-sm mb-2">Select Role <Text className="text-red-500">*</Text></Text>
             <TouchableOpacity
               onPress={() => setRoleModalVisible(true)}
-              className="border border-gray-300 bg-white px-4 py-4 rounded-xl flex-row justify-between items-center"
+              className={`border ${roleError ? "border-red-500" : "border-gray-300"} bg-white px-4 py-4 rounded-xl flex-row justify-between items-center`}
             >
               <Text className={`text-base font-poppins-medium ${data.role ? 'text-black' : 'text-gray-400'}`}>
                 {getRoleLabel(data.role)}
               </Text>
               <Ionicons name="chevron-down" size={20} color="#666" />
             </TouchableOpacity>
+            {roleError ? (
+              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{roleError}</Text>
+            ) : null}
           </View>
 
           {/* Conditional Fields for Non-Buyer Roles */}
@@ -234,7 +310,7 @@ export default function Step3() {
               <Text className="font-poppins-bold text-sm mb-4 text-secondary">Agreement</Text>
 
               <TouchableOpacity
-                onPress={() => update({ agree_mou: data.agree_mou === 1 ? 0 : 1 })}
+                onPress={handleMouChange}
                 className="flex-row items-center mb-4"
               >
                 <View className={`w-6 h-6 border rounded mr-3 items-center justify-center ${data.agree_mou === 1 ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
@@ -244,6 +320,9 @@ export default function Step3() {
                   I agree to the <Text className="text-primary font-bold">MOU</Text> terms and conditions.
                 </Text>
               </TouchableOpacity>
+              {mouError ? (
+                <Text className="text-xs text-red-500 font-poppins-medium">{mouError}</Text>
+              ) : null}
 
               {/* Hidden field logic: signed_name is auto-populated on submit */}
             </View>
@@ -252,7 +331,7 @@ export default function Step3() {
           <View className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
             <Text className="font-poppins-bold text-sm mb-4 text-secondary">SMS Consent</Text>
             <TouchableOpacity
-              onPress={() => update({ sms_consent: !data.sms_consent })}
+              onPress={handleSmsConsentChange}
               className="flex-row items-start"
             >
               <View className={`w-6 h-6 border rounded mt-1 mr-3 items-center justify-center ${data.sms_consent ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
@@ -265,6 +344,9 @@ export default function Step3() {
                 </Text>
               </View>
             </TouchableOpacity>
+            {smsConsentError ? (
+              <Text className="text-xs text-red-500 font-poppins-medium mt-2">{smsConsentError}</Text>
+            ) : null}
             
             <View className="flex-row flex-wrap mt-3">
               <Text className="text-[10px] text-gray-500">By checking this, you also agree to our </Text>
@@ -282,9 +364,15 @@ export default function Step3() {
             <Text className="font-poppins-medium text-sm mb-2">Security Verification <Text className="text-red-500">*</Text></Text>
             <TurnstileWidget
               ref={turnstileRef}
-              onTokenReceived={setTurnstileToken}
-              onError={(err) => showAlert("Security Error", "Verification failed. Please try again.")}
+              onTokenReceived={handleTurnstileTokenReceived}
+              onError={(err) => {
+                setTurnstileError("Verification failed. Please try again.");
+                showAlert("Security Error", "Verification failed. Please try again.");
+              }}
             />
+            {turnstileError ? (
+              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{turnstileError}</Text>
+            ) : null}
           </View>
 
           <View className="mt-10 mb-10">
@@ -331,7 +419,7 @@ export default function Step3() {
                     renderItem={({ item }) => (
                       <TouchableOpacity
                         onPress={() => {
-                          update({ role: item.value });
+                          handleRoleChange(item.value);
                           setRoleModalVisible(false);
                         }}
                         className={`py-4 border-b border-gray-100 flex-row justify-between items-center ${data.role === item.value ? 'bg-gray-50' : ''}`}

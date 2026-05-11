@@ -14,6 +14,12 @@ export default function Step1() {
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
+  const [firstNameError, setFirstNameError] = useState("");
+  const [lastNameError, setLastNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const validateEmail = (email: string) => emailRegex.test(email);
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -21,10 +27,40 @@ export default function Step1() {
     setAlertVisible(true);
   };
 
+  const handleFirstNameChange = (text: string) => {
+    update({ firstName: text });
+    setFirstNameError(text.trim() ? "" : "First name is required.");
+  };
+
+  const handleLastNameChange = (text: string) => {
+    update({ lastName: text });
+    setLastNameError(text.trim() ? "" : "Last name is required.");
+  };
+
+  const handleEmailChange = (text: string) => {
+    update({ email: text });
+
+    if (!text) {
+      setEmailError("Email is required.");
+      return;
+    }
+
+    setEmailError(validateEmail(text) ? "" : "Please enter a valid email address.");
+  };
+
   const next = () => {
     // basic validation
     if (!data.firstName || !data.lastName || !data.email) {
+      setFirstNameError(data.firstName ? "" : "First name is required.");
+      setLastNameError(data.lastName ? "" : "Last name is required.");
+      setEmailError(data.email ? "" : "Email is required.");
       showAlert("Missing Fields", "Please fill in all required fields (First Name, Last Name, and Email).");
+      return;
+    }
+
+    if (!validateEmail(data.email)) {
+      setEmailError("Please enter a valid email address.");
+      showAlert("Invalid Email", "Please enter a valid email address.");
       return;
     }
     
@@ -53,32 +89,41 @@ export default function Step1() {
           <Text className="font-poppins-medium text-sm mb-1">First Name <Text className="text-red-500">*</Text></Text>
           <TextInputField
             value={data.firstName}
-            onChangeText={(t) => update({ firstName: t })}
+            onChangeText={handleFirstNameChange}
             placeholder="Enter your first name"
-            className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
+            className={`border focus:border-primary ${firstNameError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium`}
           />
+          {firstNameError ? (
+            <Text className="text-xs text-red-500 font-poppins-medium mt-1">{firstNameError}</Text>
+          ) : null}
         </View>
 
         <View className="space-y-6 w-full px-8 mt-5">
           <Text className="font-poppins-medium text-sm mb-1">Last Name <Text className="text-red-500">*</Text></Text>
           <TextInputField
             value={data.lastName}
-            onChangeText={(t) => update({ lastName: t })}
+            onChangeText={handleLastNameChange}
             placeholder="Enter your last name"
-            className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
+            className={`border focus:border-primary ${lastNameError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium`}
           />
+          {lastNameError ? (
+            <Text className="text-xs text-red-500 font-poppins-medium mt-1">{lastNameError}</Text>
+          ) : null}
         </View>
 
         <View className="space-y-6 w-full px-8 mt-5">
           <Text className="font-poppins-medium text-sm mb-1">Email <Text className="text-red-500">*</Text></Text>
           <TextInputField
             value={data.email}
-            onChangeText={(t) => update({ email: t })}
+            onChangeText={handleEmailChange}
             placeholder="Enter your email"
             keyboardType="email-address"
             autoCapitalize="none"
-            className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
+            className={`border focus:border-primary ${emailError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium`}
           />
+          {emailError ? (
+            <Text className="text-xs text-red-500 font-poppins-medium mt-1">{emailError}</Text>
+          ) : null}
         </View>
 
         
