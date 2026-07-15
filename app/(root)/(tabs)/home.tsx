@@ -130,7 +130,7 @@ export default function Home() {
         ListHeaderComponent={
           <View className="px-3">
             {user?.role === 'agent' || user?.role === 'owner' ? <AgentHeader /> : <Header />}
-            <HeroBanner autoplay interval={4000} />
+            <HeroBanner properties={featuredProperties} autoplay interval={4000} />
             <View className='px-2'>
               <View className="flex flex-row justify-between items-center px-2 mb-3 mt-10">
                 <Text className="text-secondary text-lg font-poppins-semibold font-bold">
