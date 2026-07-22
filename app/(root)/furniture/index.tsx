@@ -3,7 +3,7 @@ import Header from '@/components/Header';
 import HeroBanner from '@/components/HeroBanner';
 import images from '@/constants/images';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Alert, FlatList, Image, Text, TouchableOpacity, View, ActivityIndicator, ScrollView } from 'react-native';
+import { Alert, FlatList, Image, Text, TouchableOpacity, View, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getFurnitureList, FurnitureItem, 
     FurnitureParams, getFurnitureCategories, 
@@ -50,6 +50,7 @@ const index = () => {
     const [furnitureList, setFurnitureList] = useState < FurnitureItem[] > ([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState < string | null > (null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -58,9 +59,11 @@ const index = () => {
         router.push(`/furniture/${id}`);
     };
 
-    const fetchFurniture = useCallback(async (pageNum = 1, shouldAppend = false) => {
+    const fetchFurniture = useCallback(async (pageNum = 1, shouldAppend = false, isRefresh = false) => {
         try {
-            if (pageNum === 1) {
+            if (isRefresh) {
+                setRefreshing(true);
+            } else if (pageNum === 1) {
                 setLoading(true);
             } else {
                 setLoadingMore(true);
@@ -92,19 +95,24 @@ const index = () => {
         } finally {
             setLoading(false);
             setLoadingMore(false);
+            setRefreshing(false);
         }
     }, [params.query, params.category]);
 
 
 
     useEffect(() => {
-        fetchFurniture(1, false);
+        fetchFurniture(1, false, false);
     }, [fetchFurniture]);
 
     const handleLoadMore = () => {
         if (!loadingMore && hasMore && !loading) {
-            fetchFurniture(page + 1, true);
+            fetchFurniture(page + 1, true, false);
         }
+    };
+
+    const handleRefresh = () => {
+        fetchFurniture(1, false, true);
     };
 
     if (loading) {
@@ -147,6 +155,9 @@ const index = () => {
                 keyExtractor={(item) => item.id.toString()}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#C9A24D']} tintColor="#C9A24D" />}
                 ListFooterComponent={
                     loadingMore ? (
                         <View className="py-5">

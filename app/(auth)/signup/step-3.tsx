@@ -1,20 +1,23 @@
 import CustomAlert from "@/components/CustomAlert";
+import TextInputField from "@/components/TextInputField";
+import TurnstileWidget, { TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import Watermarks from "@/components/Watermarks";
 import { useAuth } from "@/hooks/useAuth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import React, { useState, useRef } from "react";
-import { ActivityIndicator, FlatList, Modal, Text, TouchableOpacity, TouchableWithoutFeedback, View, ScrollView, Linking } from "react-native";
+import React, { useRef, useState } from "react";
+import { ActivityIndicator, FlatList, Linking, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignup } from "./_layout";
-import TurnstileWidget, { TurnstileWidgetRef } from "@/components/TurnstileWidget";
-import TextInputField from "@/components/TextInputField";
 
 export default function Step3() {
   const { data, update } = useSignup();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register } = useAuth();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const [alertVisible, setAlertVisible] = useState(false);
@@ -53,6 +56,20 @@ export default function Step3() {
   const getRoleLabel = (value: string) => {
     const role = roles.find((r) => r.value === value);
     return role ? role.label : "Select a role";
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    update({ password: "", confirmPassword: "", role: "", agree_mou: 0, sms_consent: false });
+    setPasswordError("");
+    setConfirmPasswordError("");
+    setRoleError("");
+    setSmsConsentError("");
+    setMouError("");
+    setTurnstileError("");
+    setTurnstileToken("");
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    setRefreshing(false);
   };
 
   const openLink = (url: string) => {
@@ -230,7 +247,11 @@ export default function Step3() {
       <View className="flex-1 bg-white px-6 pt-32 relative">
         <Watermarks showTopRight showBottomLeft />
 
-        <TouchableOpacity onPress={() => router.back()} className="absolute top-20 left-6 z-10">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ position: 'absolute', top: insets.top + 10, left: 16, zIndex: 10 }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Ionicons name="arrow-back" size={22} color="#C9A24D" />
         </TouchableOpacity>
 
@@ -240,7 +261,10 @@ export default function Step3() {
         <ScrollView 
           showsVerticalScrollIndicator={false} 
           className="mt-8"
+          style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
+          alwaysBounceVertical={true}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />}
         >
           <View>
             <Text className="font-poppins-medium text-sm mb-2">Password <Text className="text-red-500">*</Text></Text>

@@ -10,6 +10,7 @@ import {
   FlatList,
   Image,
   Platform,
+  RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
@@ -49,7 +50,7 @@ const Properties = () => {
   const [paymentUrl, setPaymentUrl] = useState("");
   const [inspectionModalVisible, setInspectionModalVisible] = useState(false);
   const [inspectionLoading, setInspectionLoading] = useState(false);
-
+  const [refreshing, setRefreshing] = useState(false);
 
   const [paymentVisible, setPaymentVisible] = useState(false);
   // removed currentReference as it was unused
@@ -125,6 +126,20 @@ const Properties = () => {
 
     fetchProperty();
   }, [id]);
+
+  const handleRefresh = async () => {
+    if (!id) return;
+    setRefreshing(true);
+    try {
+      const propertyData = await getPropertyDetails(Number(id));
+      setItem(propertyData);
+      setError(null);
+    } catch {
+      setError("Unable to refresh property details.");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleBookNow = async () => {
     if (!user) {
@@ -366,6 +381,7 @@ const Properties = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 120, backgroundColor: 'white' }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />}
       >
         <View className="relative w-full" style={{ height: windowHeight / 2.5 }}>
           {/* Image Carousel */}

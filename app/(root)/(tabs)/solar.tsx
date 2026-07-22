@@ -3,7 +3,7 @@ import InverterComparisonSection from '@/components/InverterComparisonSection'
 import images from '@/constants/images'
 import { Activity, Award, CheckCircle, FileText, Gem, HandHeart, Leaf, Lightbulb, Medal, Play, Settings, ShieldCheck, ShoppingCart, Users, Zap } from 'lucide-react-native'
 import React, { useState } from 'react'
-import { Alert, Image, ImageBackground, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, ImageBackground, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import SolarQuoteModal from '@/components/SolarQuoteModal'
 import { submitSolarQuote, SolarQuotePayload } from '@/libs/endpoints/solar'
@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar'
 function Solar() {
   const [quoteModalVisible, setQuoteModalVisible] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
@@ -22,6 +23,12 @@ function Solar() {
     setAlertTitle(title);
     setAlertMessage(message);
     setAlertVisible(true);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    setRefreshing(false);
   };
 
   const handleQuoteConfirm = async (data: SolarQuotePayload) => {
@@ -190,7 +197,12 @@ function Solar() {
     <SafeAreaView className='flex-1 bg-gray-200' edges={['left', 'right', 'top']} >
       <StatusBar style="dark" />
       <Header />
-      <ScrollView className='flex-1' contentContainerStyle={{ paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className='flex-1'
+        contentContainerStyle={{ paddingBottom: 80 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#C9A24D']} tintColor="#C9A24D" />}
+      >
         <View className='w-full h-[400px] relative '>
           <ImageBackground source={images.heroSolar} resizeMode="cover" className='w-full h-full justify-center items-center'>
             <View className="absolute inset-0 bg-black/30" />

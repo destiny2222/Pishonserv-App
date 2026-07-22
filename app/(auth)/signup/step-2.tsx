@@ -5,13 +5,16 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { State } from "country-state-city";
 import { Link, router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Keyboard, Modal, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { ActivityIndicator, FlatList, Keyboard, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import CountryPicker, { Country, CountryCode } from "react-native-country-picker-modal";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignup } from "./_layout";
 
 export default function Step2() {
   const { data, update } = useSignup();
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
@@ -23,12 +26,10 @@ export default function Step2() {
   const [stateError, setStateError] = useState("");
   const [addressError, setAddressError] = useState("");
   const [cityError, setCityError] = useState("");
-  const [phoneCodeError, setPhoneCodeError] = useState("");
-  const [phoneNumberError, setPhoneNumberError] = useState("");
+  
 
   const normalizePhoneCode = (phoneCode: string) => `+${phoneCode.replace(/[^\d]/g, "")}`;
   const validatePhoneCode = (phoneCode: string) => /^\+\d{1,6}$/.test(phoneCode.trim());
-  const validatePhoneNumber = (phoneNumber: string) => /^\+?[0-9]{7,15}$/.test(phoneNumber.replace(/\s/g, ""));
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -67,7 +68,6 @@ export default function Step2() {
     });
     setCountryError("");
     setStateError("");
-    setPhoneCodeError(validatePhoneCode(phoneCode) ? "" : "Enter a valid code.");
     setCountryModalVisible(false);
   };
 
@@ -88,28 +88,6 @@ export default function Step2() {
     setCityError(text.trim() ? "" : "City is required.");
   };
 
-  const handlePhoneCodeChange = (text: string) => {
-    update({ phoneCode: text });
-
-    if (!text) {
-      setPhoneCodeError("Phone code is required.");
-      return;
-    }
-
-    setPhoneCodeError(validatePhoneCode(text) ? "" : "Enter a valid code.");
-  };
-
-  const handlePhoneNumberChange = (text: string) => {
-    update({ phoneNumber: text });
-
-    if (!text) {
-      setPhoneNumberError("Phone number is required.");
-      return;
-    }
-
-    setPhoneNumberError(validatePhoneNumber(text) ? "" : "Enter a valid phone number.");
-  };
-
   const handleNinChange = (text: string) => {
     update({ nin: text });
   };
@@ -118,21 +96,30 @@ export default function Step2() {
     update({ referral_code: text });
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    update({ country: "", countryCode: "", phoneCode: "", state: "", address: "", city: "", phoneNumber: "", nin: "", referral_code: "" });
+    setCountryError("");
+    setStateError("");
+    setAddressError("");
+    setCityError("");
+    
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    setRefreshing(false);
+  };
+
   const next = () => {
-    if (!data.country || !data.countryCode || !data.state || !data.address.trim() || !data.city.trim() || !data.phoneNumber) {
+    if (!data.country || !data.countryCode || !data.state || !data.address.trim() || !data.city.trim()) {
       setCountryError(data.country && data.countryCode ? "" : "Country is required.");
       setStateError(data.state ? "" : "State is required.");
       setAddressError(data.address.trim() ? "" : "Address is required.");
       setCityError(data.city.trim() ? "" : "City is required.");
-      setPhoneNumberError(data.phoneNumber ? "" : "Phone number is required.");
       showAlert("Missing Fields", "Please fill in all required fields marked with *.");
       return;
     }
 
-    if (!validatePhoneCode(data.phoneCode) || !validatePhoneNumber(data.phoneNumber)) {
-      setPhoneCodeError(validatePhoneCode(data.phoneCode) ? "" : "Enter a valid code.");
-      setPhoneNumberError(validatePhoneNumber(data.phoneNumber) ? "" : "Enter a valid phone number.");
-      showAlert("Invalid Phone Number", "Please enter a valid phone number.");
+    if (data.phoneCode && !validatePhoneCode(data.phoneCode)) {
+      showAlert("Invalid Country Phone Code", "Please select a valid country with a proper calling code.");
       return;
     }
 
@@ -147,12 +134,22 @@ export default function Step2() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <ScrollView showsVerticalScrollIndicator={false} className="bg-white">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="bg-white"
+        style={{ flex: 1 }}
+        alwaysBounceVertical={true}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />}
+      >
         <View className="flex-1 bg-white justify-center items-center py-10">
           <Watermarks showTopRight showBottomLeft />
 
-          <TouchableOpacity onPress={() => router.back()} className="absolute top-20 left-6 z-10">
-            <Ionicons name="arrow-back" size={22} color="#C9A24D" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{ position: 'absolute', top: insets.top + 10, left: 16, zIndex: 10 }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={22} color="#0D3B66" />
           </TouchableOpacity>
 
           <Text className="text-2xl font-poppins-semibold text-secondary text-center mt-10">Sign Up</Text>
@@ -207,7 +204,6 @@ export default function Step2() {
               <Text className="text-xs text-red-500 font-poppins-medium mt-1">{addressError}</Text>
             ) : null}
           </View>
-
           <View className="space-y-6 w-full px-8 mt-5">
             <Text className="font-poppins-medium text-sm mb-2">City <Text className="text-red-500">*</Text></Text>
             <TextInputField
@@ -218,29 +214,6 @@ export default function Step2() {
             />
             {cityError ? (
               <Text className="text-xs text-red-500 font-poppins-medium mt-1">{cityError}</Text>
-            ) : null}
-          </View>
-
-          <View className="space-y-6 w-full px-8 mt-5">
-            <Text className="font-poppins-medium text-sm mb-1">Phone Number <Text className="text-red-500">*</Text></Text>
-            <View className="flex-row gap-3">
-              <TextInputField
-                value={data.phoneCode}
-                onChangeText={handlePhoneCodeChange}
-                className={`border focus:border-primary ${phoneCodeError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium w-[90px]`}
-                placeholder="+234"
-                keyboardType="phone-pad"
-              />
-              <TextInputField
-                value={data.phoneNumber}
-                onChangeText={handlePhoneNumberChange}
-                className={`border focus:border-primary ${phoneNumberError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium flex-1`}
-                placeholder="0000 000 0000"
-                keyboardType="phone-pad"
-              />
-            </View>
-            {phoneCodeError || phoneNumberError ? (
-              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{phoneCodeError || phoneNumberError}</Text>
             ) : null}
           </View>
 

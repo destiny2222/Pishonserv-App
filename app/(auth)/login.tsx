@@ -1,13 +1,14 @@
 import CustomAlert from '@/components/CustomAlert';
 import TextInputField from '@/components/TextInputField';
+import TurnstileWidget, { TurnstileWidgetRef } from '@/components/TurnstileWidget';
 import Watermarks from '@/components/Watermarks';
 import { useAuth } from '@/hooks/useAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, router } from 'expo-router';
-import React, { useState, useRef } from 'react';
-import { ActivityIndicator, Pressable, Text, TouchableOpacity, View, ScrollView } from 'react-native';
-import TurnstileWidget, { TurnstileWidgetRef } from '@/components/TurnstileWidget';
 import { StatusBar } from 'expo-status-bar';
+import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -20,8 +21,10 @@ export default function Login() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
   const { login } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -47,6 +50,18 @@ export default function Login() {
   const handlePasswordChange = (text: string) => {
     setPassword(text);
     setPasswordError(text ? "" : "Password is required.");
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setEmail('');
+    setPassword('');
+    setTurnstileToken('');
+    setEmailError('');
+    setPasswordError('');
+    setShowPassword(false);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    setRefreshing(false);
   };
 
   const handleSubmit = async () => {
@@ -92,15 +107,25 @@ export default function Login() {
   }
 
   return (
-      <View className='flex-1 bg-white justify-center items-center pt-32'>
+      <View className='flex-1 bg-white justify-center items-center relative' style={{ paddingTop: insets.top + 16 }}>
         <StatusBar style="dark" />
         <Watermarks showTopRight showBottomLeft />
-        <Text className='font-bold text-2xl text-secondary font-poppins-semibold'>Login</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ position: 'absolute', top: insets.top + 10, left: 16, zIndex: 10 }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="arrow-back" size={22} color="#0D3B66" />
+        </TouchableOpacity>
+        <Text className='font-bold text-2xl text-secondary font-poppins-semibold mt-16'>Login</Text>
 
         <ScrollView 
           showsVerticalScrollIndicator={false} 
           className="w-full px-8 mt-10"
+          style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
+          alwaysBounceVertical={true}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#C9A24D']} tintColor="#C9A24D" />}
         >
           <View>
             <Text className='font-poppins-medium text-base mb-2'>Email</Text>

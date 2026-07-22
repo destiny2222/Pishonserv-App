@@ -10,6 +10,7 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -55,6 +56,7 @@ export default function Profile() {
   const { logout, deleteAccount, user, isAuthenticated } = useAuth();
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -100,6 +102,11 @@ export default function Profile() {
     router.push("/(auth)/login");
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    setRefreshing(false);
+  };
 
   const profileImageSource = user?.profile_image
     ? { uri: user.profile_image }
@@ -148,7 +155,11 @@ export default function Profile() {
 
   return (
     <SafeAreaView key="auth-profile" className="flex-1 bg-background" edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 px-2">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerClassName="pb-32 px-2"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />}
+      >
         <TopHeader title="Profile" />
         <View className="flex flex-col items-center relative mt-5">
           <View className="flex flex-col items-center">

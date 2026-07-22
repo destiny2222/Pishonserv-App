@@ -12,6 +12,7 @@ import {
     Image,
     Modal,
     Pressable,
+    RefreshControl,
     ScrollView,
     Text,
     TextInput,
@@ -32,6 +33,7 @@ const Earnings = () => {
     const [bankAccounts, setBankAccounts] = useState < BankAccount[] > ([]);
     const [loading, setLoading] = useState(false);
     const [fetchingBanks, setFetchingBanks] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [step, setStep] = useState < 1 | 2 > (1); // 1: Init, 2: Confirm
 
@@ -46,9 +48,17 @@ const Earnings = () => {
         setAlertVisible(true);
     };
 
+    const refreshData = async () => {
+        setRefreshing(true);
+        try {
+            await Promise.all([fetchBalance(), fetchBankAccounts()]);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
-        fetchBalance();
-        fetchBankAccounts();
+        refreshData();
     }, []);
 
     const fetchBalance = async () => {
@@ -78,6 +88,10 @@ const Earnings = () => {
         } finally {
             setFetchingBanks(false);
         }
+    };
+
+    const handleRefresh = async () => {
+        await refreshData();
     };
 
     const handleRedirect = async () => {
@@ -165,7 +179,13 @@ const Earnings = () => {
     return (
         <SafeAreaView className='flex-1 bg-white'>
             <AgentHeader />
-            <ScrollView className='px-4 mt-4' showsVerticalScrollIndicator={false}>
+            <ScrollView
+                className='px-4 mt-4'
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#C9A24D']} tintColor="#C9A24D" />
+                }
+            >
                 <View className='mb-4 mt-4'>
                     <Text className='text-secondary font-poppins-semibold font-semibold text-2xl'>My Earnings</Text>
                 </View>

@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, Image, FlatList } from 'react-native'
-import React from 'react'
+import { View, Text, TouchableOpacity, Image, FlatList, RefreshControl } from 'react-native'
+import React, { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import images from '@/constants/images';
@@ -43,6 +43,17 @@ const DATA: Inquiry[] = [
 ];
 
 const Inquiries = () => {
+  const [inquiries, setInquiries] = useState<Inquiry[]>(DATA);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setInquiries((prev) => [...prev].reverse());
+      setRefreshing(false);
+    }, 800);
+  };
+
   const InquiryCard = ({ item }: { item: Inquiry }) => (
       <View className="bg-white rounded-2xl shadow-black/5 shadow-lg px-4 mx-5 py-5 mb-6 flex-row items-center">
         <Image source={item.avatar} className="w-14 h-14 rounded-full mr-4" />
@@ -76,11 +87,14 @@ const Inquiries = () => {
     <SafeAreaView>
         {/* <Watermarks showBottomLeft={true} showTopRight={false}/> */}
         <FlatList
-          data={DATA}
+          data={inquiries}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <InquiryCard item={item} />}
           contentContainerStyle={{  paddingTop: 12, paddingBottom: 30 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#C9A24D']} tintColor="#C9A24D" />
+          }
           ListHeaderComponent={
             <View className=''>
               <AgentHeader />

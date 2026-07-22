@@ -5,7 +5,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Option = { label: string; value: string };
@@ -167,6 +167,7 @@ export default function CreateListing() {
     const [amenities, setAmenities] = useState < string[] > ([]);
     const [imagesPicked, setImagesPicked] = useState < ImagePicker.ImagePickerAsset[] > ([]);
     const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     // Custom Alert State
     const [alertVisible, setAlertVisible] = useState(false);
@@ -192,6 +193,31 @@ export default function CreateListing() {
 
     const toggleAmenity = (name: string) => {
         setAmenities((prev) => (prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]));
+    };
+
+    const resetForm = () => {
+        setTitle("");
+        setLocation("");
+        setListingType("");
+        setPrice("");
+        setPropertyType("");
+        setFurnishing("");
+        setCondition("");
+        setBedrooms("");
+        setBathrooms("");
+        setGarage("");
+        setDescription("");
+        setAmenities([]);
+        setImagesPicked([]);
+        setAlertVisible(false);
+        setAlertOnClose(undefined);
+    };
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        resetForm();
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        setRefreshing(false);
     };
 
     const pickImages = async () => {
@@ -253,9 +279,9 @@ export default function CreateListing() {
             };
 
         
-            const response = await createListing(payload);
+            const response: any = await createListing(payload);
 
-            if (response.status === 'success' || response.status === 'ok' || (response as any).success) {
+            if (response.status === 'success' || response.status === 'ok' || response.success) {
                 showAlert("Success", "Property created successfully!", () => router.replace("/listing"));
             } else {
                 showAlert("Error", (response as any).message || "Failed to create listing.");
@@ -276,7 +302,13 @@ export default function CreateListing() {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-300 pt-6">
-            <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={{ paddingBottom: 40 }}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />
+                }
+            >
                 {/* Header */}
                 <View className="px-4">
                     <TopHeader title='Create Listings' />

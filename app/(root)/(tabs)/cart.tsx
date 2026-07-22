@@ -1,16 +1,16 @@
-import { View, Text, Image, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, Image, FlatList, ActivityIndicator, RefreshControl } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import images from "@/constants/images";
-import { Link, router } from "expo-router";
+import { Link, router , useFocusEffect } from "expo-router";
 import { FavoriteCard } from "@/components/Cards";
 import { getWishlist, WishlistItem } from "@/libs/endpoints/wishlist";
-import { useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 const Cart = () => {
   const [favorites, setFavorites] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -18,15 +18,20 @@ const Cart = () => {
     }, [])
   );
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const response = await getWishlist();
       setFavorites(response.data.items);
     } catch (error) {
       setFavorites([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -53,6 +58,9 @@ const Cart = () => {
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 }}
+        refreshing={refreshing}
+        onRefresh={() => fetchWishlist(true)}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchWishlist(true)} colors={['#C9A24D']} tintColor="#C9A24D" />}
         ListHeaderComponent={
           <View className="mt-6 mb-8 px-5">
             <Text className="text-secondary font-poppins-bold text-3xl">

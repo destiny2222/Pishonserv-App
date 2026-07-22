@@ -209,10 +209,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <DateTimePicker
                   value={checkInDate}
                   mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  display={Platform.OS === 'ios' ? 'inline' : 'default'}
                   minimumDate={new Date()}
                   onChange={handleCheckInChange}
                   style={{ alignSelf: 'center' }}
+                  themeVariant="light"
+                  textColor="#000000"
                 />
                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16, gap: 12 }}>
                   <TouchableOpacity 
@@ -247,10 +249,12 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 <DateTimePicker
                   value={checkOutDate}
                   mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  display={Platform.OS === 'ios' ? 'inline' : 'default'}
                   minimumDate={new Date(checkInDate.getTime() + 86400000)}
                   onChange={handleCheckOutChange}
                   style={{ alignSelf: 'center' }}
+                  themeVariant="light"
+                  textColor="#000000"
                 />
                 <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16, gap: 12 }}>
                   <TouchableOpacity 

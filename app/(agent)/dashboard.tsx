@@ -6,7 +6,7 @@ import { getSummary, SummaryData } from '@/libs/endpoints/agent/summary'
 import { getTransactions, Transaction } from '@/libs/endpoints/transaction'
 import { format, isSameMonth, parseISO, subMonths } from 'date-fns'
 import React, { useEffect, useState } from 'react'
-import { Image, ScrollView, Text, View } from 'react-native'
+import { Image, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const Home = () => {
@@ -22,25 +22,33 @@ const Home = () => {
         labels: string[];
         datasets: { data: number[] }[];
     } | undefined > (undefined);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchData = async () => {
+        try {
+            const [summaryData, transactionsData] = await Promise.all([
+                getSummary(),
+                getTransactions()
+            ]);
+            setSummary(summaryData);
+
+            if (transactionsData && transactionsData.items) {
+                processChartData(transactionsData.items);
+            }
+        } catch (error) {
+
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [summaryData, transactionsData] = await Promise.all([
-                    getSummary(),
-                    getTransactions()
-                ]);
-                setSummary(summaryData);
-
-                if (transactionsData && transactionsData.items) {
-                    processChartData(transactionsData.items);
-                }
-            } catch (error) {
-
-            }
-        };
         fetchData();
     }, []);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchData();
+        setRefreshing(false);
+    };
 
     const processChartData = (transactions: Transaction[]) => {
         const today = new Date();
@@ -82,7 +90,12 @@ const Home = () => {
     return (
         <SafeAreaView className='bg-[#f9fafb]'>
             <AgentHeader />
-            <ScrollView className='mt-4 px-4 mb-20'>
+            <ScrollView
+                className='mt-4 px-4 mb-20'
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#C9A24D']} tintColor="#C9A24D" />
+                }
+            >
                 <View className='py-5'>
                     <Text className='font-poppins-light font-light py-1'>Welcome!</Text>
                     <Text className=' text-black font-poppins-semibold font-semibold text-xl'>{user?.name} {user?.lname}</Text>

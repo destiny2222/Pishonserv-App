@@ -18,7 +18,13 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(({ 
 
   useImperativeHandle(ref, () => ({
     reload: () => {
-      webViewRef.current?.reload();
+      // Instead of reloading the WebView (which fetches baseUrl), reset Turnstile via JS
+      webViewRef.current?.injectJavaScript(`
+        if (typeof turnstile !== 'undefined') {
+          turnstile.reset();
+        }
+        true;
+      `);
     },
   }));
 
