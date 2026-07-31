@@ -24,6 +24,7 @@ export interface Property {
   requires_inspection?: boolean;
   latitude?: number;
   longitude?: number;
+  youtube_video_embed_url?: string;
 }
 
 interface ApiResponse<T> {

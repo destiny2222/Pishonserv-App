@@ -26,6 +26,7 @@ import PaymentWebView from "@/components/PaymentWebView";
 import icons from "@/constants/icons";
 import { useAuth } from "@/hooks/useAuth";
 import MapView, { Marker } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 import { StatusBar } from "expo-status-bar";
 
 const Properties = () => {
@@ -543,6 +544,23 @@ const Properties = () => {
               )}
             />
           </View>
+
+          {property?.youtube_video_embed_url && (
+            <View className="mt-7">
+              <Text className="text-black-300 text-xl font-rubik-bold mb-4">
+                Video Tour
+              </Text>
+              <View className="h-48 w-full rounded-2xl overflow-hidden mt-4">
+                <WebView
+                  source={{ uri: property.youtube_video_embed_url }}
+                  style={{ flex: 1 }}
+                  javaScriptEnabled={true}
+                  domStorageEnabled={true}
+                  allowsFullscreenVideo={true}
+                />
+              </View>
+            </View>
+          )}
 
           <View className="mt-7">
             <Text className="text-black-300 text-xl font-rubik-bold mb-4">

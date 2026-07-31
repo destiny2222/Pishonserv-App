@@ -107,13 +107,13 @@ export default function Login() {
   }
 
   return (
-      <View className='flex-1 bg-white justify-center items-center relative' style={{ paddingTop: insets.top + 16 }}>
+      <View className='flex-1 bg-white justify-center items-center pt-52 relative' style={{ paddingTop: insets.top + 16 }}>
         <StatusBar style="dark" />
         <Watermarks showTopRight showBottomLeft />
         <TouchableOpacity
           onPress={() => router.back()}
-          style={{ position: 'absolute', top: insets.top + 10, left: 16, zIndex: 10 }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={{ position: 'absolute', top: insets.top + 30, left: 16, zIndex: 10 }}
+          hitSlop={{ top: 30, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="arrow-back" size={22} color="#0D3B66" />
         </TouchableOpacity>

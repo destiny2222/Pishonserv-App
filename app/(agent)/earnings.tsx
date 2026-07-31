@@ -25,7 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const Earnings = () => {
     const { user } = useAuth();
-    const [balanceData, setBalanceData] = useState < WalletBalanceData > ({ balance: 0 });
+    const [balanceData, setBalanceData] = useState<WalletBalanceData>({ balance: 0, withdrawable_balance: 0, reserved_balance: 0, bonus_balance: 0 });
     const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
     const [amount, setAmount] = useState('');
     const [otp, setOtp] = useState('');
@@ -103,8 +103,8 @@ const Earnings = () => {
             showAlert("Error", "Please enter a valid amount");
             return;
         }
-        if (Number(amount) > balanceData.balance) {
-            showAlert("Error", "Insufficient balance");
+        if (Number(amount) > balanceData.withdrawable_balance) {
+            showAlert("Error", "Insufficient withdrawable balance");
             return;
         }
         if (!selectedBank) {
@@ -239,7 +239,10 @@ const Earnings = () => {
                             {step === 1 && (
                                 <>
                                     {/* Amount Input */}
-                                    <Text className="font-poppins-medium text-gray-600 mb-2">Amount</Text>
+                                    <View className="flex-row justify-between items-center mb-2">
+                                        <Text className="font-poppins-medium text-gray-600">Amount</Text>
+                                        <Text className="font-poppins text-xs text-gray-500">Available: ₦{balanceData.withdrawable_balance.toLocaleString()}</Text>
+                                    </View>
                                     <View className="flex-row items-center border border-gray-200 rounded-xl px-4 py-3 mb-6 bg-gray-50">
                                         <Text className="text-gray-500 font-poppins-medium text-lg mr-2">₦</Text>
                                         <TextInput

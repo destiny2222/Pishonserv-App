@@ -88,17 +88,9 @@ export default function Step2() {
     setCityError(text.trim() ? "" : "City is required.");
   };
 
-  const handleNinChange = (text: string) => {
-    update({ nin: text });
-  };
-
-  const handleReferralCodeChange = (text: string) => {
-    update({ referral_code: text });
-  };
-
   const handleRefresh = async () => {
     setRefreshing(true);
-    update({ country: "", countryCode: "", phoneCode: "", state: "", address: "", city: "", phoneNumber: "", nin: "", referral_code: "" });
+    update({ country: "", countryCode: "", phoneCode: "", state: "", address: "", city: "", phoneNumber: "" });
     setCountryError("");
     setStateError("");
     setAddressError("");
@@ -141,13 +133,14 @@ export default function Step2() {
         alwaysBounceVertical={true}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />}
       >
-        <View className="flex-1 bg-white justify-center items-center py-10">
+        <View className="flex-1 bg-white justify-center items-center pb-10 pt-32">
           <Watermarks showTopRight showBottomLeft />
 
           <TouchableOpacity
             onPress={() => router.back()}
-            style={{ position: 'absolute', top: insets.top + 10, left: 16, zIndex: 10 }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className="p-2  bg-slate-400 rounded-full *:bg-white/30"
+            style={{ position: 'absolute', top: insets.top + 30, left: 16, zIndex: 10 }}
+            hitSlop={{ top: 30, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="arrow-back" size={22} color="#0D3B66" />
           </TouchableOpacity>
@@ -215,32 +208,6 @@ export default function Step2() {
             {cityError ? (
               <Text className="text-xs text-red-500 font-poppins-medium mt-1">{cityError}</Text>
             ) : null}
-          </View>
-
-          <View className="space-y-6 w-full px-8 mt-5">
-            <Text className="font-poppins-medium text-sm mb-2">
-              NIN <Text className="text-gray-400">(Optional)</Text>
-            </Text>
-            <TextInputField
-              value={data.nin}
-              onChangeText={handleNinChange}
-              className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
-              placeholder="Enter your NIN"
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View className="space-y-6 w-full px-8 mt-5">
-            <Text className="font-poppins-medium text-sm mb-2">
-              Referral Code <Text className="text-gray-400">(Optional)</Text>
-            </Text>
-            <TextInputField
-              value={data.referral_code}
-              onChangeText={handleReferralCodeChange}
-              className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
-              placeholder="Enter referral code"
-              autoCapitalize="characters"
-            />
           </View>
 
           <View className="space-y-6 w-full px-8 mt-8">

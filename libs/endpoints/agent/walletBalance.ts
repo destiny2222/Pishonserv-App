@@ -2,6 +2,9 @@ import { apiRequest } from "@/libs/api/clients";
 
 export type WalletBalanceData = {
     balance: number;
+    withdrawable_balance: number;
+    reserved_balance: number;
+    bonus_balance: number;
 }
 
 interface ApiResponse<WalletBalanceData> {

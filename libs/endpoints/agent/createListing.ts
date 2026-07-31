@@ -15,6 +15,7 @@ export interface CreateListingData {
   size?: number;
   amenities?: string[];
   images?: string[]; // Array of Base64 strings
+  youtube_video_url?: string;
 }
 
 export const createListing = async (data: CreateListingData) => {

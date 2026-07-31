@@ -1,34 +1,24 @@
 import CustomAlert from "@/components/CustomAlert";
 import TextInputField from "@/components/TextInputField";
-import TurnstileWidget, { TurnstileWidgetRef } from "@/components/TurnstileWidget";
 import Watermarks from "@/components/Watermarks";
-import { useAuth } from "@/hooks/useAuth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Linking, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, FlatList, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignup } from "./_layout";
 
 export default function Step3() {
   const { data, update } = useSignup();
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register } = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [roleError, setRoleError] = useState("");
-  const [smsConsentError, setSmsConsentError] = useState("");
-  const [mouError, setMouError] = useState("");
-  const [turnstileError, setTurnstileError] = useState("");
 
   // Role Selection State
   const [roleModalVisible, setRoleModalVisible] = useState(false);
@@ -44,9 +34,6 @@ export default function Step3() {
     // { label: "Super Admin", value: "superadmin" },
   ];
 
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const turnstileRef = useRef < TurnstileWidgetRef > (null);
-
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
     setAlertMessage(message);
@@ -60,203 +47,50 @@ export default function Step3() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    update({ password: "", confirmPassword: "", role: "", agree_mou: 0, sms_consent: false });
-    setPasswordError("");
-    setConfirmPasswordError("");
+    update({ role: "", agree_mou: 0 });
     setRoleError("");
-    setSmsConsentError("");
-    setMouError("");
-    setTurnstileError("");
-    setTurnstileToken("");
     await new Promise((resolve) => setTimeout(resolve, 400));
     setRefreshing(false);
-  };
-
-  const openLink = (url: string) => {
-    Linking.openURL(url);
-  };
-
-  const handlePasswordChange = (text: string) => {
-    update({ password: text });
-
-    if (!text) {
-      setPasswordError("Password is required.");
-    } else {
-      setPasswordError("");
-    }
-
-    if (data.confirmPassword) {
-      setConfirmPasswordError(text === data.confirmPassword ? "" : "Passwords do not match.");
-    }
-  };
-
-  const handleConfirmPasswordChange = (text: string) => {
-    update({ confirmPassword: text });
-
-    if (!text) {
-      setConfirmPasswordError("Please re-enter your password.");
-      return;
-    }
-
-    setConfirmPasswordError(text === data.password ? "" : "Passwords do not match.");
   };
 
   const handleRoleChange = (role: string) => {
     update({ role, agree_mou: role === "buyer" ? 0 : data.agree_mou });
     setRoleError("");
-    setMouError("");
   };
 
-  const handleSmsConsentChange = () => {
-    const nextValue = !data.sms_consent;
-    update({ sms_consent: nextValue });
-    setSmsConsentError(nextValue ? "" : "SMS consent is required.");
-  };
-
-  const handleMouChange = () => {
-    const nextValue = data.agree_mou === 1 ? 0 : 1;
-    update({ agree_mou: nextValue });
-    setMouError(nextValue === 1 ? "" : "MOU agreement is required.");
-  };
-
-  const handleTurnstileTokenReceived = (token: string) => {
-    setTurnstileToken(token);
-    setTurnstileError(token ? "" : "Security verification is required.");
-  };
-
-  const handleSubmit = async () => {
-    if (!data.password) {
-      setPasswordError("Password is required.");
-      showAlert("Password Required", "Please enter a password.");
-      return;
-    }
-
-    if (!data.confirmPassword) {
-      setConfirmPasswordError("Please re-enter your password.");
-      showAlert("Password Required", "Please re-enter your password.");
-      return;
-    }
-
-    if (data.password !== data.confirmPassword) {
-      setConfirmPasswordError("Passwords do not match.");
-      showAlert("Password Mismatch", "Passwords do not match. Please re-enter.");
-      return;
-    }
-
+  const handleNext = () => {
     if (!data.role) {
       setRoleError("Role is required.");
       showAlert("Role Required", "Please select a role to proceed.");
       return;
     }
 
-    if (!data.sms_consent) {
-      setSmsConsentError("SMS consent is required.");
-      showAlert("Consent Required", "You must agree to receive SMS messages to proceed.");
-      return;
-    }
-
-    if (!turnstileToken) {
-      setTurnstileError("Security verification is required.");
-      showAlert("Security Verification", "Please complete the security verification challenge.");
-      return;
-    }
-
-    // Validation for non-buyer roles
-    if (data.role !== 'buyer') {
-      if (!data.agree_mou) {
-        setMouError("MOU agreement is required.");
-        showAlert("MOU Required", "You must agree to the MOU to proceed.");
-        return;
-      }
-    }
-
     setIsLoading(true);
-    try {
-      const payload: any = {
-        name: data.firstName,
-        lname: data.lastName,
-        email: data.email,
-        phone: `${data.phoneCode}${data.phoneNumber}`,
-        address: data.address,
-        state: data.state,
-        city: data.city,
-        password: data.password,
-        role: data.role,
-        turnstile_token: turnstileToken,
-        referral_code: data.referral_code || "",
-        sms_consent: data.sms_consent ? true : false,
-        nin: data.nin || ""
-      };
-
-      if (data.role !== 'buyer') {
-        payload.agree_mou = 1;
-        // Auto-populate signed_name
-        payload.signed_name = `${data.firstName} ${data.lastName}`;
-      }
-
-      const result = await register(payload);
-
-      if (result.success) {
-        const msg = result.existing_unverified
-          ? "Account created successfully. A verification code has been sent to your email."
-          : "Registration successful! Please verify your email.";
-
-        showAlert("Success", msg);
-        router.push({
-          pathname: '/(auth)/verify-otp',
-          params: { email: data.email }
-        });
-      } else {
-        if (result.status === 422) {
-          if (result.error?.toLowerCase().includes("turnstile")) {
-            showAlert("Verification Failed", "Security verification failed. Please try the challenge again.");
-            turnstileRef.current?.reload();
-            setTurnstileToken("");
-            setTurnstileError("Security verification failed. Please try again.");
-          } else {
-            showAlert("Validation Error", result.error || "Please check all required fields.");
-          }
-        } else {
-          const errorMessage = result.error?.includes("409")
-            ? "This email is already registered. Please use a different email."
-            : result.error || "An error occurred. Please try again.";
-          showAlert("Error", errorMessage);
-        }
-      }
-    } catch {
-      showAlert("Error", "An unexpected error occurred. Please try again.");
-    } finally {
+    setTimeout(() => {
+      router.push("/(auth)/signup/step-4");
       setIsLoading(false);
-    }
+    }, 300);
   };
 
   const isFormValid = () => {
-    const basicValid = data.password && data.password === data.confirmPassword && data.role && turnstileToken && data.sms_consent;
-    
-   
-    if (!basicValid) return false;
-
-    if (data.role !== 'buyer') {
-      return data.agree_mou === 1;
-    }
-
-    return true;
+    return Boolean(data.role);
   };
 
   return (
-      <View className="flex-1 bg-white px-6 pt-32 relative">
+      <View className="flex-1 bg-white px-6 pt-56 relative">
         <Watermarks showTopRight showBottomLeft />
 
         <TouchableOpacity
           onPress={() => router.back()}
-          style={{ position: 'absolute', top: insets.top + 10, left: 16, zIndex: 10 }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          className="p-2 bg-slate-400 rounded-full *:bg-white/30"
+          style={{ position: 'absolute', top: insets.top + 60, left: 16, zIndex: 10 }}
+          hitSlop={{ top: 130, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="arrow-back" size={22} color="#C9A24D" />
+          <Ionicons name="arrow-back" size={22} color="#0D3B66" />
         </TouchableOpacity>
 
         <Text className="text-2xl font-poppins-semibold text-secondary text-center">Sign Up</Text>
-        <Text className="text-xs text-gray-300 text-center mt-2">(Security)</Text>
+        <Text className="text-xs text-gray-300 text-center mt-2">(Account Type)</Text>
 
         <ScrollView 
           showsVerticalScrollIndicator={false} 
@@ -266,53 +100,7 @@ export default function Step3() {
           alwaysBounceVertical={true}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />}
         >
-          <View>
-            <Text className="font-poppins-medium text-sm mb-2">Password <Text className="text-red-500">*</Text></Text>
-            <View className="relative">
-              <TextInputField
-                value={data.password}
-                onChangeText={handlePasswordChange}
-                placeholder="Input password"
-                secureTextEntry={!showPassword}
-                style={{ color: '#000000', paddingRight: 50 }}
-                className={`border focus:border-primary ${passwordError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium rounded-xl`}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-4"
-              >
-                <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#666" />
-              </TouchableOpacity>
-            </View>
-            {passwordError ? (
-              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{passwordError}</Text>
-            ) : null}
-          </View>
-
-          <View className="mt-6">
-            <Text className="font-poppins-medium text-sm mb-2">Re-enter Password <Text className="text-red-500">*</Text></Text>
-            <View className="relative">
-              <TextInputField
-                value={data.confirmPassword}
-                onChangeText={handleConfirmPasswordChange}
-                placeholder="Re-enter password"
-                secureTextEntry={!showConfirmPassword}
-                style={{ color: '#000000', paddingRight: 50 }}
-                className={`border focus:border-primary ${confirmPasswordError ? "border-red-500" : "border-gray-300"} bg-white text-base font-poppins-medium rounded-xl`}
-              />
-              <TouchableOpacity
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-4"
-              >
-                <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={22} color="#666" />
-              </TouchableOpacity>
-            </View>
-            {confirmPasswordError ? (
-              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{confirmPasswordError}</Text>
-            ) : null}
-          </View>
-
-          <View className="mt-6">
+          <View className="mt-6 mb-6">
             <Text className="font-poppins-medium text-sm mb-2">Select Role <Text className="text-red-500">*</Text></Text>
             <TouchableOpacity
               onPress={() => setRoleModalVisible(true)}
@@ -328,86 +116,41 @@ export default function Step3() {
             ) : null}
           </View>
 
-          {/* Conditional Fields for Non-Buyer Roles */}
-          {data.role && data.role !== 'buyer' && (
-            <View className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <Text className="font-poppins-bold text-sm mb-4 text-secondary">Agreement</Text>
-
-              <TouchableOpacity
-                onPress={handleMouChange}
-                className="flex-row items-center mb-4"
-              >
-                <View className={`w-6 h-6 border rounded mr-3 items-center justify-center ${data.agree_mou === 1 ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
-                  {data.agree_mou === 1 && <Ionicons name="checkmark" size={16} color="white" />}
-                </View>
-                <Text className="text-sm font-poppins text-gray-700 flex-1">
-                  I agree to the <Text className="text-primary font-bold">MOU</Text> terms and conditions.
-                </Text>
-              </TouchableOpacity>
-              {mouError ? (
-                <Text className="text-xs text-red-500 font-poppins-medium">{mouError}</Text>
-              ) : null}
-
-              {/* Hidden field logic: signed_name is auto-populated on submit */}
-            </View>
-          )}
-
-          <View className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <Text className="font-poppins-bold text-sm mb-4 text-secondary">SMS Consent</Text>
-            <TouchableOpacity
-              onPress={handleSmsConsentChange}
-              className="flex-row items-start"
-            >
-              <View className={`w-6 h-6 border rounded mt-1 mr-3 items-center justify-center ${data.sms_consent ? 'bg-primary border-primary' : 'border-gray-400 bg-white'}`}>
-                {data.sms_consent && <Ionicons name="checkmark" size={16} color="white" />}
-              </View>
-              <View className="flex-1">
-                <Text className="text-[11px] font-poppins text-gray-700 leading-4">
-                  I agree to receive SMS messages from Pishonserv Property Hub regarding my registration, property inquiries, booking updates, and customer support. Message frequency varies. Reply STOP to opt out and HELP for assistance. Message and data rates may apply.
-                  <Text className="text-red-500"> *</Text>
-                </Text>
-              </View>
-            </TouchableOpacity>
-            {smsConsentError ? (
-              <Text className="text-xs text-red-500 font-poppins-medium mt-2">{smsConsentError}</Text>
-            ) : null}
-            
-            <View className="flex-row flex-wrap mt-3">
-              <Text className="text-[10px] text-gray-500">By checking this, you also agree to our </Text>
-              <TouchableOpacity onPress={() => openLink('https://pishonserv.com/privacy-policy.php')}>
-                <Text className="text-[10px] text-primary font-poppins-semibold underline">Privacy Policy</Text>
-              </TouchableOpacity>
-              <Text className="text-[10px] text-gray-500"> and </Text>
-              <TouchableOpacity onPress={() => openLink('https://pishonserv.com/terms-conditions.php')}>
-                <Text className="text-[10px] text-primary font-poppins-semibold underline">Terms/SMS Terms</Text>
-              </TouchableOpacity>
-            </View>
+          <View>
+            <Text className="font-poppins-medium text-sm mb-2">
+              NIN <Text className="text-gray-400">(Optional)</Text>
+            </Text>
+            <TextInputField
+              value={data.nin}
+              onChangeText={(nin) => update({ nin })}
+              className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
+              placeholder="Enter your NIN"
+              keyboardType="numeric"
+            />
           </View>
 
           <View className="mt-6">
-            <Text className="font-poppins-medium text-sm mb-2">Security Verification <Text className="text-red-500">*</Text></Text>
-            <TurnstileWidget
-              ref={turnstileRef}
-              onTokenReceived={handleTurnstileTokenReceived}
-              onError={(err) => {
-                setTurnstileError("Verification failed. Please try again.");
-                showAlert("Security Error", "Verification failed. Please try again.");
-              }}
+            <Text className="font-poppins-medium text-sm mb-2">
+              Referral Code <Text className="text-gray-400">(Optional)</Text>
+            </Text>
+            <TextInputField
+              value={data.referral_code}
+              onChangeText={(referral_code) => update({ referral_code })}
+              className="border focus:border-primary border-gray-300 bg-white text-base font-poppins-medium"
+              placeholder="Enter referral code"
+              autoCapitalize="characters"
             />
-            {turnstileError ? (
-              <Text className="text-xs text-red-500 font-poppins-medium mt-1">{turnstileError}</Text>
-            ) : null}
           </View>
 
           <View className="mt-10 mb-10">
             <TouchableOpacity className={`rounded-xl py-4 items-center ${isFormValid() ? 'bg-primary' : 'bg-gray-300'}`}
-              onPress={handleSubmit}
+              onPress={handleNext}
               disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text className="text-white font-poppins-semibold text-lg">Register</Text>
+                <Text className="text-white font-poppins-semibold text-lg">Next</Text>
               )}
             </TouchableOpacity>
           </View>
