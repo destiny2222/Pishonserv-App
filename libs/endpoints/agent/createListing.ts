@@ -16,6 +16,7 @@ export interface CreateListingData {
   amenities?: string[];
   images?: string[]; // Array of Base64 strings
   youtube_video_url?: string;
+  utility_bill?: string; // Base64 image or PDF data URL
 }
 
 export const createListing = async (data: CreateListingData) => {
@@ -40,7 +41,7 @@ export interface Property {
   description: string;
   owner_id: number;
   created_at: string;
-  images: string; // Comma-separated string of filenames
+  images: string | null | undefined; // Comma-separated string of filenames (may be null/undefined on new listings)
   admin_approved: number;
   listing_type: string;
   bedrooms: number;
