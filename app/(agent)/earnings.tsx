@@ -195,12 +195,45 @@ const Earnings = () => {
                         <Image source={icons.wallet} className='w-6 h-6' resizeMode='contain' tintColor="#C9A24D" />
                         <Text className='font-semibold font-poppins-semibold text-xl text-secondary'>Wallet Balance</Text>
                     </View>
-                    <View className='mt-4'>
+                    <View className='mt-2'>
                         <Text className='font-bold font-poppins-bold text-4xl text-primary'>{formatCurrency(balanceData.balance)}</Text>
+                    </View>
+                    
+                    {/* Wallet Buckets Details */}
+                    <View className="flex-row justify-between border-t border-gray-100 pt-4 mt-4">
+                        <View className="flex-1">
+                            <Text className="text-gray-400 text-xs font-poppins">Withdrawable</Text>
+                            <Text className="text-secondary font-poppins-semibold text-base mt-0.5">{formatCurrency(balanceData.withdrawable_balance)}</Text>
+                        </View>
+                        <View className="flex-1 items-center">
+                            <Text className="text-gray-400 text-xs font-poppins">Reserved</Text>
+                            <Text className="text-secondary font-poppins-semibold text-base mt-0.5">{formatCurrency(balanceData.reserved_balance)}</Text>
+                        </View>
+                        <View className="flex-1 items-end">
+                            <Text className="text-gray-400 text-xs font-poppins">Bonus</Text>
+                            <Text className="text-secondary font-poppins-semibold text-base mt-0.5">{formatCurrency(balanceData.bonus_balance)}</Text>
+                        </View>
                     </View>
                 </View>
 
-                <View className='flex-row gap-4 mb-4'>
+                {/* Caution Fee Escrow Management Card */}
+                <TouchableOpacity
+                    onPress={() => router.push("/(agent)/caution-fees" as any)}
+                    className="bg-white border border-gray-100 rounded-2xl p-5 mb-5 shadow-sm flex-row justify-between items-center"
+                >
+                    <View className="flex-1 pr-4">
+                        <View className="flex-row items-center gap-2 mb-1">
+                            <Ionicons name="shield-half-outline" size={20} color="#C9A24D" />
+                            <Text className="font-poppins-semibold text-base text-secondary">Caution Fee Escrow</Text>
+                        </View>
+                        <Text className="font-poppins text-gray-500 text-xs">
+                            View and manage refundable caution fees held in escrow for your bookings.
+                        </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                </TouchableOpacity>
+
+                <View className='flex-row gap-4 mb-8'>
                     <TouchableOpacity
                         className="flex-1 bg-primary p-4 rounded-xl shadow-lg shadow-primary/30"
                         onPress={() => setWithdrawModalVisible(true)}

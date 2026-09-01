@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useContext, useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { UpdateChecker } from '@/components/UpdateChecker';
 import './global.css';
 
 // Prevent splash screen from auto-hiding
@@ -77,6 +78,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <StatusBarWrapper>
         <UserProvider>
+          <UpdateChecker />
           <SplashScreenManager fontsLoaded={fontsLoaded} fontError={fontError}>
             <AuthGuard>
               <Stack screenOptions={{ headerShown: false }} />

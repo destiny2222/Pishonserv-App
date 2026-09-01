@@ -12,7 +12,6 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview"
-      
     },
     "production": {
       "node": "22.12.0",

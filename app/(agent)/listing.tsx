@@ -13,8 +13,9 @@ interface ListingPropertyProps {
 }
 
 const ListingPropertyCard = ({ item, onPress, onDelete }: ListingPropertyProps) => {
-    // Handle image rendering: check if comma separated string
-    const firstImage = item.images ? item.images.split(',')[0] : null;
+    // Handle image rendering: safely handle null/undefined/non-string values from API
+    const rawImages = typeof item.images === 'string' && item.images.trim() ? item.images : null;
+    const firstImage = rawImages ? rawImages.split(',')[0].trim() : null;
     const isBase64 = firstImage?.startsWith('data:');
     const imageSource = firstImage
         ? (isBase64 ? { uri: firstImage } : { uri: `${process.env.EXPO_PUBLIC_API_BASE_URL}/storage/${firstImage}` }) // Adjust path as per backend storage

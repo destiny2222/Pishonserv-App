@@ -25,6 +25,7 @@ export interface Property {
   latitude?: number;
   longitude?: number;
   youtube_video_embed_url?: string;
+  caution_fee?: number | string;
 }
 
 interface ApiResponse<T> {

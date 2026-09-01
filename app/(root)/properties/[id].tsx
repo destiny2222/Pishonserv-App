@@ -57,6 +57,11 @@ const Properties = () => {
   // removed currentReference as it was unused
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [bookingBreakdown, setBookingBreakdown] = useState<{
+    propertyCharge: number;
+    cautionFee: number;
+    totalPayable: number;
+  } | null>(null);
 
   const property = item;
 
@@ -200,6 +205,21 @@ const Properties = () => {
         return;
       }
 
+      // Calculate breakdown for receipt display
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      const diffTime = checkOutDate.getTime() - checkInDate.getTime();
+      const nights = diffTime > 0 ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) : 0;
+      const pricePerNight = parseFloat(String(property.price).replace(/[^0-9.-]+/g, ''));
+      const propCharge = pricePerNight * nights;
+      const cautionAmt = property.caution_fee ? parseFloat(String(property.caution_fee).replace(/[^0-9.-]+/g, '')) : 0;
+      const totalPayable = propCharge + cautionAmt;
+      setBookingBreakdown({
+        propertyCharge: propCharge,
+        cautionFee: cautionAmt,
+        totalPayable
+      });
+
       // Direct Booking Path (Existing logic)
       const bookingResponse = await createBooking({
         property_id: property.id,
@@ -304,7 +324,10 @@ const Properties = () => {
       });
 
       if (complete.data.success) {
-        showAlert("Payment Successful 🎉", "Your booking has been confirmed!", () => {
+        const breakdownText = bookingBreakdown 
+          ? `\n\nProperty Charge: ₦${bookingBreakdown.propertyCharge.toLocaleString()}\nRefundable Caution Fee: ₦${bookingBreakdown.cautionFee.toLocaleString()}\nTotal Paid: ₦${bookingBreakdown.totalPayable.toLocaleString()}\n\nYour branded Pishonserv receipt has been generated!`
+          : "";
+        showAlert("Payment Successful 🎉", `Your booking has been confirmed!${breakdownText}`, () => {
           router.push('/(root)/(tabs)/home');
         });
       } else {
@@ -637,6 +660,7 @@ const Properties = () => {
         loading={bookingLoading}
         propertyPrice={property?.price ? String(property.price) : "0"}
         listingType={property?.listing_type}
+        cautionFee={property?.caution_fee}
       />
 
       <InspectionModal

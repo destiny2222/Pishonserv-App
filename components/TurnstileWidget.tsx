@@ -57,16 +57,16 @@ const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(({ 
 
           function renderTurnstile() {
             if (typeof turnstile !== 'undefined') {
-              turnstile.render('#turnstile-container', {
-                sitekey: '${TURNSTILE_SITE_KEY}',
-                callback: function(token) {
-                  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'token', token: token }));
-                },
-                'error-callback': function(error) {
+                turnstile.render('#turnstile-container', {
+                  sitekey: '${TURNSTILE_SITE_KEY}',
+                  callback: function(token) {
+                      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'token', token: token }));
+                  },
+                  'error-callback': function(error) {
                   window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', error: 'Turnstile Error Code: ' + error }));
-                },
-                theme: 'light',
-              });
+                  },
+                  theme: 'light',
+                });
             } else {
               setTimeout(renderTurnstile, 500);
             }

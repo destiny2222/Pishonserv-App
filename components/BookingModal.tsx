@@ -10,6 +10,7 @@ interface BookingModalProps {
   loading?: boolean;
   propertyPrice: string;
   listingType?: string;
+  cautionFee?: string | number;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({
@@ -19,6 +20,7 @@ const BookingModal: React.FC<BookingModalProps> = ({
   loading = false,
   propertyPrice,
   listingType,
+  cautionFee,
 }) => {
   const [checkInDate, setCheckInDate] = useState(new Date(Date.now() + 86400000));
   const [checkOutDate, setCheckOutDate] = useState(new Date(Date.now() + 172800000)); // +2 days
@@ -52,10 +54,19 @@ const BookingModal: React.FC<BookingModalProps> = ({
 
   const isInquiry = listingType === 'short_let' || listingType === 'hotel';
 
-  const calculateTotalAmount = (): number => {
+  const calculatePropertyCharge = (): number => {
     const nights = calculateNights();
     const pricePerNight = parseFloat(propertyPrice.replace(/[^0-9.-]+/g, ''));
     return pricePerNight * nights;
+  };
+
+  const calculateCautionFee = (): number => {
+    if (!cautionFee) return 0;
+    return parseFloat(String(cautionFee).replace(/[^0-9.-]+/g, ''));
+  };
+
+  const calculateTotalAmount = (): number => {
+    return calculatePropertyCharge() + calculateCautionFee();
   };
 
   const isDateRangeValid = (): boolean => {
@@ -169,9 +180,27 @@ const BookingModal: React.FC<BookingModalProps> = ({
                 {calculateNights()}
               </Text>
             </View>
-            <View className="flex-row justify-between items-center">
+            <View className="flex-row justify-between items-center mb-2">
               <Text className="text-sm font-rubik text-gray-600">
-                Total Amount
+                Property Charge
+              </Text>
+              <Text className={`text-base font-rubik-bold ${!isValid ? 'text-red-300' : 'text-black-300'}`}>
+                ₦{calculatePropertyCharge().toLocaleString()}
+              </Text>
+            </View>
+            {calculateCautionFee() > 0 && (
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="text-sm font-rubik text-gray-600">
+                  Refundable Caution Fee
+                </Text>
+                <Text className="text-base font-rubik-bold text-black-300">
+                  ₦{calculateCautionFee().toLocaleString()}
+                </Text>
+              </View>
+            )}
+            <View className="flex-row justify-between items-center border-t border-gray-200 pt-2 mt-2">
+              <Text className="text-sm font-rubik-medium text-gray-800">
+                Total Payable
               </Text>
               <Text className={`text-xl font-rubik-bold ${!isValid ? 'text-red-300' : 'text-primary'}`}>
                 ₦{calculateTotalAmount().toLocaleString()}

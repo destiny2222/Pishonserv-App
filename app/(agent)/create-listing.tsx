@@ -189,6 +189,7 @@ export default function CreateListing() {
 
     const [amenities, setAmenities] = useState < string[] > ([]);
     const [imagesPicked, setImagesPicked] = useState < ImagePicker.ImagePickerAsset[] > ([]);
+    const [utilityBill, setUtilityBill] = useState<ImagePicker.ImagePickerAsset | null>(null);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -242,6 +243,7 @@ export default function CreateListing() {
         setYoutubeVideoUrl("");
         setAmenities([]);
         setImagesPicked([]);
+        setUtilityBill(null);
         setAlertVisible(false);
         setAlertOnClose(undefined);
     };
@@ -275,18 +277,41 @@ export default function CreateListing() {
         setImagesPicked((prev) => [...prev, ...result.assets].slice(0, 7));
     };
 
+    const pickUtilityBill = async () => {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!perm.granted) {
+            showAlert("Permission Required", "Please allow access to your photos to upload the utility bill.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 0.7,
+            allowsMultipleSelection: false,
+            base64: true,
+        });
+
+        if (result.canceled) return;
+        setUtilityBill(result.assets[0]);
+    };
+
     const removePicked = (uri: string) => {
         setImagesPicked((prev) => prev.filter((x) => x.uri !== uri));
     };
 
     const submit = async () => {
         if (!title || !price || !location || !listingType || !description) {
-            showAlert("Missing Fields", "Please fill in all required fields (Title, Location, simple Listing Type, Price, Description)");
+            showAlert("Missing Fields", "Please fill in all required fields (Title, Location, Listing Type, Price, Description)");
             return;
         }
 
         if (imagesPicked.length === 0) {
-            showAlert("No Images", "Please upload at least one image.");
+            showAlert("No Images", "Please upload at least one property image.");
+            return;
+        }
+
+        if (!utilityBill) {
+            showAlert("Utility Bill Required", "Please upload a utility bill or proof of address/ownership document.");
             return;
         }
 
@@ -310,6 +335,7 @@ export default function CreateListing() {
                 ...(garage ? { garage: Number(garage) } : {}),
                 images: imageBase64s,
                 ...(youtubeVideoUrl ? { youtube_video_url: youtubeVideoUrl } : {}),
+                utility_bill: `data:${utilityBill!.mimeType ?? 'image/jpeg'};base64,${utilityBill!.base64}`,
             };
 
         
@@ -488,8 +514,52 @@ export default function CreateListing() {
                                     ))}
                                 </View>
                             )}
-
                         </View>
+                    </View>
+
+                    {/* Utility Bill */}
+                    <View className="mb-6">
+                        <Text className="font-poppins-semibold text-secondary mb-1">Utility Bill / Proof of Ownership</Text>
+                        <Text className="font-poppins text-xs text-gray-500 mb-3">Upload a utility bill, land document, or proof of address for this property.</Text>
+
+                        <TouchableOpacity
+                            onPress={pickUtilityBill}
+                            activeOpacity={0.85}
+                            className={`border-2 border-dashed rounded-2xl p-5 bg-white items-center ${
+                                utilityBill ? "border-amber-400" : "border-gray-300"
+                            }`}
+                        >
+                            {utilityBill ? (
+                                <View className="items-center">
+                                    <View className="w-12 h-12 rounded-full bg-amber-50 items-center justify-center mb-3">
+                                        <Ionicons name="document-text" size={24} color="#C9A24D" />
+                                    </View>
+                                    <Text className="font-poppins-semibold text-amber-600">Document uploaded ✓</Text>
+                                    <Text className="font-poppins text-gray-500 text-xs mt-1">Tap to change</Text>
+                                </View>
+                            ) : (
+                                <View className="items-center">
+                                    <View className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center mb-3">
+                                        <Ionicons name="document-attach-outline" size={24} color="#9CA3AF" />
+                                    </View>
+                                    <Text className="font-poppins-semibold text-secondary">Upload utility bill</Text>
+                                    <Text className="font-poppins text-gray-500 text-xs mt-1">JPG or PNG image of the document</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        {utilityBill && (
+                            <View className="mt-3 flex-row items-center">
+                                <Image source={{ uri: utilityBill.uri }} className="w-16 h-16 rounded-lg mr-3" />
+                                <TouchableOpacity
+                                    onPress={() => setUtilityBill(null)}
+                                    className="flex-row items-center px-3 py-2 bg-red-50 rounded-xl"
+                                >
+                                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                                    <Text className="font-poppins text-red-500 text-xs ml-1">Remove</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
 
                     {/* Submit */}
