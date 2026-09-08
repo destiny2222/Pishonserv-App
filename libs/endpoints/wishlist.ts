@@ -8,6 +8,9 @@ export interface WishlistItem {
   price: string;
   images: string | string[];
   created_at: string;
+  headline_label?: string;
+  headline_amount?: number;
+  total_payable?: number;
 }
 
 export interface WishlistResponse {

@@ -23,7 +23,9 @@ const ListingPropertyCard = ({ item, onPress, onDelete }: ListingPropertyProps) 
         : icons.home; // Fallback icon if available, or empty
 
     // Format price
-    const formattedPrice = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(Number(item.price));
+    const displayAmount = item.headline_amount ?? item.total_payable ?? item.price;
+    const formattedPrice = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(Number(displayAmount));
+    const headlineLabel = item.headline_label;
 
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
@@ -39,9 +41,14 @@ const ListingPropertyCard = ({ item, onPress, onDelete }: ListingPropertyProps) 
                     <Text className="text-secondary font-poppins-bold text-xl mb-1" numberOfLines={2}>
                         {item.title}
                     </Text>
-                    <Text className="text-gray-600 font-poppins-regular text-base mb-3" numberOfLines={1}>
+                    <Text className="text-gray-600 font-poppins-regular text-base mb-2" numberOfLines={1}>
                         {item.location}
                     </Text>
+                    {headlineLabel ? (
+                        <Text className="text-gray-500 text-[10px] font-poppins uppercase tracking-wider mb-0.5" numberOfLines={1}>
+                            {headlineLabel}
+                        </Text>
+                    ) : null}
                     <Text className="text-green-600 font-poppins-bold text-lg">
                         {formattedPrice}
                     </Text>

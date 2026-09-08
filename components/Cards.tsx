@@ -71,7 +71,9 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const imageSource = toImageSource(item?.image, images.featured1);
-  const formattedPrice = item?.price ? `₦${Number(item.price).toLocaleString()}` : '₦0';
+  const displayAmount = item?.headline_amount ?? item?.total_payable ?? item?.price;
+  const formattedPrice = displayAmount !== undefined && displayAmount !== null ? `₦${Number(displayAmount).toLocaleString()}` : '₦0';
+  const headlineLabel = item?.headline_label;
 
   useEffect(() => {
     setIsFavorite(isInWishlist);
@@ -134,9 +136,16 @@ export const FeaturedCard = ({ onPress, item, isInWishlist = false, onWishlistTo
           {item?.title}
         </Text>
         <Text className="text-white/90 text-xs font-poppins py-1">{item?.location}</Text>
-        <View className='flex flex-row items-center justify-between w-full'>
-          <Text className='text-xl text-white font-poppins-semibold'>{formattedPrice}</Text>
-          <TouchableOpacity onPress={handleWishlistToggle} disabled={loading}>
+        <View className='flex flex-row items-end justify-between w-full mt-1'>
+          <View className="flex-1 mr-2">
+            {headlineLabel ? (
+              <Text className="text-white/80 text-[10px] font-poppins uppercase tracking-wider mb-0.5" numberOfLines={1}>
+                {headlineLabel}
+              </Text>
+            ) : null}
+            <Text className='text-xl text-white font-poppins-semibold'>{formattedPrice}</Text>
+          </View>
+          <TouchableOpacity onPress={handleWishlistToggle} disabled={loading} className="pb-1">
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
@@ -166,7 +175,9 @@ export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: 
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const imageSource = toImageSource(item?.image, images.featured1);
-  const formattedPrice = item?.price ? `₦${Number(item.price).toLocaleString()}` : '₦0';
+  const displayAmount = item?.headline_amount ?? item?.total_payable ?? item?.price;
+  const formattedPrice = displayAmount !== undefined && displayAmount !== null ? `₦${Number(displayAmount).toLocaleString()}` : '₦0';
+  const headlineLabel = item?.headline_label;
 
   useEffect(() => {
     setIsFavorite(isInWishlist);
@@ -218,8 +229,15 @@ export const Card = ({ onPress, item, isInWishlist = false, onWishlistToggle }: 
           {item?.title}
         </Text>
         <Text className="text-black-300 text-xs font-poppins py-1">{item?.location}</Text>
-        <View className='flex flex-row items-center justify-between w-full mt-2'>
-          <Text className='text-xl text-black-300 font-poppins-semibold'>{formattedPrice}</Text>
+        <View className='flex flex-row items-end justify-between w-full mt-2'>
+          <View className="flex-1 mr-2">
+            {headlineLabel ? (
+              <Text className="text-gray-500 text-[10px] font-poppins uppercase tracking-wider mb-0.5" numberOfLines={1}>
+                {headlineLabel}
+              </Text>
+            ) : null}
+            <Text className='text-xl text-black-300 font-poppins-semibold'>{formattedPrice}</Text>
+          </View>
           <TouchableOpacity onPress={handleWishlistToggle} disabled={loading} className="p-1">
             {loading ? (
               <ActivityIndicator size="small" color="#C9A24D" />
@@ -262,8 +280,9 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
     ? { uri: firstImage }
     : images.featured1;
 
-
-  const formattedPrice = `₦${Number(item.price).toLocaleString()}`;
+  const displayAmount = item.headline_amount ?? item.total_payable ?? item.price;
+  const formattedPrice = `₦${Number(displayAmount).toLocaleString()}`;
+  const headlineLabel = item.headline_label;
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -313,9 +332,14 @@ export const FavoriteCard = ({ onPress, item, onDelete }: FavoriteProperty) => {
           <Text className="text-secondary font-poppins-bold text-xl mb-1" numberOfLines={2}>
             {item?.title}
           </Text>
-          <Text className="text-gray-600 font-poppins-regular text-base mb-3" numberOfLines={1}>
+          <Text className="text-gray-600 font-poppins-regular text-base mb-2" numberOfLines={1}>
             {item?.location}
           </Text>
+          {headlineLabel ? (
+            <Text className="text-gray-500 text-[10px] font-poppins uppercase tracking-wider mb-0.5" numberOfLines={1}>
+              {headlineLabel}
+            </Text>
+          ) : null}
           <Text className="text-green-600 font-poppins-bold text-2xl">
             {formattedPrice}
           </Text>

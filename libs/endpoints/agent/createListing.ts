@@ -66,6 +66,10 @@ export interface Property {
   latitude: string;
   longitude: string;
   expiry_date: string;
+  headline_label?: string;
+  headline_amount?: number;
+  total_payable?: number;
+  payment_breakdown?: any;
 }
 
 export interface GetPropertiesResponse {

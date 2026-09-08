@@ -25,6 +25,7 @@ import InspectionModal from "@/components/InspectionModal";
 import PaymentWebView from "@/components/PaymentWebView";
 import icons from "@/constants/icons";
 import { useAuth } from "@/hooks/useAuth";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MapView, { Marker } from 'react-native-maps';
 import { WebView } from 'react-native-webview';
 import { StatusBar } from "expo-status-bar";
@@ -71,8 +72,11 @@ const Properties = () => {
     if (!property || !property?.id) return;
     try {
       const propertyUrl = Linking.createURL(`/properties/${property.id}`);
+      const displayAmount = property.headline_amount ?? property.total_payable ?? property.price;
+      const formatted = Number(displayAmount).toLocaleString();
+      const labelText = property.headline_label ? ` (${property.headline_label})` : "";
       await Share.share({
-        message: `Check out this property: ${property.title} in ${property.location} for ₦${property.price}!\n\nView here: ${propertyUrl}`,
+        message: `Check out this property: ${property.title} in ${property.location} for ₦${formatted}${labelText}!\n\nView here: ${propertyUrl}`,
         url: propertyUrl,
       });
     } catch {
@@ -585,6 +589,127 @@ const Properties = () => {
             </View>
           )}
 
+          {/* Payment Breakdown */}
+          {(property?.payment_breakdown || property?.headline_amount || property?.total_payable) && (
+            <View className="mt-7">
+              <View className="flex flex-row items-center justify-between mb-3">
+                <Text className="text-black-300 text-xl font-rubik-bold">
+                  Payment Breakdown
+                </Text>
+                {property?.listing_type && (
+                  <View className="bg-primary/10 px-3 py-1 rounded-full">
+                    <Text className="text-primary text-xs font-rubik-bold uppercase">
+                      {property.listing_type.replace('_', ' ')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                {/* Listed Property Price */}
+                <View className="flex flex-row items-center justify-between py-2 border-b border-slate-200/60">
+                  <Text className="text-gray-600 text-sm font-rubik">
+                    {property?.listing_type === 'short_let' || property?.listing_type === 'hotel'
+                      ? 'Nightly Rate'
+                      : 'Listed Property Price'}
+                  </Text>
+                  <Text className="text-black-300 text-sm font-rubik-medium">
+                    ₦{Number(property?.payment_breakdown?.listed_property_price ?? property?.price ?? 0).toLocaleString()}
+                  </Text>
+                </View>
+
+                {/* Agent Fee (if present and > 0) */}
+                {Boolean(property?.payment_breakdown?.agent_fee && Number(property.payment_breakdown.agent_fee) > 0) && (
+                  <View className="flex flex-row items-center justify-between py-2 border-b border-slate-200/60">
+                    <Text className="text-gray-600 text-sm font-rubik">Agent Fee</Text>
+                    <Text className="text-black-300 text-sm font-rubik-medium">
+                      ₦{Number(property.payment_breakdown!.agent_fee).toLocaleString()}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Legal Fee (if present and > 0) */}
+                {Boolean(property?.payment_breakdown?.legal_fee && Number(property.payment_breakdown.legal_fee) > 0) && (
+                  <View className="flex flex-row items-center justify-between py-2 border-b border-slate-200/60">
+                    <Text className="text-gray-600 text-sm font-rubik">Legal Fee</Text>
+                    <Text className="text-black-300 text-sm font-rubik-medium">
+                      ₦{Number(property.payment_breakdown!.legal_fee).toLocaleString()}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Caution Fee (if present and > 0) */}
+                {Boolean(
+                  (property?.payment_breakdown?.caution_fee && Number(property.payment_breakdown.caution_fee) > 0) ||
+                  (property?.payment_breakdown?.refundable_caution_fee && Number(property.payment_breakdown.refundable_caution_fee) > 0) ||
+                  (property?.caution_fee && Number(property.caution_fee) > 0)
+                ) && (
+                  <View className="flex flex-row items-center justify-between py-2 border-b border-slate-200/60">
+                    <View className="flex flex-row items-center gap-1.5">
+                      <Text className="text-gray-600 text-sm font-rubik">Caution Fee</Text>
+                      <View className="bg-emerald-100 px-1.5 py-0.5 rounded">
+                        <Text className="text-[10px] font-rubik-medium text-emerald-700">Refundable</Text>
+                      </View>
+                    </View>
+                    <Text className="text-black-300 text-sm font-rubik-medium">
+                      ₦{Number(
+                        property?.payment_breakdown?.refundable_caution_fee ??
+                        property?.payment_breakdown?.caution_fee ??
+                        property?.caution_fee ??
+                        0
+                      ).toLocaleString()}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Service Charge (if present) */}
+                {(property?.payment_breakdown?.service_charge !== undefined || property?.payment_breakdown?.service_charge_label) && (
+                  <View className="flex flex-row items-center justify-between py-2 border-b border-slate-200/60">
+                    <Text className="text-gray-600 text-sm font-rubik">Service Charge</Text>
+                    <Text className="text-black-300 text-sm font-rubik-medium">
+                      {property?.payment_breakdown?.service_charge && Number(property.payment_breakdown.service_charge) > 0
+                        ? `₦${Number(property.payment_breakdown.service_charge).toLocaleString()}`
+                        : (property?.payment_breakdown?.service_charge_label || 'To be determined')}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Total Payable Row */}
+                <View className="flex flex-row items-center justify-between pt-3 mt-1">
+                  <View className="flex-1 mr-2">
+                    <Text className="text-black-300 text-sm font-rubik-bold">
+                      {property?.payment_breakdown?.total_label || property?.headline_label || 'Total Payable'}
+                    </Text>
+                    <Text className="text-[11px] text-gray-500 font-rubik">
+                      {property?.listing_type === 'for_rent' || property?.listing_type === 'for_sale'
+                        ? 'Includes price, fees & refundable caution'
+                        : 'Public payable amount'}
+                    </Text>
+                  </View>
+                  <Text className="text-primary text-xl font-rubik-bold">
+                    ₦{Number(
+                      property?.payment_breakdown?.total_payable ??
+                      property?.headline_amount ??
+                      property?.total_payable ??
+                      property?.price ??
+                      0
+                    ).toLocaleString()}
+                  </Text>
+                </View>
+
+                {/* Secure Offline Payment / Escrow notice for Rent/Sale */}
+                {(property?.listing_type === 'for_rent' || property?.listing_type === 'for_sale') && (
+                  <View className="mt-3 pt-2.5 border-t border-slate-200/60 flex flex-row items-start gap-1.5">
+                    <Ionicons name="shield-checkmark" size={15} color="#C9A24D" style={{ marginTop: 1 }} />
+                    <Text className="text-[11px] text-gray-500 font-rubik flex-1 leading-4">
+                      Rent and sale payments are handled securely and offline with Pishonserv. Caution fees are held in escrow and refundable.
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
           <View className="mt-7">
             <Text className="text-black-300 text-xl font-rubik-bold mb-4">
               Location
@@ -632,12 +757,12 @@ const Properties = () => {
 
       <View className="absolute bg-white bottom-0 w-full rounded-t-3xl border-t border-gray-200 px-7 py-5 shadow-2xl">
         <View className="flex flex-row items-center justify-between gap-4">
-          <View className="flex flex-col">
-            <Text className="text-black-200 text-xs font-rubik uppercase tracking-wider">
-              Price
+          <View className="flex flex-col flex-1 mr-2">
+            <Text className="text-black-200 text-xs font-rubik uppercase tracking-wider" numberOfLines={1}>
+              {property?.headline_label || (property?.listing_type === 'short_let' || property?.listing_type === 'hotel' ? 'Nightly Rate' : 'Price')}
             </Text>
             <Text numberOfLines={1} className="text-primary text-2xl font-rubik-bold mt-1">
-              ₦{property?.price}
+              ₦{Number(property?.headline_amount ?? property?.total_payable ?? property?.price ?? 0).toLocaleString()}
             </Text>
           </View>
 
@@ -646,7 +771,7 @@ const Properties = () => {
             className="flex-1 bg-primary py-4 rounded-full shadow-lg shadow-primary/30"
           >
             <Text className="text-white text-base text-center font-rubik-bold">
-              Book Now
+              {property?.requires_inspection ? 'Book Inspection' : 'Book Now'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -658,7 +783,7 @@ const Properties = () => {
         onClose={() => setBookingModalVisible(false)}
         onConfirm={handleConfirmBooking}
         loading={bookingLoading}
-        propertyPrice={property?.price ? String(property.price) : "0"}
+        propertyPrice={property?.headline_amount ? String(property.headline_amount) : (property?.price ? String(property.price) : "0")}
         listingType={property?.listing_type}
         cautionFee={property?.caution_fee}
       />

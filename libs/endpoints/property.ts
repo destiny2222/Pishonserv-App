@@ -1,5 +1,17 @@
 import { apiRequest } from "@/libs/api/clients";
 
+export interface PaymentBreakdown {
+  listed_property_price?: number;
+  agent_fee?: number | null;
+  legal_fee?: number | null;
+  service_charge?: number | null;
+  service_charge_label?: string | null;
+  caution_fee?: number | null;
+  refundable_caution_fee?: number | null;
+  total_payable?: number;
+  total_label?: string;
+}
+
 export interface Property {
   id: number;
   title: string;
@@ -26,6 +38,24 @@ export interface Property {
   longitude?: number;
   youtube_video_embed_url?: string;
   caution_fee?: number | string;
+  headline_label?: string;
+  headline_amount?: number;
+  payment_breakdown?: PaymentBreakdown;
+  total_payable?: number;
+  property_charge_amount?: number;
+  agent_fee_amount?: number;
+  legal_fee_amount?: number;
+  service_charge_amount?: number;
+  service_charge_known?: boolean;
+  caution_fee_amount?: number;
+  agent_fee?: number | null;
+  legal_fee?: number | null;
+  service_charge?: number | null;
+  refundable_caution_fee?: number | null;
+  approval_status?: string;
+  whatsapp_inquiry_url?: string;
+  requires_inquiry?: boolean;
+  inquiry_mode?: string;
 }
 
 interface ApiResponse<T> {
