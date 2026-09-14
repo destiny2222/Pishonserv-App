@@ -43,6 +43,13 @@ const CONDITIONS: Option[] = [
     { label: "Used", value: "used" },
 ];
 
+const SIZE_OPTIONS: Option[] = [
+    { label: "Small", value: "small" },
+    { label: "Standard", value: "standard" },
+    { label: "Medium", value: "medium" },
+    { label: "Large", value: "large" },
+];
+
 const AMENITIES = [
     "Pool",
     "Gym",
@@ -178,14 +185,21 @@ export default function CreateListing() {
     const [location, setLocation] = useState("");
     const [listingType, setListingType] = useState("");
     const [price, setPrice] = useState("");
+    const [agentFee, setAgentFee] = useState("");
+    const [legalFee, setLegalFee] = useState("");
+    const [legalFeeCustom, setLegalFeeCustom] = useState(false);
+    const [cautionFee, setCautionFee] = useState("");
+    const [serviceCharge, setServiceCharge] = useState("");
+    const [size, setSize] = useState("");
     const [propertyType, setPropertyType] = useState("");
     const [furnishing, setFurnishing] = useState("");
     const [condition, setCondition] = useState("");
     const [bedrooms, setBedrooms] = useState("");
     const [bathrooms, setBathrooms] = useState("");
-    const [garage, setGarage] = useState("");
+    const [parkingSpace, setParkingSpace] = useState("");
     const [description, setDescription] = useState("");
     const [youtubeVideoUrl, setYoutubeVideoUrl] = useState("");
+    const [confirmedPricingRule, setConfirmedPricingRule] = useState(false);
 
     const [amenities, setAmenities] = useState < string[] > ([]);
     const [imagesPicked, setImagesPicked] = useState < ImagePicker.ImagePickerAsset[] > ([]);
@@ -202,8 +216,7 @@ export default function CreateListing() {
     const showAlert = (title: string, message: string, onClose?: () => void) => {
         setAlertTitle(title);
         setAlertMessage(message);
-        setAlertOnClose(() => onClose); // wrap in function if needed, but state setter might invoke it. 
-        // Better: setAlertOnClose(() => onClose); to store the function
+        setAlertOnClose(() => onClose);
         setAlertVisible(true);
     };
 
@@ -228,17 +241,55 @@ export default function CreateListing() {
 
     const isStayListing = listingType === "hotel" || listingType === "short_let";
 
+    // Pricing rule calculations
+    const numericPrice = useMemo(() => {
+        return Number(price.replace(/[^0-9.]/g, "")) || 0;
+    }, [price]);
+
+    const defaultLegalFee = useMemo(() => {
+        return Math.round(numericPrice * 0.10);
+    }, [numericPrice]);
+
+    const activeLegalFee = useMemo(() => {
+        if (legalFeeCustom) {
+            return Number(legalFee.replace(/[^0-9.]/g, "")) || 0;
+        }
+        return defaultLegalFee;
+    }, [legalFeeCustom, legalFee, defaultLegalFee]);
+
+    const numericAgentFee = useMemo(() => {
+        return Number(agentFee.replace(/[^0-9.]/g, "")) || 0;
+    }, [agentFee]);
+
+    const numericCautionFee = useMemo(() => {
+        return listingType === "for_rent" ? (Number(cautionFee.replace(/[^0-9.]/g, "")) || 0) : 0;
+    }, [cautionFee, listingType]);
+
+    const numericServiceCharge = useMemo(() => {
+        return listingType === "for_rent" ? (Number(serviceCharge.replace(/[^0-9.]/g, "")) || 0) : 0;
+    }, [serviceCharge, listingType]);
+
+    const calculatedTotal = useMemo(() => {
+        return numericPrice + activeLegalFee + numericAgentFee + numericCautionFee + numericServiceCharge;
+    }, [numericPrice, activeLegalFee, numericAgentFee, numericCautionFee, numericServiceCharge]);
+
     const resetForm = () => {
         setTitle("");
         setLocation("");
         setListingType("");
         setPrice("");
+        setAgentFee("");
+        setLegalFee("");
+        setLegalFeeCustom(false);
+        setCautionFee("");
+        setServiceCharge("");
+        setSize("");
         setPropertyType("");
         setFurnishing("");
         setCondition("");
         setBedrooms("");
         setBathrooms("");
-        setGarage("");
+        setParkingSpace("");
         setDescription("");
         setYoutubeVideoUrl("");
         setAmenities([]);
@@ -246,6 +297,7 @@ export default function CreateListing() {
         setUtilityBill(null);
         setAlertVisible(false);
         setAlertOnClose(undefined);
+        setConfirmedPricingRule(false);
     };
 
     const handleRefresh = async () => {
@@ -305,6 +357,11 @@ export default function CreateListing() {
             return;
         }
 
+        if ((listingType === "for_rent" || listingType === "for_sale") && !confirmedPricingRule) {
+            showAlert("Pricing Rule Confirmation Required", "Please review and confirm the offline pricing rule acknowledgment before publishing your listing.");
+            return;
+        }
+
         if (imagesPicked.length === 0) {
             showAlert("No Images", "Please upload at least one property image.");
             return;
@@ -326,19 +383,23 @@ export default function CreateListing() {
                 title,
                 location,
                 listing_type: listingType as ListingType,
-                price: Number(price.replace(/[^0-9.]/g, '')),
+                price: numericPrice,
                 description,
                 type: propertyType || undefined,
                 amenities,
                 ...(bedrooms ? { bedrooms: Number(bedrooms) } : {}),
                 ...(bathrooms ? { bathrooms: Number(bathrooms) } : {}),
-                ...(garage ? { garage: Number(garage) } : {}),
+                ...(parkingSpace ? { garage: Number(parkingSpace), parking_space: Number(parkingSpace) } : {}),
+                ...(size ? { size } : {}),
+                ...(numericAgentFee > 0 ? { agent_fee: numericAgentFee } : {}),
+                ...(listingType === "for_rent" || listingType === "for_sale" ? { legal_fee: activeLegalFee } : {}),
+                ...(listingType === "for_rent" && numericCautionFee > 0 ? { caution_fee: numericCautionFee } : {}),
+                ...(listingType === "for_rent" && numericServiceCharge > 0 ? { service_charge: numericServiceCharge } : {}),
                 images: imageBase64s,
                 ...(youtubeVideoUrl ? { youtube_video_url: youtubeVideoUrl } : {}),
                 utility_bill: `data:${utilityBill!.mimeType ?? 'image/jpeg'};base64,${utilityBill!.base64}`,
             };
 
-        
             const response: any = await createListing(payload);
 
             if (response.status === 'success' || response.status === 'ok' || response.success) {
@@ -348,7 +409,6 @@ export default function CreateListing() {
             }
 
         } catch (error: any) {
-            
             if (error.status === 400 && error.data) {
                 showAlert("Validation Error", error.data.message || "Please check your inputs.");
             } else {
@@ -400,10 +460,181 @@ export default function CreateListing() {
 
                     <Select label="Listing type" value={listingType} placeholder="Choose rent, sale, short let, or hotel" options={LISTING_TYPES} onChange={handleListingTypeChange} />
 
+                    {/* Pricing Rule Confirmation Banner */}
+                    {(listingType === "for_rent" || listingType === "for_sale") && (
+                        <View className="mb-5 bg-amber-50/80 border border-primary/40 rounded-2xl p-4">
+                            <View className="flex-row items-center mb-2">
+                                <Ionicons name="shield-checkmark" size={20} color="#C9A24D" />
+                                <Text className="font-poppins-semibold text-secondary text-sm ml-2">
+                                    {listingType === "for_rent" ? "Rent" : "Sale"} Pricing Rules
+                                </Text>
+                            </View>
+                            <Text className="font-poppins text-xs text-gray-600 leading-5">
+                                • Payments are handled offline by Pishonserv.{"\n"}
+                                • Platform commission is ₦0 (no commission added).{"\n"}
+                                • Legal fee is set to 10% by default and can be edited below.{"\n"}
+                                {listingType === "for_rent"
+                                    ? "• Caution fee is held in escrow and refundable.\n• Service charge is optional (shows 'To be determined' if left blank)."
+                                    : "• Caution fee is not applicable for sale properties."}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setConfirmedPricingRule(!confirmedPricingRule)}
+                                activeOpacity={0.8}
+                                className="flex-row items-center mt-3 pt-2.5 border-t border-amber-200/60"
+                            >
+                                <View
+                                    className={`w-5 h-5 rounded-md border mr-2.5 items-center justify-center ${
+                                        confirmedPricingRule ? "bg-primary border-primary" : "border-gray-300 bg-white"
+                                    }`}
+                                >
+                                    {confirmedPricingRule && <Ionicons name="checkmark" size={14} color="white" />}
+                                </View>
+                                <Text className="font-poppins-medium text-secondary text-xs flex-1">
+                                    I acknowledge and confirm these pricing rules
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
                     <View className="mb-5">
                         <Label>{isStayListing ? "Price per night" : "Price"}</Label>
                         <Input placeholder={isStayListing ? "e.g. 45000 per night" : "e.g. 5000000"} keyboardType="numeric" value={price} onChangeText={setPrice} />
                     </View>
+
+                    {/* Additional Fee Fields for Rent & Sale */}
+                    {(listingType === "for_rent" || listingType === "for_sale") && (
+                        <>
+                            <View className="mb-5">
+                                <View className="flex-row justify-between items-center mb-1">
+                                    <Label>Legal Fee</Label>
+                                    <Text className="text-[11px] font-poppins text-gray-400">10% default (editable)</Text>
+                                </View>
+                                <Input
+                                    placeholder={`e.g. ${defaultLegalFee || 500000}`}
+                                    keyboardType="numeric"
+                                    value={legalFeeCustom ? legalFee : (numericPrice > 0 ? String(defaultLegalFee) : "")}
+                                    onChangeText={(text: string) => {
+                                        setLegalFeeCustom(true);
+                                        setLegalFee(text);
+                                    }}
+                                />
+                            </View>
+
+                            <View className="mb-5">
+                                <View className="flex-row justify-between items-center mb-1">
+                                    <Label>Agent Fee (Optional)</Label>
+                                    <Text className="text-[11px] font-poppins text-gray-400">Optional fee</Text>
+                                </View>
+                                <Input
+                                    placeholder="e.g. 500000"
+                                    keyboardType="numeric"
+                                    value={agentFee}
+                                    onChangeText={setAgentFee}
+                                />
+                            </View>
+
+                            {listingType === "for_rent" && (
+                                <>
+                                    <View className="mb-5">
+                                        <View className="flex-row justify-between items-center mb-1">
+                                            <Label>Caution Fee</Label>
+                                            <Text className="text-[11px] font-poppins text-emerald-600">Refundable Escrow</Text>
+                                        </View>
+                                        <Input
+                                            placeholder="e.g. 200000"
+                                            keyboardType="numeric"
+                                            value={cautionFee}
+                                            onChangeText={setCautionFee}
+                                        />
+                                    </View>
+
+                                    <View className="mb-5">
+                                        <View className="flex-row justify-between items-center mb-1">
+                                            <Label>Service Charge (Optional)</Label>
+                                            <Text className="text-[11px] font-poppins text-gray-400">Shows 'To be determined' if blank</Text>
+                                        </View>
+                                        <Input
+                                            placeholder="e.g. 150000 (leave blank if pending)"
+                                            keyboardType="numeric"
+                                            value={serviceCharge}
+                                            onChangeText={setServiceCharge}
+                                        />
+                                    </View>
+                                </>
+                            )}
+
+                            {/* Live Pricing Calculator Card */}
+                            {numericPrice > 0 && (
+                                <View className="mb-6 bg-slate-50 border border-slate-200/90 rounded-2xl p-4">
+                                    <View className="flex-row justify-between items-center mb-3">
+                                        <View className="flex-row items-center gap-1.5">
+                                            <Ionicons name="calculator-outline" size={16} color="#0D3B66" />
+                                            <Text className="font-poppins-semibold text-secondary text-sm">
+                                                Live Pricing Breakdown
+                                            </Text>
+                                        </View>
+                                        <View className="bg-primary/10 px-2 py-0.5 rounded-full">
+                                            <Text className="font-poppins-medium text-[10px] text-primary uppercase">Calculated</Text>
+                                        </View>
+                                    </View>
+
+                                    <View className="flex-row justify-between py-1.5 border-b border-gray-100">
+                                        <Text className="font-poppins text-xs text-gray-500">Property Price</Text>
+                                        <Text className="font-poppins-medium text-xs text-secondary">
+                                            ₦{numericPrice.toLocaleString()}
+                                        </Text>
+                                    </View>
+
+                                    <View className="flex-row justify-between py-1.5 border-b border-gray-100">
+                                        <Text className="font-poppins text-xs text-gray-500">Legal Fee</Text>
+                                        <Text className="font-poppins-medium text-xs text-secondary">
+                                            ₦{activeLegalFee.toLocaleString()}
+                                        </Text>
+                                    </View>
+
+                                    {numericAgentFee > 0 && (
+                                        <View className="flex-row justify-between py-1.5 border-b border-gray-100">
+                                            <Text className="font-poppins text-xs text-gray-500">Agent Fee</Text>
+                                            <Text className="font-poppins-medium text-xs text-secondary">
+                                                ₦{numericAgentFee.toLocaleString()}
+                                            </Text>
+                                        </View>
+                                    )}
+
+                                    {listingType === "for_rent" && (
+                                        <>
+                                            <View className="flex-row justify-between py-1.5 border-b border-gray-100">
+                                                <Text className="font-poppins text-xs text-gray-500">Caution Fee (Escrow)</Text>
+                                                <Text className="font-poppins-medium text-xs text-secondary">
+                                                    {numericCautionFee > 0 ? `₦${numericCautionFee.toLocaleString()}` : "₦0"}
+                                                </Text>
+                                            </View>
+                                            <View className="flex-row justify-between py-1.5 border-b border-gray-100">
+                                                <Text className="font-poppins text-xs text-gray-500">Service Charge</Text>
+                                                <Text className="font-poppins-medium text-xs text-secondary">
+                                                    {numericServiceCharge > 0 ? `₦${numericServiceCharge.toLocaleString()}` : "To be determined"}
+                                                </Text>
+                                            </View>
+                                        </>
+                                    )}
+
+                                    <View className="flex-row justify-between py-1.5 border-b border-gray-100">
+                                        <Text className="font-poppins text-xs text-gray-500">Platform Commission</Text>
+                                        <Text className="font-poppins-medium text-xs text-emerald-600">
+                                            ₦0 (Free / Offline)
+                                        </Text>
+                                    </View>
+
+                                    <View className="flex-row justify-between items-center pt-2.5 mt-1">
+                                        <Text className="font-poppins-bold text-sm text-secondary">Estimated Total</Text>
+                                        <Text className="font-poppins-bold text-base text-primary">
+                                            ₦{calculatedTotal.toLocaleString()}
+                                        </Text>
+                                    </View>
+                                </View>
+                            )}
+                        </>
+                    )}
 
                     <Select label="Property type" value={propertyType} placeholder="Select"
                         options={PROPERTY_TYPES} onChange={setPropertyType}
@@ -426,6 +657,14 @@ export default function CreateListing() {
                     <View className="h-px bg-gray-200 mt-3 mb-6" />
                     <Text className="font-poppins-bold text-lg text-secondary mb-1">Property details</Text>
                     <Text className="font-poppins text-xs text-gray-500 mb-5">Help people understand the space before they contact you.</Text>
+
+                    <Select
+                        label="Property Size"
+                        value={size}
+                        placeholder="Select size"
+                        options={SIZE_OPTIONS}
+                        onChange={setSize}
+                    />
 
                     <Select
                         label="Furnishing Status (e.g. Fully Furnished Apartment)"
@@ -454,8 +693,8 @@ export default function CreateListing() {
                     </View>
 
                     <View className="mb-5">
-                        <Label>Garage Spaces</Label>
-                        <Input placeholder="e.g. 1" keyboardType="numeric" value={garage} onChangeText={setGarage} />
+                        <Label>Parking Space</Label>
+                        <Input placeholder="e.g. 1" keyboardType="numeric" value={parkingSpace} onChangeText={setParkingSpace} />
                     </View>
 
                     <View className="mb-5">

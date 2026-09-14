@@ -12,7 +12,12 @@ export interface CreateListingData {
   bedrooms?: number;
   bathrooms?: number;
   garage?: number;
-  size?: number;
+  parking_space?: number;
+  size?: "small" | "standard" | "medium" | "large" | string;
+  agent_fee?: number;
+  legal_fee?: number;
+  caution_fee?: number;
+  service_charge?: number;
   amenities?: string[];
   images?: string[]; // Array of Base64 strings
   youtube_video_url?: string;
@@ -48,12 +53,19 @@ export interface Property {
   bathrooms: number;
   size: string | null;
   garage: number;
+  parking_space?: number;
   furnishing_status: string;
   property_condition: string;
   amenities: string; // Comma-separated string
   maintenance_fee: string | null;
   agent_fee: string | null;
+  legal_fee?: string | null;
   caution_fee: string | null;
+  service_charge?: string | null;
+  video_playback_url?: string | null;
+  video_upload_status?: string | null;
+  youtube_video_url?: string | null;
+  youtube_video_embed_url?: string | null;
   price_frequency: string;
   minimum_stay: number | null;
   checkin_time: string;

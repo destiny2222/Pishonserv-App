@@ -1,4 +1,4 @@
-import { BookingMobileDisabledResponse, completePayment, createBooking, createInspection, createWhatsAppInquiry, initializePayment, requiresInspection, supportsDirectBooking } from "@/libs/endpoints/booking";
+import { BookingMobileDisabledResponse, completePayment, createBooking, createInspection, createWhatsAppInquiry, initializePayment, requiresInspection, supportsDirectBooking, verifyInspectionPayment } from "@/libs/endpoints/booking";
 import { ApiError } from "@/libs/api/clients";
 import { getPropertyDetails, Property } from "@/libs/endpoints/property";
 import * as Linking from "expo-linking";
@@ -52,6 +52,10 @@ const Properties = () => {
   const [paymentUrl, setPaymentUrl] = useState("");
   const [inspectionModalVisible, setInspectionModalVisible] = useState(false);
   const [inspectionLoading, setInspectionLoading] = useState(false);
+  const [inspectionPaymentUrl, setInspectionPaymentUrl] = useState("");
+  const [inspectionPaymentVisible, setInspectionPaymentVisible] = useState(false);
+  const [pendingInspectionRef, setPendingInspectionRef] = useState<string | null>(null);
+  const [pendingInspectionCode, setPendingInspectionCode] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const [paymentVisible, setPaymentVisible] = useState(false);
@@ -164,19 +168,19 @@ const Properties = () => {
       return;
     }
 
-    // 1. WhatsApp flow for short_let/hotel (now shows modal first)
-    if (!supportsDirectBooking(property.listing_type)) {
-      setBookingModalVisible(true);
-      return;
-    }
-
-    // 2. Inspection flow for for_sale/for_rent/land if flag is set
+    // 1. Inspection flow for for_sale/for_rent/land properties
     if (requiresInspection(property.requires_inspection, property.listing_type)) {
       setInspectionModalVisible(true);
       return;
     }
 
-    // 3. Direct booking flow
+    // 2. WhatsApp flow for short_let/hotel (shows modal first)
+    if (!supportsDirectBooking(property.listing_type)) {
+      setBookingModalVisible(true);
+      return;
+    }
+
+    // 3. Direct online booking flow (shortlet/hotel)
     setBookingModalVisible(true);
   };
 
@@ -289,18 +293,33 @@ const Properties = () => {
 
     setInspectionLoading(true);
     try {
-      const response = await createInspection({
+      const response: any = await createInspection({
         property_id: property.id,
         ...data,
       });
 
-      if (response.status === "ok") {
+      if (response.status === "ok" || response.status === "success" || response.data) {
         setInspectionModalVisible(false);
-        showAlert(
-          "Inspection Booked",
-          `Your inspection request has been received. Your code is: ${response.data.inspection_code}. We will contact you soon.`,
-          () => router.push('/(root)/(tabs)/home')
-        );
+
+        const respData = response.data || response;
+        const code = respData.inspection_code || "INSP-SCHEDULED";
+        const paymentData = respData.payment;
+        const authUrl = paymentData?.authorization_url;
+        const ref = paymentData?.reference || respData.payment_reference;
+
+        if (authUrl) {
+          // Launch Paystack WebView to pay the ₦5,000 inspection fee
+          setPendingInspectionCode(code);
+          setPendingInspectionRef(ref || null);
+          setInspectionPaymentUrl(authUrl);
+          setInspectionPaymentVisible(true);
+        } else {
+          showAlert(
+            "Inspection Booked 🎉",
+            `Your inspection request has been scheduled! Your inspection code is: ${code}. We will contact you soon.`,
+            () => router.push('/(root)/(tabs)/home')
+          );
+        }
       } else {
         showAlert("Error", "Failed to book inspection. Please try again.");
       }
@@ -308,6 +327,38 @@ const Properties = () => {
       showAlert("Inspection Booking Failed", err?.message || "An error occurred while booking the inspection.");
     } finally {
       setInspectionLoading(false);
+    }
+  };
+
+  const handleInspectionPaymentSuccess = async (reference: string) => {
+    setInspectionPaymentVisible(false);
+    setLoading(true);
+    const refToVerify = reference || pendingInspectionRef;
+
+    try {
+      if (refToVerify) {
+        const verifyRes = await verifyInspectionPayment({ reference: refToVerify });
+        const code = verifyRes?.data?.inspection_code || verifyRes?.inspection_code || pendingInspectionCode;
+        showAlert(
+          "Inspection Confirmed 🎉",
+          `Your ₦5,000 inspection fee has been verified! Inspection code: ${code}. We will contact you shortly.`,
+          () => router.push('/(root)/(tabs)/home')
+        );
+      } else {
+        showAlert(
+          "Inspection Confirmed 🎉",
+          `Your inspection payment was received! Inspection code: ${pendingInspectionCode}. We will contact you shortly.`,
+          () => router.push('/(root)/(tabs)/home')
+        );
+      }
+    } catch {
+      showAlert(
+        "Inspection Payment Processing",
+        `Payment was recorded for inspection code: ${pendingInspectionCode}. Our team will contact you shortly to confirm your inspection.`,
+        () => router.push('/(root)/(tabs)/home')
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -383,6 +434,30 @@ const Properties = () => {
     ? property.images
     : (property?.image ? [property.image] : []);
 
+  // Video resolution: R2 video_playback_url first when ready, fallback legacy YouTube
+  const hasR2Video = Boolean(
+    property?.video_playback_url &&
+    (property.video_upload_status === "ready" || !property.video_upload_status)
+  );
+  const hasYoutubeVideo = Boolean(
+    !hasR2Video && (property?.youtube_video_embed_url || property?.youtube_video_url)
+  );
+  const hasVideo = hasR2Video || hasYoutubeVideo;
+  const videoUrlToPlay = hasR2Video
+    ? property!.video_playback_url!
+    : (property?.youtube_video_embed_url || property?.youtube_video_url || null);
+
+  type MediaSlide =
+    | { type: "image"; uri: string }
+    | { type: "video"; url: string; isR2: boolean };
+
+  const mediaSlides: MediaSlide[] = [
+    ...propertyImages.map((uri) => ({ type: "image" as const, uri })),
+    ...(hasVideo && videoUrlToPlay
+      ? [{ type: "video" as const, url: videoUrlToPlay, isR2: hasR2Video }]
+      : []),
+  ];
+
   const amenitiesList = Array.isArray(property?.amenities)
     ? property.amenities
     : typeof (property?.amenities as any) === "string"
@@ -412,9 +487,9 @@ const Properties = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={["#C9A24D"]} tintColor="#C9A24D" />}
       >
         <View className="relative w-full" style={{ height: windowHeight / 2.5 }}>
-          {/* Image Carousel */}
+          {/* Media Slider (Images + Video as last slide) */}
           <FlatList
-            data={propertyImages}
+            data={mediaSlides}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
@@ -422,33 +497,90 @@ const Properties = () => {
               const index = Math.round(event.nativeEvent.contentOffset.x / windowWidth);
               setCurrentImageIndex(index);
             }}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <Image
-                source={{ uri: item }}
-                style={{ width: windowWidth, height: windowHeight / 2.5 }}
-                resizeMode="cover"
-              />
-            )}
+            keyExtractor={(slide, index) => `${slide.type}-${index}`}
+            renderItem={({ item: slide }) => {
+              if (slide.type === "image") {
+                return (
+                  <Image
+                    source={{ uri: slide.uri }}
+                    style={{ width: windowWidth, height: windowHeight / 2.5 }}
+                    resizeMode="cover"
+                  />
+                );
+              }
+
+              return (
+                <View style={{ width: windowWidth, height: windowHeight / 2.5, backgroundColor: "#000" }}>
+                  {slide.isR2 ? (
+                    <WebView
+                      source={{
+                        html: `
+                          <!DOCTYPE html>
+                          <html>
+                          <head>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                            <style>
+                              * { box-sizing: border-box; margin: 0; padding: 0; }
+                              html, body { width: 100%; height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+                              video { width: 100%; height: 100%; object-fit: contain; }
+                            </style>
+                          </head>
+                          <body>
+                            <video src="${slide.url}" controls playsinline webkit-playsinline></video>
+                          </body>
+                          </html>
+                        `,
+                      }}
+                      style={{ flex: 1, backgroundColor: "#000" }}
+                      javaScriptEnabled={true}
+                      domStorageEnabled={true}
+                      allowsFullscreenVideo={true}
+                      allowsInlineMediaPlayback={true}
+                      mediaPlaybackRequiresUserAction={false}
+                    />
+                  ) : (
+                    <WebView
+                      source={{ uri: slide.url }}
+                      style={{ flex: 1, backgroundColor: "#000" }}
+                      javaScriptEnabled={true}
+                      domStorageEnabled={true}
+                      allowsFullscreenVideo={true}
+                      allowsInlineMediaPlayback={true}
+                    />
+                  )}
+                  <View className="absolute top-20 left-6 bg-black/60 px-3 py-1.5 rounded-full flex-row items-center gap-1.5 z-20">
+                    <Ionicons name="videocam" size={14} color="#C9A24D" />
+                    <Text className="text-white text-xs font-rubik-medium">Video Tour</Text>
+                  </View>
+                </View>
+              );
+            }}
           />
 
-          {/* Pagination Dots - with better visibility */}
+          {/* Pagination Dots */}
           <View
             className="absolute bottom-10 w-full flex-row justify-center items-center gap-2 z-10"
             style={{
               paddingHorizontal: 20,
             }}
           >
-            {propertyImages.map((_, index) => (
+            {mediaSlides.map((slide, index) => (
               <View
                 key={index}
                 style={{
                   height: 8,
-                  width: index === currentImageIndex ? 24 : 8,
+                  width: index === currentImageIndex ? (slide.type === "video" ? 28 : 24) : 8,
                   borderRadius: 4,
-                  backgroundColor: index === currentImageIndex ? '#C9A24D' : 'rgba(255, 255, 255, 0.5)',
+                  backgroundColor: index === currentImageIndex ? "#C9A24D" : "rgba(255, 255, 255, 0.5)",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-              />
+              >
+                {slide.type === "video" && index === currentImageIndex && (
+                  <Ionicons name="play" size={6} color="#ffffff" style={{ marginLeft: 1 }} />
+                )}
+              </View>
             ))}
           </View>
 
@@ -497,24 +629,50 @@ const Properties = () => {
             </View>
           </View>
 
-          <View className="flex flex-row items-center gap-8 mt-5">
-            <View className="flex flex-row items-center gap-2">
-              <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
-                <Image source={icons.bed} className="size-5" tintColor="#C9A24D" />
+          <View className="flex flex-row flex-wrap items-center gap-6 mt-5">
+            {Boolean(property?.bedrooms) && (
+              <View className="flex flex-row items-center gap-2">
+                <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
+                  <Image source={icons.bed} className="size-5" tintColor="#C9A24D" />
+                </View>
+                <Text className="text-black-300 text-sm font-rubik-medium">
+                  {property?.bedrooms} Beds
+                </Text>
               </View>
-              <Text className="text-black-300 text-sm font-rubik-medium">
-                {property?.bedrooms} Beds
-              </Text>
-            </View>
+            )}
 
-            <View className="flex flex-row items-center gap-2">
-              <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
-                <Image source={icons.bath} className="size-5" tintColor="#C9A24D" />
+            {Boolean(property?.bathrooms) && (
+              <View className="flex flex-row items-center gap-2">
+                <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
+                  <Image source={icons.bath} className="size-5" tintColor="#C9A24D" />
+                </View>
+                <Text className="text-black-300 text-sm font-rubik-medium">
+                  {property?.bathrooms} Bath
+                </Text>
               </View>
-              <Text className="text-black-300 text-sm font-rubik-medium">
-                {property?.bathrooms} Bath
-              </Text>
-            </View>
+            )}
+
+            {Boolean(property?.parking_space || property?.garage) && (
+              <View className="flex flex-row items-center gap-2">
+                <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
+                  <Image source={icons.carPark} className="size-5" tintColor="#C9A24D" />
+                </View>
+                <Text className="text-black-300 text-sm font-rubik-medium">
+                  {property?.parking_space ?? property?.garage} Parking Space{Number(property?.parking_space ?? property?.garage) > 1 ? "s" : ""}
+                </Text>
+              </View>
+            )}
+
+            {Boolean(property?.size) && (
+              <View className="flex flex-row items-center gap-2">
+                <View className="bg-primary/10 rounded-full size-9 items-center justify-center">
+                  <Ionicons name="resize-outline" size={16} color="#C9A24D" />
+                </View>
+                <Text className="text-black-300 text-sm font-rubik-medium capitalize">
+                  {property?.size} Size
+                </Text>
+              </View>
+            )}
           </View>
 
           <View className="mt-7">
@@ -572,19 +730,47 @@ const Properties = () => {
             />
           </View>
 
-          {property?.youtube_video_embed_url && (
+          {hasVideo && videoUrlToPlay && (
             <View className="mt-7">
               <Text className="text-black-300 text-xl font-rubik-bold mb-4">
                 Video Tour
               </Text>
-              <View className="h-48 w-full rounded-2xl overflow-hidden mt-4">
-                <WebView
-                  source={{ uri: property.youtube_video_embed_url }}
-                  style={{ flex: 1 }}
-                  javaScriptEnabled={true}
-                  domStorageEnabled={true}
-                  allowsFullscreenVideo={true}
-                />
+              <View className="h-48 w-full rounded-2xl overflow-hidden mt-4 bg-black">
+                {hasR2Video ? (
+                  <WebView
+                    source={{
+                      html: `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                          <style>
+                            * { box-sizing: border-box; margin: 0; padding: 0; }
+                            html, body { width: 100%; height: 100%; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+                            video { width: 100%; height: 100%; object-fit: contain; }
+                          </style>
+                        </head>
+                        <body>
+                          <video src="${videoUrlToPlay}" controls playsinline webkit-playsinline></video>
+                        </body>
+                        </html>
+                      `,
+                    }}
+                    style={{ flex: 1, backgroundColor: "#000" }}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    allowsFullscreenVideo={true}
+                    allowsInlineMediaPlayback={true}
+                  />
+                ) : (
+                  <WebView
+                    source={{ uri: videoUrlToPlay }}
+                    style={{ flex: 1, backgroundColor: "#000" }}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    allowsFullscreenVideo={true}
+                  />
+                )}
               </View>
             </View>
           )}
@@ -638,11 +824,13 @@ const Properties = () => {
                   </View>
                 )}
 
-                {/* Caution Fee (if present and > 0) */}
+                {/* Caution Fee (Rent only, never for Sale) */}
                 {Boolean(
-                  (property?.payment_breakdown?.caution_fee && Number(property.payment_breakdown.caution_fee) > 0) ||
-                  (property?.payment_breakdown?.refundable_caution_fee && Number(property.payment_breakdown.refundable_caution_fee) > 0) ||
-                  (property?.caution_fee && Number(property.caution_fee) > 0)
+                  property?.listing_type !== 'for_sale' && (
+                    (property?.payment_breakdown?.caution_fee && Number(property.payment_breakdown.caution_fee) > 0) ||
+                    (property?.payment_breakdown?.refundable_caution_fee && Number(property.payment_breakdown.refundable_caution_fee) > 0) ||
+                    (property?.caution_fee && Number(property.caution_fee) > 0)
+                  )
                 ) && (
                   <View className="flex flex-row items-center justify-between py-2 border-b border-slate-200/60">
                     <View className="flex flex-row items-center gap-1.5">
@@ -662,8 +850,8 @@ const Properties = () => {
                   </View>
                 )}
 
-                {/* Service Charge (if present) */}
-                {(property?.payment_breakdown?.service_charge !== undefined || property?.payment_breakdown?.service_charge_label) && (
+                {/* Service Charge */}
+                {(property?.listing_type === 'for_rent' || property?.payment_breakdown?.service_charge !== undefined || property?.payment_breakdown?.service_charge_label) && (
                   <View className="flex flex-row items-center justify-between py-2 border-b border-slate-200/60">
                     <Text className="text-gray-600 text-sm font-rubik">Service Charge</Text>
                     <Text className="text-black-300 text-sm font-rubik-medium">
@@ -771,7 +959,7 @@ const Properties = () => {
             className="flex-1 bg-primary py-4 rounded-full shadow-lg shadow-primary/30"
           >
             <Text className="text-white text-base text-center font-rubik-bold">
-              {property?.requires_inspection ? 'Book Inspection' : 'Book Now'}
+              {requiresInspection(property?.requires_inspection, property?.listing_type) ? 'Book Inspection' : 'Book Now'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -806,11 +994,20 @@ const Properties = () => {
         cancelText={alertCancelText}
       />
 
+      {/* Paystack WebView for Online Booking */}
       <PaymentWebView
         visible={paymentVisible}
         authorizationUrl={paymentUrl}
         onSuccess={handlePaymentSuccess}
         onClose={() => setPaymentVisible(false)}
+      />
+
+      {/* Paystack WebView for ₦5,000 Inspection Fee */}
+      <PaymentWebView
+        visible={inspectionPaymentVisible}
+        authorizationUrl={inspectionPaymentUrl}
+        onSuccess={handleInspectionPaymentSuccess}
+        onClose={() => setInspectionPaymentVisible(false)}
       />
     </View >
   )

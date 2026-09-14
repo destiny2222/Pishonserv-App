@@ -59,8 +59,12 @@ export interface InspectionPayload {
   phone: string;
   email: string;
   inspection_date: string; // Format: YYYY-MM-DD
-  inspection_time: string; // Format: "10:00 AM"
+  inspection_time: string; // Format: "10:00 AM" or "HH:MM" (AM/PM recommended)
+  agreement: boolean; // Required: explicit acceptance of platform agreement
+  platform_agreement?: boolean; // Accepted alias
+  notes?: string;
   note?: string;
+  skip_payment?: boolean; // Admin/superadmin only
 }
 
 /**
@@ -68,9 +72,56 @@ export interface InspectionPayload {
  */
 export interface InspectionResponse {
   status: string;
-  data: {
-    success: boolean;
-    inspection_code: string; // Format: INSP-YYYYMMDD-XXXX
+  tour_request_id?: number;
+  inspection_code?: string;
+  payment_reference?: string;
+  inspection_fee?: {
+    amount: number;
+    currency: string;
+    label: string;
+  };
+  payment?: {
+    authorization_url: string;
+    access_code: string;
+    reference: string;
+    callback_url: string;
+  };
+  data?: {
+    tour_request_id?: number;
+    inspection_code: string;
+    payment_reference?: string;
+    inspection_fee?: {
+      amount: number;
+      currency: string;
+      label: string;
+    };
+    payment?: {
+      authorization_url: string;
+      access_code: string;
+      reference: string;
+      callback_url: string;
+    };
+    success?: boolean;
+  };
+}
+
+export interface VerifyInspectionPayload {
+  reference: string;
+}
+
+export interface VerifyInspectionResponse {
+  status: string;
+  paid?: boolean;
+  already_processed?: boolean;
+  tour_request_id?: number;
+  inspection_code?: string;
+  receipts_sent?: boolean;
+  data?: {
+    paid?: boolean;
+    already_processed?: boolean;
+    tour_request_id?: number;
+    inspection_code?: string;
+    receipts_sent?: boolean;
   };
 }
 
@@ -261,43 +312,59 @@ export async function completePayment(
   });
 }
 
+/**
+ * Verify Paystack payment for property inspection (idempotent, safe to retry)
+ *
+ * @param payload - Verification details with Paystack reference
+ * @returns Inspection verification result
+ */
+export async function verifyInspectionPayment(
+  payload: VerifyInspectionPayload,
+): Promise<VerifyInspectionResponse> {
+  return apiRequest<VerifyInspectionResponse>("/inspections/payments/verify", {
+    method: "POST",
+    body: payload,
+    auth: true,
+  });
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
 /**
- * Check if a property type supports direct booking
+ * Check if a property type supports direct online booking / inquiry
  *
- * NOTE: Direct booking is not allowed for short_let and hotel types.
- * These types should use the WhatsApp inquiry flow instead.
+ * NOTE: For rent and sale properties, payment is offline and handled by Pishonserv.
+ * They should use the inquiry/inspection workflow instead of online booking.
+ * Online booking / inquiry is for short_let and hotel.
  *
  * @param listingType - The property listing type
- * @returns true if direct booking is supported
+ * @returns true if online booking / inquiry flow is used
  */
 export function supportsDirectBooking(
   listingType: string | undefined,
 ): boolean {
   if (!listingType) return false;
-  // Direct booking is NOT available for short_let and hotel
-  return !["short_let", "hotel"].includes(listingType);
+  return listingType === "short_let" || listingType === "hotel";
 }
 
 /**
- * Check if a property requires inspection before booking
+ * Check if a property supports/requires an inspection
  *
- * Works for: For Sale, For Rent, Land property types
- * if they have requires_inspection: true
+ * Inspection is available for: for_sale, for_rent, and land_for_sale (or land).
  *
- * @param requiresInspection - Whether the property requires inspection
+ * @param requiresInspection - Optional flag from property
  * @param listingType - The property listing type
- * @returns true if inspection is required
+ * @returns true if inspection applies
  */
 export function requiresInspection(
   requiresInspection: boolean | undefined,
   listingType: string | undefined,
 ): boolean {
-  if (!requiresInspection) return false;
-  // Inspection applies to: for_sale, for_rent, land
-  const inspectionTypes = ["for_sale", "for_rent", "land"];
-  return listingType ? inspectionTypes.includes(listingType) : false;
+  const inspectionTypes = ["for_sale", "for_rent", "land", "land_for_sale"];
+  if (listingType && inspectionTypes.includes(listingType)) {
+    return true;
+  }
+  return Boolean(requiresInspection);
 }

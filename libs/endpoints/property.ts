@@ -23,7 +23,8 @@ export interface Property {
   bedrooms?: number;
   bathrooms?: number;
   garage?: number;
-  size?: string;
+  parking_space?: number;
+  size?: "small" | "standard" | "medium" | "large" | string;
   amenities?: string[];
   images?: string[];
   image?: string;
@@ -36,7 +37,13 @@ export interface Property {
   requires_inspection?: boolean;
   latitude?: number;
   longitude?: number;
-  youtube_video_embed_url?: string;
+  video_url?: string | null;
+  video_mime?: string | null;
+  video_upload_status?: "ready" | "pending" | "processing" | "failed" | string | null;
+  video_provider?: string | null;
+  video_playback_url?: string | null;
+  youtube_video_url?: string | null;
+  youtube_video_embed_url?: string | null;
   caution_fee?: number | string;
   headline_label?: string;
   headline_amount?: number;

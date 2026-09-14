@@ -12,9 +12,11 @@ interface InspectionModalProps {
     email: string;
     inspection_date: string;
     inspection_time: string;
+    agreement: boolean;
     note?: string;
   }) => void;
   loading?: boolean;
+  inspectionFee?: number;
 }
 
 const InspectionModal: React.FC<InspectionModalProps> = ({
@@ -22,6 +24,7 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
   onClose,
   onConfirm,
   loading = false,
+  inspectionFee = 5000,
 }) => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -31,8 +34,9 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
   const [time, setTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
-  const [errors, setErrors] = useState<{ email?: string; phone?: string; fullName?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; phone?: string; fullName?: string; agreement?: string }>({});
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -72,11 +76,12 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
   };
 
   const handleConfirm = () => {
-    const newErrors: { email?: string; phone?: string; fullName?: string } = {};
+    const newErrors: { email?: string; phone?: string; fullName?: string; agreement?: string } = {};
     
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!validateEmail(email)) newErrors.email = 'Please enter a valid email address';
     if (!validatePhone(phone)) newErrors.phone = 'Please enter a valid phone number';
+    if (!agreed) newErrors.agreement = 'Please accept the platform agreement to proceed';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -90,6 +95,7 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
       email,
       inspection_date: formatDate(date),
       inspection_time: formatDisplayTime(time),
+      agreement: true,
       note,
     });
   };
@@ -132,6 +138,24 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+            {/* Inspection Fee Card */}
+            <View className="mb-5 bg-amber-50/80 border border-primary/30 rounded-2xl p-4 flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center mr-3">
+                  <Ionicons name="shield-checkmark" size={20} color="#C9A24D" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs font-rubik text-gray-500">Inspection Fee (Paid to Pishonserv)</Text>
+                  <Text className="text-base font-rubik-bold text-black-300 mt-0.5">
+                    ₦{inspectionFee.toLocaleString()}
+                  </Text>
+                </View>
+              </View>
+              <View className="bg-amber-100/80 px-2.5 py-1 rounded-full">
+                <Text className="text-[10px] font-rubik-medium text-amber-900 uppercase">Non-refundable</Text>
+              </View>
+            </View>
+
             {/* Full Name */}
             <View className="mb-4">
               <View className="flex-row justify-between">
@@ -225,7 +249,7 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
             </View>
 
             {/* Note */}
-            <View className="mb-6">
+            <View className="mb-5">
               <Text className="text-sm font-rubik-medium text-gray-600 mb-2">
                 Additional Note (Optional)
               </Text>
@@ -239,6 +263,34 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
                 onChangeText={setNote}
               />
             </View>
+
+            {/* Platform Agreement (Required) */}
+            <TouchableOpacity
+              onPress={() => {
+                setAgreed(!agreed);
+                if (errors.agreement) setErrors({ ...errors, agreement: undefined });
+              }}
+              activeOpacity={0.8}
+              className={`mb-6 p-4 rounded-2xl border flex-row items-start ${
+                agreed ? 'bg-amber-50/60 border-primary' : errors.agreement ? 'bg-red-50/30 border-red-300' : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <View
+                className={`w-5 h-5 rounded-md border mr-3 items-center justify-center mt-0.5 ${
+                  agreed ? 'bg-primary border-primary' : 'border-gray-300 bg-white'
+                }`}
+              >
+                {agreed && <Ionicons name="checkmark" size={14} color="white" />}
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs font-rubik-medium text-black-300 leading-5">
+                  I understand that inspection, negotiation, and payment must be handled only through Pishonserv, and that private deals with the vendor may void my protection.
+                </Text>
+                {errors.agreement && (
+                  <Text className="text-xs text-red-500 font-rubik mt-1.5">{errors.agreement}</Text>
+                )}
+              </View>
+            </TouchableOpacity>
           </ScrollView>
 
           {/* Confirm Button */}
@@ -251,7 +303,7 @@ const InspectionModal: React.FC<InspectionModalProps> = ({
               <ActivityIndicator color="#fff" />
             ) : (
               <Text className="text-white text-center text-base font-rubik-bold">
-                Book Inspection
+                Pay ₦{inspectionFee.toLocaleString()} & Schedule Inspection
               </Text>
             )}
           </TouchableOpacity>

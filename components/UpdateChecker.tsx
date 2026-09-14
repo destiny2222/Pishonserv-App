@@ -29,7 +29,7 @@ export function UpdateChecker() {
           setModalVisible(true);
         }
       } catch (error) {
-        console.error('Error checking for updates:', error);
+        // console.error('Error checking for updates:', error);
       }
     }
 
@@ -41,7 +41,7 @@ export function UpdateChecker() {
       setIsApplying(true);
       await Updates.reloadAsync();
     } catch (error) {
-      console.error('Error reloading app:', error);
+      // console.error('Error reloading app:', error);
       setIsApplying(false);
       setModalVisible(false);
     }
